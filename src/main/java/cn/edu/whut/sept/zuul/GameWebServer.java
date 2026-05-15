@@ -1,7 +1,15 @@
 /**
  * 游戏Web服务器
  * 提供HTTP服务和REST API，支持前端访问
- * 
+ *
+ * API端点：
+ * - POST /api/register - 用户注册
+ * - POST /api/login - 用户登录
+ * - POST /api/command - 执行游戏命令
+ * - GET  /api/status - 获取游戏状态
+ * - POST /api/save - 保存游戏
+ * - POST /api/load - 加载游戏
+ *
  * @author 扩展功能实现
  * @version 1.0
  */

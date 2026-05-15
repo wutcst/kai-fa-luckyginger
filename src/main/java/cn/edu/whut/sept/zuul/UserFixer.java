@@ -1,3 +1,16 @@
+/**
+ * 用户数据修复工具
+ * 用于修复或创建测试用户数据
+ *
+ * 功能：
+ * - 检查用户是否存在
+ * - 重置用户密码
+ * - 创建新用户
+ * - 列出所有用户
+ *
+ * @author 扩展功能实现
+ * @version 1.0
+ */
 package cn.edu.whut.sept.zuul;
 
 import java.sql.*;

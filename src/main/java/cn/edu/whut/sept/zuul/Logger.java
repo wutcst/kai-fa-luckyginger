@@ -1,7 +1,12 @@
 /**
  * 简单的日志工具类。
  * 提供可选的调试日志功能，便于开发时追踪程序执行流程。
- * 
+ *
+ * 使用方法：
+ * - Logger.enableDebug()  启用调试模式
+ * - Logger.debug(msg)     输出调试日志（仅调试模式）
+ * - Logger.info(msg)      输出信息日志（始终输出）
+ *
  * @author 扩展功能实现
  * @version 1.0
  */

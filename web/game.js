@@ -7,6 +7,16 @@ const views = {
 
 const API_BASE = "";
 
+const itemMeta = {
+    key: { label: "key", weight: 0.1, icon: "assets/items/key.png" },
+    cookie: { label: "cookie", weight: 0.2, icon: "assets/items/cookie.png" },
+    computer: { label: "computer", weight: 2.5, icon: "assets/items/computer.png" },
+    cable: { label: "cable", weight: 0.1, icon: "assets/items/cable.png" },
+    coin: { label: "coin", weight: 0.1, icon: "assets/items/coin.png" },
+    bottle: { label: "bottle", weight: 0.4, icon: "assets/items/potion.png" },
+    map: { label: "map", weight: 0.1, icon: "assets/items/scroll.png" }
+};
+
 const playerFrames = {
     north: [
         "assets/characters/player_frames/player_up_0.png",
@@ -40,161 +50,112 @@ const playerFrames = {
 
 const rooms = {
     campus_gate: {
-        title: "Campus Gate",
-        description: "You are standing at the campus gate. A small key lies near the stone path.",
+        title: "校园入口",
+        description: "你站在校园入口。石板路旁放着一把小钥匙。",
         image: "assets/rooms/campus_gate.png",
         exits: { north: "main_hall" },
         items: ["key"],
-        start: { left: 48, top: 66 },
+        start: { left: 50, top: 76 },
         paths: {
-            north: {
-                exit: { left: 52, top: 38 },
-                enter: { left: 50, top: 70 }
-            }
+            north: { exit: { left: 50, top: 42 }, enter: { left: 50, top: 78 } }
         }
     },
     main_hall: {
-        title: "Main Hall",
-        description: "The main hall connects the key study areas around the campus.",
+        title: "主大厅",
+        description: "主大厅连接着校园里的几个重要区域。",
         image: "assets/rooms/main_hall.png",
-        exits: {
-            south: "campus_gate",
-            east: "library",
-            west: "forest_path",
-            north: "lab"
-        },
-        start: { left: 50, top: 70 },
+        exits: { south: "campus_gate", east: "library", west: "forest_path", north: "lab" },
+        items: ["cookie"],
+        start: { left: 50, top: 72 },
         paths: {
-            north: {
-                exit: { left: 50, top: 35 },
-                enter: { left: 50, top: 72 }
-            },
-            south: {
-                exit: { left: 48, top: 86 },
-                enter: { left: 52, top: 42 }
-            },
-            east: {
-                exit: { left: 84, top: 58 },
-                enter: { left: 18, top: 58 }
-            },
-            west: {
-                exit: { left: 16, top: 58 },
-                enter: { left: 82, top: 58 }
-            }
+            north: { exit: { left: 50, top: 38 }, enter: { left: 50, top: 78 } },
+            south: { exit: { left: 50, top: 86 }, enter: { left: 50, top: 42 } },
+            east: { exit: { left: 84, top: 62 }, enter: { left: 18, top: 62 } },
+            west: { exit: { left: 16, top: 62 }, enter: { left: 82, top: 62 } }
         }
     },
     forest_path: {
-        title: "Forest Path",
-        description: "A quiet forest path runs beside the buildings.",
+        title: "校园酒吧",
+        description: "花园小路旁有休息区和温室，石板路通向更深处。",
         image: "assets/rooms/forest_path.png",
         exits: { east: "main_hall", north: "teleport_room" },
-        start: { left: 40, top: 64 },
+        items: ["bottle", "map"],
+        start: { left: 50, top: 72 },
         paths: {
-            east: {
-                exit: { left: 78, top: 56 },
-                enter: { left: 16, top: 58 }
-            },
-            north: {
-                exit: { left: 52, top: 34 },
-                enter: { left: 48, top: 74 }
-            }
+            east: { exit: { left: 84, top: 66 }, enter: { left: 16, top: 62 } },
+            north: { exit: { left: 50, top: 42 }, enter: { left: 50, top: 76 } }
         }
     },
     library: {
-        title: "Library",
-        description: "Warm lights and long desks fill the library.",
+        title: "图书馆",
+        description: "温暖的灯光照在长桌和书架上，桌面上散落着笔记。",
         image: "assets/rooms/library.png",
         exits: { west: "main_hall", north: "locked_room" },
-        start: { left: 52, top: 62 },
+        items: ["coin"],
+        start: { left: 52, top: 64 },
         paths: {
-            west: {
-                exit: { left: 14, top: 60 },
-                enter: { left: 84, top: 58 }
-            },
-            north: {
-                exit: { left: 74, top: 40 },
-                enter: { left: 42, top: 76 }
-            }
+            west: { exit: { left: 14, top: 60 }, enter: { left: 84, top: 62 } },
+            north: { exit: { left: 74, top: 42 }, enter: { left: 42, top: 78 } }
         }
     },
     lab: {
         title: "Computer Lab",
-        description: "The computer lab is filled with equipment and scattered notes.",
+        description: "你在计算机实验室。设备、线缆和笔记本电脑摆放在实验台附近。",
         image: "assets/rooms/lab.png",
         exits: { south: "main_hall", east: "locked_room" },
+        items: ["computer", "cable"],
         start: { left: 50, top: 68 },
         paths: {
-            south: {
-                exit: { left: 50, top: 84 },
-                enter: { left: 50, top: 35 }
-            },
-            east: {
-                exit: { left: 82, top: 58 },
-                enter: { left: 22, top: 76 }
-            }
+            south: { exit: { left: 50, top: 84 }, enter: { left: 50, top: 38 } },
+            east: { exit: { left: 82, top: 60 }, enter: { left: 22, top: 76 } }
         }
     },
     locked_room: {
-        title: "Locked Treasury",
-        description: "A sealed treasury door blocks the way forward.",
+        title: "上锁的宝库",
+        description: "厚重的宝库门被锁住了。使用钥匙后，向北可以进入宝藏房间。",
         image: "assets/rooms/locked_room.png",
         exits: { south: "library", west: "lab" },
+        items: [],
         start: { left: 50, top: 76 },
         paths: {
-            south: {
-                exit: { left: 42, top: 86 },
-                enter: { left: 74, top: 40 }
-            },
-            west: {
-                exit: { left: 18, top: 76 },
-                enter: { left: 82, top: 58 }
-            },
-            north: {
-                exit: { left: 58, top: 44 },
-                enter: { left: 50, top: 76 }
-            }
+            south: { exit: { left: 42, top: 86 }, enter: { left: 74, top: 42 } },
+            west: { exit: { left: 18, top: 76 }, enter: { left: 82, top: 60 } },
+            north: { exit: { left: 58, top: 44 }, enter: { left: 50, top: 78 } }
         }
     },
     unlocked_treasure_room: {
-        title: "Treasure Room",
-        description: "The treasure room glows with warm light and hidden rewards.",
+        title: "开锁后的宝库",
+        description: "宝库已经打开，金色灯光照亮了收藏架和宝箱。",
         image: "assets/rooms/unlocked_treasure_room2.png",
         exits: { south: "locked_room" },
-        start: { left: 50, top: 76 },
+        items: [],
+        start: { left: 50, top: 78 },
         paths: {
-            south: {
-                exit: { left: 50, top: 86 },
-                enter: { left: 58, top: 76 }
-            }
+            south: { exit: { left: 50, top: 86 }, enter: { left: 58, top: 44 } }
         }
     },
     teleport_room: {
-        title: "Teleport Room",
-        description: "A strange room hums with unstable magical energy.",
+        title: "传送房间",
+        description: "传送装置发出蓝色光芒，空气里有轻微的嗡鸣。",
         image: "assets/rooms/teleport_room.png",
         exits: { south: "forest_path", east: "main_hall" },
+        items: [],
         start: { left: 50, top: 70 },
         paths: {
-            south: {
-                exit: { left: 48, top: 84 },
-                enter: { left: 52, top: 34 }
-            },
-            east: {
-                exit: { left: 80, top: 58 },
-                enter: { left: 16, top: 58 }
-            }
+            south: { exit: { left: 48, top: 84 }, enter: { left: 50, top: 42 } },
+            east: { exit: { left: 80, top: 58 }, enter: { left: 16, top: 62 } }
         }
     }
 };
 
 const backendRoomAliases = [
-    { patterns: ["大学主入口", "campus", "outside"], roomId: "campus_gate" },
-    { patterns: ["演讲厅", "theater"], roomId: "library" },
-    { patterns: ["校园酒吧", "pub"], roomId: "forest_path" },
-    { patterns: ["计算机实验室", "lab"], roomId: "lab" },
-    { patterns: ["计算机管理办公室", "office"], roomId: "main_hall" },
-    { patterns: ["上锁的宝库", "宝库", "treasure"], roomId: "locked_room" },
-    { patterns: ["传输房间", "传送房间", "transporter"], roomId: "teleport_room" }
+    { patterns: ["outside", "campus", "入口", "校园入口"], roomId: "campus_gate" },
+    { patterns: ["hall", "大厅", "main"], roomId: "main_hall" },
+    { patterns: ["library", "图书馆"], roomId: "library" },
+    { patterns: ["computer lab", "lab", "实验室", "计算机实验室"], roomId: "lab" },
+    { patterns: ["forest", "pub", "bar", "酒吧", "小路"], roomId: "forest_path" },
+    { patterns: ["locked", "treasury", "宝库", "上锁"], roomId: "locked_room" },
+    { patterns: ["teleport", "transporter", "传送"], roomId: "teleport_room" }
 ];
 
 let playerAnimationTimer = null;
@@ -204,9 +165,16 @@ let commandBusy = false;
 let sessionId = null;
 let currentUsername = null;
 let lastBackendStatus = null;
+
 const gameState = {
     inventory: [],
-    treasureUnlocked: false
+    treasureUnlocked: false,
+    completion: {
+        roomsExplored: 1,
+        totalRooms: 7,
+        itemsCollected: 0,
+        totalItems: 9
+    }
 };
 
 function showView(name) {
@@ -221,9 +189,10 @@ function setActiveAuthTab(mode) {
     $("register-form").classList.toggle("active", mode === "register");
 }
 
-function appendLog(text) {
+function appendLog(text, type = "") {
     const line = document.createElement("p");
     line.textContent = text;
+    if (type) line.classList.add(type);
     $("output-area").appendChild(line);
     $("output-area").scrollTop = $("output-area").scrollHeight;
 }
@@ -255,9 +224,7 @@ function setCommandControlsDisabled(disabled) {
 async function callApi(endpoint, payload) {
     const response = await fetch(`${API_BASE}/api/${endpoint}`, {
         method: "POST",
-        headers: {
-            "Content-Type": "application/json"
-        },
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify(payload)
     });
 
@@ -288,10 +255,23 @@ async function sendGameCommand(command) {
     return callApi("command", { command, sessionId });
 }
 
-function appendApiMessage(data) {
-    if (data && data.message) {
-        appendLog(data.message);
-    }
+function bindFloatingPanels() {
+    document.querySelectorAll(".round-tool").forEach((button) => {
+        button.addEventListener("click", () => {
+            const target = button.dataset.panel;
+            document.querySelectorAll(".round-tool").forEach((tool) => {
+                tool.classList.toggle("active", tool === button);
+            });
+            document.querySelectorAll(".floating-panel").forEach((panel) => {
+                panel.classList.toggle("active", panel.id === target);
+            });
+        });
+    });
+
+    const dock = $("inventory-dock");
+    dock.querySelector(".dock-tab").addEventListener("click", () => {
+        dock.classList.toggle("open");
+    });
 }
 
 function findVisualRoomId(roomInfo) {
@@ -299,7 +279,8 @@ function findVisualRoomId(roomInfo) {
 
     const text = [
         roomInfo.shortDescription,
-        roomInfo.longDescription
+        roomInfo.longDescription,
+        roomInfo.name
     ].filter(Boolean).join(" ").toLowerCase();
 
     const match = backendRoomAliases.find((entry) => {
@@ -309,21 +290,96 @@ function findVisualRoomId(roomInfo) {
     return match ? match.roomId : currentRoomId;
 }
 
+function normalizeItemName(item) {
+    if (!item) return "";
+    if (typeof item === "string") return item;
+    return item.name || item.label || "";
+}
+
 function itemNames(items) {
     if (!Array.isArray(items)) return [];
-    return items.map((item) => item && item.name).filter(Boolean);
+    return items.map(normalizeItemName).filter(Boolean);
+}
+
+function formatWeight(value) {
+    const number = Number(value || 0);
+    return Number.isInteger(number) ? String(number) : number.toFixed(1);
+}
+
+function itemWeight(name) {
+    return itemMeta[name] ? itemMeta[name].weight : 0;
+}
+
+function inventoryWeight() {
+    return gameState.inventory.reduce((total, name) => total + itemWeight(name), 0);
+}
+
+function itemPill(name) {
+    const meta = itemMeta[name] || { label: name, icon: "assets/items/scroll.png" };
+    const label = meta.label || name;
+    return `<span class="item-pill"><img src="${meta.icon}" alt="">${label}</span>`;
+}
+
+function renderInventory() {
+    const box = $("inventory-list");
+    if (!gameState.inventory.length) {
+        box.textContent = "暂无物品";
+    } else {
+        box.innerHTML = gameState.inventory.map(itemPill).join("");
+    }
+
+    const playerInfo = lastBackendStatus && lastBackendStatus.player ? lastBackendStatus.player : {};
+    const totalWeight = playerInfo.totalWeight != null ? playerInfo.totalWeight : inventoryWeight();
+    const maxWeight = playerInfo.maxWeight != null ? playerInfo.maxWeight : 10;
+    $("weight-info").textContent = `负重 ${formatWeight(totalWeight)}/${formatWeight(maxWeight)}kg`;
+}
+
+function renderQuickActions() {
+    const room = rooms[currentRoomId];
+    const actions = [
+        { label: "查看状态", command: "status" },
+        { label: "查看物品", command: "items" },
+        { label: "返回上一房间", command: "back" }
+    ];
+
+    (room.items || []).forEach((item) => {
+        actions.push({ label: `拾取 ${item}`, command: `take ${item}` });
+    });
+
+    if (currentRoomId === "locked_room" && hasItem("key") && !gameState.treasureUnlocked) {
+        actions.push({ label: "使用 key", command: "use key" });
+    }
+
+    const box = $("quick-actions");
+    box.innerHTML = "";
+    actions.forEach((action) => {
+        const button = document.createElement("button");
+        button.type = "button";
+        button.textContent = action.label;
+        button.addEventListener("click", () => submitCommand(action.command));
+        box.appendChild(button);
+    });
+}
+
+function renderProgress() {
+    const completion = gameState.completion;
+    $("room-progress").textContent =
+        `房间 ${completion.roomsExplored}/${completion.totalRooms}，物品 ${completion.itemsCollected}/${completion.totalItems}`;
+}
+
+function updateHud() {
+    renderInventory();
+    renderQuickActions();
+    renderProgress();
 }
 
 function syncFromBackendStatus(status) {
     if (!status || status.error) {
-        if (status && status.error) {
-            appendLog(status.error);
-        }
+        if (status && status.error) appendLog(status.error, "error");
         return;
     }
 
     lastBackendStatus = status;
-
     const roomInfo = status.currentRoom || {};
     const visualRoomId = findVisualRoomId(roomInfo);
     const visualRoom = rooms[visualRoomId];
@@ -332,22 +388,22 @@ function syncFromBackendStatus(status) {
         currentRoomId = visualRoomId;
         visualRoom.description = roomInfo.longDescription || roomInfo.shortDescription || visualRoom.description;
         visualRoom.items = itemNames(roomInfo.items);
-        renderRoom();
     }
 
     const playerInfo = status.player || {};
     gameState.inventory = itemNames(playerInfo.inventory);
 
-    const inventoryText = gameState.inventory.length ? gameState.inventory.join(", ") : "空";
-    appendLog("背包：" + inventoryText + "。");
-
     if (status.completion) {
-        const completion = status.completion;
-        appendLog(
-            "进度：房间 " + completion.roomsExplored + "/" + completion.totalRooms +
-            "，物品 " + completion.itemsCollected + "/" + completion.totalItems + "。"
-        );
+        gameState.completion = {
+            roomsExplored: status.completion.roomsExplored || gameState.completion.roomsExplored,
+            totalRooms: status.completion.totalRooms || gameState.completion.totalRooms,
+            itemsCollected: status.completion.itemsCollected || gameState.completion.itemsCollected,
+            totalItems: status.completion.totalItems || gameState.completion.totalItems
+        };
     }
+
+    updateLockedTreasuryExit();
+    renderRoom();
 }
 
 async function refreshGameStatus() {
@@ -357,7 +413,7 @@ async function refreshGameStatus() {
         const status = await getApi("status", { sessionId });
         syncFromBackendStatus(status);
     } catch (error) {
-        appendLog("状态同步暂时不可用。");
+        appendLog("暂时无法同步后端状态，已保留当前前端状态。", "error");
     }
 }
 
@@ -367,10 +423,9 @@ function enterGameFromAuth(data) {
     updateLockedTreasuryExit();
     showView("game");
     renderRoom();
-    appendLog("已登录：" + (currentUsername || "player") + "。");
-    if (data.message) {
-        appendLog(data.message);
-    }
+    appendLog(`欢迎进入游戏，${currentUsername || "player"}。`);
+    if (data.message) appendLog(data.message);
+
     if (data.gameStatus) {
         syncFromBackendStatus(data.gameStatus);
     } else {
@@ -403,11 +458,14 @@ function renderRoom(entryPosition) {
     const room = rooms[currentRoomId];
     $("scene-bg").src = room.image;
     $("room-name").textContent = room.title;
+
     const itemText = room.items && room.items.length
-        ? " Items here: " + room.items.join(", ") + "."
-        : "";
+        ? ` 物品：${room.items.join("、")}。`
+        : " 当前房间没有可拾取物品。";
     $("room-description").textContent = room.description + itemText;
+
     setPlayerPosition(entryPosition || room.start);
+    updateHud();
 }
 
 function getDirection(command) {
@@ -423,65 +481,70 @@ function takeItem(itemName) {
     const items = room.items || [];
 
     if (!items.includes(itemName)) {
-        appendLog("这里没有 " + itemName + "。");
+        appendLog(`这里没有 ${itemName}。`, "error");
         return;
     }
 
     room.items = items.filter((item) => item !== itemName);
     gameState.inventory.push(itemName);
+    gameState.completion.itemsCollected = Math.max(gameState.completion.itemsCollected, gameState.inventory.length);
     renderRoom();
-    appendLog("已拾取：" + itemName + "。");
+    appendLog(`你拾取了 ${itemName}。`);
 }
 
 function useItem(itemName) {
     if (itemName !== "key") {
-        appendLog("这里不能使用该物品。");
+        appendLog("这个物品暂时不能在这里使用。", "error");
         return;
     }
 
     if (!hasItem("key")) {
-        appendLog("你需要先获得钥匙。");
+        appendLog("你的背包里没有钥匙。", "error");
         return;
     }
 
     if (currentRoomId !== "locked_room") {
-        appendLog("附近没有可以用钥匙打开的入口。");
+        appendLog("钥匙需要在上锁的宝库门前使用。", "error");
         return;
     }
 
     if (gameState.treasureUnlocked) {
-        appendLog("宝藏房间已经解锁。");
+        appendLog("宝库已经打开了。");
         return;
     }
 
     gameState.treasureUnlocked = true;
     updateLockedTreasuryExit();
-    appendLog("宝库门锁已打开，北侧路径已经开放。");
+    renderRoom();
+    appendLog("钥匙转动后，宝库北侧的门打开了。现在可以向北进入。");
 }
 
 function applyFrontEndCommand(command, options = {}) {
     const normalized = normalizeCommand(command);
     const shouldEchoLook = options.echoLook !== false;
 
-    if (normalized === "take key" || normalized === "get key") {
-        takeItem("key");
+    if (normalized.startsWith("take ") || normalized.startsWith("get ")) {
+        takeItem(normalized.split(" ").slice(1).join(" "));
         return;
     }
 
-    if (normalized === "use key") {
-        useItem("key");
+    if (normalized.startsWith("use ")) {
+        useItem(normalized.split(" ").slice(1).join(" "));
         return;
     }
 
     if (normalized === "items" || normalized === "inventory") {
-        appendLog("背包：" + (gameState.inventory.join(", ") || "空") + "。");
+        appendLog("背包：" + (gameState.inventory.join("、") || "空") + "。");
+        return;
+    }
+
+    if (normalized === "status") {
+        appendLog(`${rooms[currentRoomId].title}，背包 ${gameState.inventory.length} 件物品。`);
         return;
     }
 
     if (normalized === "look") {
-        if (shouldEchoLook) {
-            appendLog(rooms[currentRoomId].description);
-        }
+        if (shouldEchoLook) appendLog(rooms[currentRoomId].description);
         return;
     }
 
@@ -491,7 +554,18 @@ function applyFrontEndCommand(command, options = {}) {
         return;
     }
 
-    appendLog("无法识别该命令。");
+    if (normalized === "back") {
+        appendLog("返回上一房间将在后续步骤接入完整历史记录。");
+        return;
+    }
+
+    appendLog("无法识别这条命令。", "error");
+}
+
+function appendApiMessage(data) {
+    if (data && data.message) {
+        appendLog(data.message, data.success === false ? "error" : "");
+    }
 }
 
 async function handleCommand(command) {
@@ -501,8 +575,7 @@ async function handleCommand(command) {
     try {
         response = await sendGameCommand(normalized);
     } catch (error) {
-        appendLog("命令服务暂时不可用。");
-        return;
+        appendLog("后端命令暂时不可用，已执行前端交互。", "error");
     }
 
     if (response && response.success === false) {
@@ -525,7 +598,7 @@ function moveToDirection(direction) {
     playPlayerStep(direction);
 
     if (!nextRoomId || !path) {
-        appendLog("这个方向没有出口。");
+        appendLog("这个方向没有出口。", "error");
         return;
     }
 
@@ -533,10 +606,15 @@ function moveToDirection(direction) {
     setPlayerPosition(path.exit);
     window.setTimeout(() => {
         currentRoomId = nextRoomId;
+        gameState.completion.roomsExplored = Math.max(gameState.completion.roomsExplored, visitedRoomCount());
         renderRoom(path.enter);
-        appendLog("已到达：" + rooms[currentRoomId].title + "。");
+        appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
         isMoving = false;
-    }, 980);
+    }, 1280);
+}
+
+function visitedRoomCount() {
+    return Math.min(gameState.completion.totalRooms, gameState.completion.roomsExplored + 1);
 }
 
 function setPlayerFrame(direction, frameIndex) {
@@ -556,14 +634,32 @@ function playPlayerStep(direction) {
     playerAnimationTimer = window.setInterval(() => {
         frameIndex += 1;
         setPlayerFrame(direction, frameIndex);
-    }, 90);
+    }, 110);
 
     window.setTimeout(() => {
         window.clearInterval(playerAnimationTimer);
         playerAnimationTimer = null;
         token.classList.remove("walking");
         setPlayerFrame(direction, 0);
-    }, 980);
+    }, 1280);
+}
+
+async function submitCommand(presetCommand) {
+    if (commandBusy) return;
+
+    const command = (presetCommand || $("command-input").value).trim();
+    if (!command) {
+        appendLog("请输入命令。", "error");
+        return;
+    }
+
+    commandBusy = true;
+    setCommandControlsDisabled(true);
+    appendLog("> " + command, "command");
+    await handleCommand(command);
+    if (!presetCommand) $("command-input").value = "";
+    setCommandControlsDisabled(false);
+    commandBusy = false;
 }
 
 $("login-tab").addEventListener("click", () => setActiveAuthTab("login"));
@@ -590,7 +686,8 @@ $("login-form").addEventListener("submit", async (event) => {
         setFormMessage("login-message", "");
         enterGameFromAuth(data);
     } catch (error) {
-        setFormMessage("login-message", "暂时无法连接登录服务。");
+        setFormMessage("login-message", "暂时无法连接后端，已进入本地预览。");
+        enterGameFromAuth({ username, sessionId: null });
     } finally {
         setBusy("login-btn", false);
     }
@@ -606,8 +703,8 @@ $("register-form").addEventListener("submit", async (event) => {
         return;
     }
 
-    setFormMessage("register-message", "正在创建账号...");
-    setBusy("register-btn", true, "创建中");
+    setFormMessage("register-message", "正在注册...");
+    setBusy("register-btn", true, "注册中");
     try {
         const data = await callApi("register", { username, password });
         if (!data.success) {
@@ -617,7 +714,8 @@ $("register-form").addEventListener("submit", async (event) => {
         setFormMessage("register-message", "");
         enterGameFromAuth(data);
     } catch (error) {
-        setFormMessage("register-message", "暂时无法连接注册服务。");
+        setFormMessage("register-message", "暂时无法连接后端，已进入本地预览。");
+        enterGameFromAuth({ username, sessionId: null });
     } finally {
         setBusy("register-btn", false);
     }
@@ -628,7 +726,7 @@ $("logout-btn").addEventListener("click", async () => {
         try {
             await callApi("logout", { sessionId });
         } catch (error) {
-            appendLog("退出服务暂时不可用。");
+            appendLog("退出时无法连接后端。", "error");
         }
     }
     sessionId = null;
@@ -636,25 +734,7 @@ $("logout-btn").addEventListener("click", async () => {
     showView("auth");
 });
 
-async function submitCommand() {
-    if (commandBusy) return;
-
-    const command = $("command-input").value.trim();
-    if (!command) {
-        appendLog("请输入命令。");
-        return;
-    }
-
-    commandBusy = true;
-    setCommandControlsDisabled(true);
-    appendLog("> " + command);
-    await handleCommand(command);
-    $("command-input").value = "";
-    setCommandControlsDisabled(false);
-    commandBusy = false;
-}
-
-$("submit-btn").addEventListener("click", submitCommand);
+$("submit-btn").addEventListener("click", () => submitCommand());
 
 $("command-input").addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
@@ -664,14 +744,9 @@ $("command-input").addEventListener("keydown", (event) => {
 });
 
 document.querySelectorAll(".direction-pad button").forEach((button) => {
-    button.addEventListener("click", async () => {
-        if (commandBusy) return;
-
-        commandBusy = true;
-        setCommandControlsDisabled(true);
-        appendLog("> " + button.dataset.command);
-        await handleCommand(button.dataset.command);
-        setCommandControlsDisabled(false);
-        commandBusy = false;
-    });
+    button.addEventListener("click", () => submitCommand(button.dataset.command));
 });
+
+bindFloatingPanels();
+updateLockedTreasuryExit();
+renderRoom();

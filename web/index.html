@@ -11,8 +11,8 @@
         <section class="auth-view view active" id="auth-view">
             <div class="auth-panel">
                 <p class="eyebrow">World of Zuul</p>
-                <h1>校园探索游戏</h1>
-                <p class="muted">登录后进入可视化校园探索界面。</p>
+                <h1>校园冒险</h1>
+                <p class="muted">登录或注册后进入游戏，探索房间、拾取物品并解锁隐藏区域。</p>
 
                 <div class="auth-tabs" role="tablist">
                     <button class="tab active" id="login-tab" type="button">登录</button>
@@ -35,13 +35,13 @@
                 <form class="auth-form" id="register-form">
                     <label>
                         用户名
-                        <input id="register-username" type="text" autocomplete="username" placeholder="设置用户名">
+                        <input id="register-username" type="text" autocomplete="username" placeholder="创建用户名">
                     </label>
                     <label>
                         密码
-                        <input id="register-password" type="password" autocomplete="new-password" placeholder="设置密码">
+                        <input id="register-password" type="password" autocomplete="new-password" placeholder="创建密码">
                     </label>
-                    <button class="primary-action" id="register-btn" type="submit">创建账号</button>
+                    <button class="primary-action" id="register-btn" type="submit">注册并进入</button>
                     <p class="form-message" id="register-message"></p>
                 </form>
             </div>
@@ -60,22 +60,47 @@
 
             <div class="player-token" id="player-token" aria-label="玩家角色"></div>
 
-            <section class="info-panel">
+            <aside class="inventory-dock" id="inventory-dock">
+                <button class="dock-tab" type="button">背包</button>
+                <div class="dock-panel">
+                    <h3>背包</h3>
+                    <div class="inventory-list" id="inventory-list">暂无物品</div>
+                    <div class="weight-line" id="weight-info">负重 0/10kg</div>
+                </div>
+            </aside>
+
+            <nav class="floating-tools" aria-label="游戏信息">
+                <button class="round-tool active" data-panel="room-floating" type="button">房间</button>
+                <button class="round-tool" data-panel="command-floating" type="button">命令</button>
+                <button class="round-tool" data-panel="log-floating" type="button">日志</button>
+            </nav>
+
+            <section class="floating-panel room-floating active" id="room-floating">
                 <h3>房间信息</h3>
-                <p id="room-description">你站在校园入口，前方有通往不同区域的道路。</p>
+                <p id="room-description">正在加载房间信息。</p>
+                <div class="progress-line" id="room-progress">房间 0/7，物品 0/9</div>
+            </section>
+
+            <section class="floating-panel command-floating" id="command-floating">
+                <h3>交互命令</h3>
+                <div class="quick-actions" id="quick-actions"></div>
                 <div class="command-row">
-                    <input id="command-input" type="text" placeholder="输入命令，例如 look / take key / use key">
+                    <input id="command-input" type="text" placeholder="take key / use key / status">
                     <button class="primary-action small" id="submit-btn" type="button">执行</button>
                 </div>
+            </section>
+
+            <section class="floating-panel log-floating" id="log-floating">
+                <h3>游戏日志</h3>
                 <div class="log-panel" id="output-area" aria-live="polite"></div>
             </section>
 
             <nav class="direction-pad" aria-label="方向控制">
-                <button data-command="go north" id="go-north" type="button" title="向北移动">↑</button>
-                <button data-command="go west" id="go-west" type="button" title="向西移动">←</button>
-                <button data-command="look" id="look-room" type="button" title="查看当前房间">◎</button>
-                <button data-command="go east" id="go-east" type="button" title="向东移动">→</button>
-                <button data-command="go south" id="go-south" type="button" title="向南移动">↓</button>
+                <button data-command="go north" id="go-north" type="button" title="向北">↑</button>
+                <button data-command="go west" id="go-west" type="button" title="向西">←</button>
+                <button data-command="look" id="look-room" type="button" title="查看">⊙</button>
+                <button data-command="go east" id="go-east" type="button" title="向东">→</button>
+                <button data-command="go south" id="go-south" type="button" title="向南">↓</button>
             </nav>
         </section>
     </main>

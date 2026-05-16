@@ -187,12 +187,23 @@ const rooms = {
     }
 };
 
+const backendRoomAliases = [
+    { patterns: ["大学主入口", "campus", "outside"], roomId: "campus_gate" },
+    { patterns: ["演讲厅", "theater"], roomId: "library" },
+    { patterns: ["校园酒吧", "pub"], roomId: "forest_path" },
+    { patterns: ["计算机实验室", "lab"], roomId: "lab" },
+    { patterns: ["计算机管理办公室", "office"], roomId: "main_hall" },
+    { patterns: ["上锁的宝库", "宝库", "treasure"], roomId: "locked_room" },
+    { patterns: ["传输房间", "传送房间", "transporter"], roomId: "teleport_room" }
+];
+
 let playerAnimationTimer = null;
 let currentRoomId = "campus_gate";
 let isMoving = false;
 let commandBusy = false;
 let sessionId = null;
 let currentUsername = null;
+let lastBackendStatus = null;
 const gameState = {
     inventory: [],
     treasureUnlocked: false
@@ -257,6 +268,18 @@ async function callApi(endpoint, payload) {
     return response.json();
 }
 
+async function getApi(endpoint, params = {}) {
+    const query = new URLSearchParams(params).toString();
+    const url = `${API_BASE}/api/${endpoint}${query ? "?" + query : ""}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    return response.json();
+}
+
 async function sendGameCommand(command) {
     if (!sessionId) {
         return { success: true, message: "" };
@@ -271,6 +294,73 @@ function appendApiMessage(data) {
     }
 }
 
+function findVisualRoomId(roomInfo) {
+    if (!roomInfo) return currentRoomId;
+
+    const text = [
+        roomInfo.shortDescription,
+        roomInfo.longDescription
+    ].filter(Boolean).join(" ").toLowerCase();
+
+    const match = backendRoomAliases.find((entry) => {
+        return entry.patterns.some((pattern) => text.includes(pattern.toLowerCase()));
+    });
+
+    return match ? match.roomId : currentRoomId;
+}
+
+function itemNames(items) {
+    if (!Array.isArray(items)) return [];
+    return items.map((item) => item && item.name).filter(Boolean);
+}
+
+function syncFromBackendStatus(status) {
+    if (!status || status.error) {
+        if (status && status.error) {
+            appendLog(status.error);
+        }
+        return;
+    }
+
+    lastBackendStatus = status;
+
+    const roomInfo = status.currentRoom || {};
+    const visualRoomId = findVisualRoomId(roomInfo);
+    const visualRoom = rooms[visualRoomId];
+
+    if (visualRoom) {
+        currentRoomId = visualRoomId;
+        visualRoom.description = roomInfo.longDescription || roomInfo.shortDescription || visualRoom.description;
+        visualRoom.items = itemNames(roomInfo.items);
+        renderRoom();
+    }
+
+    const playerInfo = status.player || {};
+    gameState.inventory = itemNames(playerInfo.inventory);
+
+    const inventoryText = gameState.inventory.length ? gameState.inventory.join(", ") : "空";
+    appendLog("背包：" + inventoryText + "。");
+
+    if (status.completion) {
+        const completion = status.completion;
+        appendLog(
+            "进度：房间 " + completion.roomsExplored + "/" + completion.totalRooms +
+            "，物品 " + completion.itemsCollected + "/" + completion.totalItems + "。"
+        );
+    }
+}
+
+async function refreshGameStatus() {
+    if (!sessionId) return;
+
+    try {
+        const status = await getApi("status", { sessionId });
+        syncFromBackendStatus(status);
+    } catch (error) {
+        appendLog("状态同步暂时不可用。");
+    }
+}
+
 function enterGameFromAuth(data) {
     sessionId = data.sessionId || null;
     currentUsername = data.username || $("login-username").value.trim() || $("register-username").value.trim();
@@ -280,6 +370,11 @@ function enterGameFromAuth(data) {
     appendLog("已登录：" + (currentUsername || "player") + "。");
     if (data.message) {
         appendLog(data.message);
+    }
+    if (data.gameStatus) {
+        syncFromBackendStatus(data.gameStatus);
+    } else {
+        refreshGameStatus();
     }
 }
 
@@ -417,6 +512,7 @@ async function handleCommand(command) {
 
     appendApiMessage(response);
     applyFrontEndCommand(normalized, { echoLook: !response || !response.message });
+    await refreshGameStatus();
 }
 
 function moveToDirection(direction) {

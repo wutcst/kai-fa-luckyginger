@@ -5,6 +5,8 @@ const views = {
     game: $("game-view")
 };
 
+const API_BASE = "";
+
 const playerFrames = {
     north: [
         "assets/characters/player_frames/player_up_0.png",
@@ -188,6 +190,8 @@ const rooms = {
 let playerAnimationTimer = null;
 let currentRoomId = "campus_gate";
 let isMoving = false;
+let sessionId = null;
+let currentUsername = null;
 const gameState = {
     inventory: [],
     treasureUnlocked: false
@@ -210,6 +214,38 @@ function appendLog(text) {
     line.textContent = text;
     $("output-area").appendChild(line);
     $("output-area").scrollTop = $("output-area").scrollHeight;
+}
+
+function setFormMessage(id, text) {
+    $(id).textContent = text;
+}
+
+async function callApi(endpoint, payload) {
+    const response = await fetch(`${API_BASE}/api/${endpoint}`, {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/json"
+        },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    return response.json();
+}
+
+function enterGameFromAuth(data) {
+    sessionId = data.sessionId || null;
+    currentUsername = data.username || $("login-username").value.trim() || $("register-username").value.trim();
+    updateLockedTreasuryExit();
+    showView("game");
+    renderRoom();
+    appendLog("Signed in as " + (currentUsername || "player") + ".");
+    if (data.message) {
+        appendLog(data.message);
+    }
 }
 
 function normalizeCommand(command) {
@@ -379,20 +415,64 @@ function playPlayerStep(direction) {
 $("login-tab").addEventListener("click", () => setActiveAuthTab("login"));
 $("register-tab").addEventListener("click", () => setActiveAuthTab("register"));
 
-$("login-form").addEventListener("submit", (event) => {
+$("login-form").addEventListener("submit", async (event) => {
     event.preventDefault();
-    updateLockedTreasuryExit();
-    showView("game");
-    renderRoom();
-    appendLog("Entered the campus gate.");
+    const username = $("login-username").value.trim();
+    const password = $("login-password").value;
+
+    if (!username || !password) {
+        setFormMessage("login-message", "Please enter username and password.");
+        return;
+    }
+
+    setFormMessage("login-message", "Signing in...");
+    try {
+        const data = await callApi("login", { username, password });
+        if (!data.success) {
+            setFormMessage("login-message", data.message || "Login failed.");
+            return;
+        }
+        setFormMessage("login-message", "");
+        enterGameFromAuth(data);
+    } catch (error) {
+        setFormMessage("login-message", "Unable to connect to the login service.");
+    }
 });
 
-$("register-form").addEventListener("submit", (event) => {
+$("register-form").addEventListener("submit", async (event) => {
     event.preventDefault();
-    $("register-message").textContent = "Account form is ready. Registration API will be connected later.";
+    const username = $("register-username").value.trim();
+    const password = $("register-password").value;
+
+    if (!username || !password) {
+        setFormMessage("register-message", "Please enter username and password.");
+        return;
+    }
+
+    setFormMessage("register-message", "Creating account...");
+    try {
+        const data = await callApi("register", { username, password });
+        if (!data.success) {
+            setFormMessage("register-message", data.message || "Registration failed.");
+            return;
+        }
+        setFormMessage("register-message", "");
+        enterGameFromAuth(data);
+    } catch (error) {
+        setFormMessage("register-message", "Unable to connect to the registration service.");
+    }
 });
 
-$("logout-btn").addEventListener("click", () => {
+$("logout-btn").addEventListener("click", async () => {
+    if (sessionId) {
+        try {
+            await callApi("logout", { sessionId });
+        } catch (error) {
+            appendLog("Logout service is unavailable.");
+        }
+    }
+    sessionId = null;
+    currentUsername = null;
     showView("auth");
 });
 

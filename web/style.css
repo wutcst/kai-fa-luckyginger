@@ -63,7 +63,21 @@ input:disabled {
     display: grid;
 }
 
-.auth-panel {
+.menu-view {
+    display: none;
+    place-items: center;
+    padding: 32px 16px;
+    background:
+        linear-gradient(rgba(42, 31, 22, 0.22), rgba(42, 31, 22, 0.58)),
+        url("assets/rooms/main_hall.png") center / cover;
+}
+
+.menu-view.active {
+    display: grid;
+}
+
+.auth-panel,
+.menu-panel {
     width: min(420px, 100%);
     padding: 28px;
     border: 1px solid rgba(255, 255, 255, 0.52);
@@ -71,6 +85,10 @@ input:disabled {
     background: var(--panel);
     box-shadow: var(--shadow);
     backdrop-filter: blur(10px);
+}
+
+.menu-panel {
+    width: min(520px, 100%);
 }
 
 .eyebrow {
@@ -115,7 +133,8 @@ h3 {
 
 .tab,
 .hud-button,
-.primary-action {
+.primary-action,
+.secondary-action {
     min-height: 42px;
     border: 1px solid var(--line);
     border-radius: 6px;
@@ -128,6 +147,24 @@ h3 {
     color: #fff8e8;
     border-color: var(--accent-dark);
     background: var(--accent);
+}
+
+.secondary-action {
+    color: var(--accent-dark);
+    background: rgba(255, 251, 239, 0.78);
+    font-weight: 800;
+}
+
+.menu-actions {
+    display: grid;
+    gap: 10px;
+    margin-top: 22px;
+}
+
+.menu-action {
+    width: 100%;
+    min-height: 48px;
+    font-weight: 900;
 }
 
 .auth-form {

@@ -2,6 +2,7 @@ const $ = (id) => document.getElementById(id);
 
 const views = {
     auth: $("auth-view"),
+    menu: $("menu-view"),
     game: $("game-view")
 };
 
@@ -237,6 +238,7 @@ let isMoving = false;
 let commandBusy = false;
 let sessionId = null;
 let currentUsername = null;
+let pendingAuthData = null;
 let lastBackendStatus = null;
 let currentPlayerPosition = { left: 50, top: 76 };
 
@@ -273,6 +275,13 @@ function appendLog(text, type = "") {
 
 function setFormMessage(id, text) {
     $(id).textContent = text;
+}
+
+function setMenuMessage(text, type = "") {
+    const message = $("menu-message");
+    message.textContent = text;
+    message.className = "form-message";
+    if (type) message.classList.add(type);
 }
 
 function setBusy(buttonId, isBusy, busyText) {
@@ -523,6 +532,37 @@ function enterGameFromAuth(data) {
         syncFromBackendStatus(data.gameStatus);
     } else {
         refreshGameStatus();
+    }
+}
+
+function showGameMenu(data) {
+    pendingAuthData = data || {};
+    sessionId = pendingAuthData.sessionId || null;
+    currentUsername = pendingAuthData.username || $("login-username").value.trim() || $("register-username").value.trim();
+    $("menu-welcome").textContent = `${currentUsername || "player"}，请选择进入游戏的方式。`;
+    setMenuMessage("");
+    showView("menu");
+}
+
+async function startGameFromMenu(mode) {
+    if (!pendingAuthData) return;
+
+    if (mode === "load" && !sessionId) {
+        setMenuMessage("当前为离线会话，无法读取服务器存档。", "error");
+        return;
+    }
+
+    setMenuMessage(mode === "load" ? "正在读取存档..." : "正在进入游戏...");
+    enterGameFromAuth(pendingAuthData);
+
+    if (mode === "load") {
+        try {
+            const response = await sendGameCommand("load");
+            appendApiMessage(response);
+            await refreshGameStatus();
+        } catch (error) {
+            appendLog("读取存档失败，请确认服务器已保存过进度。", "error");
+        }
     }
 }
 
@@ -862,10 +902,10 @@ $("login-form").addEventListener("submit", async (event) => {
             return;
         }
         setFormMessage("login-message", "");
-        enterGameFromAuth(data);
+        showGameMenu(data);
     } catch (error) {
         setFormMessage("login-message", "暂时无法连接后端，已进入本地预览。");
-        enterGameFromAuth({ username, sessionId: null });
+        showGameMenu({ username, sessionId: null });
     } finally {
         setBusy("login-btn", false);
     }
@@ -890,10 +930,10 @@ $("register-form").addEventListener("submit", async (event) => {
             return;
         }
         setFormMessage("register-message", "");
-        enterGameFromAuth(data);
+        showGameMenu(data);
     } catch (error) {
         setFormMessage("register-message", "暂时无法连接后端，已进入本地预览。");
-        enterGameFromAuth({ username, sessionId: null });
+        showGameMenu({ username, sessionId: null });
     } finally {
         setBusy("register-btn", false);
     }
@@ -909,8 +949,13 @@ $("logout-btn").addEventListener("click", async () => {
     }
     sessionId = null;
     currentUsername = null;
+    pendingAuthData = null;
     showView("auth");
 });
+
+$("start-game-btn").addEventListener("click", () => startGameFromMenu("new"));
+$("load-game-btn").addEventListener("click", () => startGameFromMenu("load"));
+$("continue-game-btn").addEventListener("click", () => startGameFromMenu("continue"));
 
 $("submit-btn").addEventListener("click", () => submitCommand());
 

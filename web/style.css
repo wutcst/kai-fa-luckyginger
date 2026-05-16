@@ -189,7 +189,7 @@ input {
     aspect-ratio: 1;
     transform: translate(-50%, -50%);
     background: url("assets/characters/player_frames/player_down_0.png") center bottom / contain no-repeat;
-    transition: left 0.45s ease, top 0.45s ease;
+    transition: left 0.95s ease-in-out, top 0.95s ease-in-out;
 }
 
 .player-token.walking {

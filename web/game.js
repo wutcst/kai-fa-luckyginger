@@ -41,7 +41,14 @@ const rooms = {
         title: "Campus Gate",
         description: "You are standing at the campus gate. A path leads north into the main hall.",
         image: "assets/rooms/campus_gate.png",
-        exits: { north: "main_hall" }
+        exits: { north: "main_hall" },
+        start: { left: 48, top: 66 },
+        paths: {
+            north: {
+                exit: { left: 52, top: 38 },
+                enter: { left: 50, top: 70 }
+            }
+        }
     },
     main_hall: {
         title: "Main Hall",
@@ -52,48 +59,130 @@ const rooms = {
             east: "library",
             west: "forest_path",
             north: "lab"
+        },
+        start: { left: 50, top: 70 },
+        paths: {
+            north: {
+                exit: { left: 50, top: 35 },
+                enter: { left: 50, top: 72 }
+            },
+            south: {
+                exit: { left: 48, top: 86 },
+                enter: { left: 52, top: 42 }
+            },
+            east: {
+                exit: { left: 84, top: 58 },
+                enter: { left: 18, top: 58 }
+            },
+            west: {
+                exit: { left: 16, top: 58 },
+                enter: { left: 82, top: 58 }
+            }
         }
     },
     forest_path: {
         title: "Forest Path",
         description: "A quiet forest path runs beside the buildings.",
         image: "assets/rooms/forest_path.png",
-        exits: { east: "main_hall", north: "teleport_room" }
+        exits: { east: "main_hall", north: "teleport_room" },
+        start: { left: 40, top: 64 },
+        paths: {
+            east: {
+                exit: { left: 78, top: 56 },
+                enter: { left: 16, top: 58 }
+            },
+            north: {
+                exit: { left: 52, top: 34 },
+                enter: { left: 48, top: 74 }
+            }
+        }
     },
     library: {
         title: "Library",
         description: "Warm lights and long desks fill the library.",
         image: "assets/rooms/library.png",
-        exits: { west: "main_hall", north: "locked_room" }
+        exits: { west: "main_hall", north: "locked_room" },
+        start: { left: 52, top: 62 },
+        paths: {
+            west: {
+                exit: { left: 14, top: 60 },
+                enter: { left: 84, top: 58 }
+            },
+            north: {
+                exit: { left: 74, top: 40 },
+                enter: { left: 42, top: 76 }
+            }
+        }
     },
     lab: {
         title: "Computer Lab",
         description: "The computer lab is filled with equipment and scattered notes.",
         image: "assets/rooms/lab.png",
-        exits: { south: "main_hall", east: "locked_room" }
+        exits: { south: "main_hall", east: "locked_room" },
+        start: { left: 50, top: 68 },
+        paths: {
+            south: {
+                exit: { left: 50, top: 84 },
+                enter: { left: 50, top: 35 }
+            },
+            east: {
+                exit: { left: 82, top: 58 },
+                enter: { left: 22, top: 76 }
+            }
+        }
     },
     locked_room: {
         title: "Locked Treasury",
         description: "A sealed treasury door blocks the way forward.",
         image: "assets/rooms/locked_room.png",
-        exits: { south: "library", west: "lab" }
+        exits: { south: "library", west: "lab" },
+        start: { left: 50, top: 76 },
+        paths: {
+            south: {
+                exit: { left: 42, top: 86 },
+                enter: { left: 74, top: 40 }
+            },
+            west: {
+                exit: { left: 18, top: 76 },
+                enter: { left: 82, top: 58 }
+            }
+        }
     },
     unlocked_treasure_room: {
         title: "Treasure Room",
         description: "The treasure room glows with warm light and hidden rewards.",
         image: "assets/rooms/unlocked_treasure_room2.png",
-        exits: { south: "locked_room" }
+        exits: { south: "locked_room" },
+        start: { left: 50, top: 76 },
+        paths: {
+            south: {
+                exit: { left: 50, top: 86 },
+                enter: { left: 58, top: 76 }
+            }
+        }
     },
     teleport_room: {
         title: "Teleport Room",
         description: "A strange room hums with unstable magical energy.",
         image: "assets/rooms/teleport_room.png",
-        exits: { south: "forest_path", east: "main_hall" }
+        exits: { south: "forest_path", east: "main_hall" },
+        start: { left: 50, top: 70 },
+        paths: {
+            south: {
+                exit: { left: 48, top: 84 },
+                enter: { left: 52, top: 34 }
+            },
+            east: {
+                exit: { left: 80, top: 58 },
+                enter: { left: 16, top: 58 }
+            }
+        }
     }
 };
 
 let playerAnimationTimer = null;
 let currentRoomId = "campus_gate";
+let isMoving = false;
 
 function showView(name) {
     Object.values(views).forEach((view) => view.classList.remove("active"));
@@ -114,11 +203,17 @@ function appendLog(text) {
     $("output-area").scrollTop = $("output-area").scrollHeight;
 }
 
-function renderRoom() {
+function setPlayerPosition(position) {
+    $("player-token").style.left = position.left + "%";
+    $("player-token").style.top = position.top + "%";
+}
+
+function renderRoom(entryPosition) {
     const room = rooms[currentRoomId];
     $("scene-bg").src = room.image;
     $("room-name").textContent = room.title;
     $("room-description").textContent = room.description;
+    setPlayerPosition(entryPosition || room.start);
 }
 
 function getDirection(command) {
@@ -130,23 +225,27 @@ function getDirection(command) {
 }
 
 function moveToDirection(direction) {
-    if (!direction) return;
+    if (!direction || isMoving) return;
 
     const room = rooms[currentRoomId];
     const nextRoomId = room.exits[direction];
+    const path = room.paths && room.paths[direction];
 
     playPlayerStep(direction);
 
-    if (!nextRoomId) {
+    if (!nextRoomId || !path) {
         appendLog("No exit in that direction.");
         return;
     }
 
-    currentRoomId = nextRoomId;
+    isMoving = true;
+    setPlayerPosition(path.exit);
     window.setTimeout(() => {
-        renderRoom();
+        currentRoomId = nextRoomId;
+        renderRoom(path.enter);
         appendLog("Moved to " + rooms[currentRoomId].title + ".");
-    }, 420);
+        isMoving = false;
+    }, 980);
 }
 
 function setPlayerFrame(direction, frameIndex) {
@@ -173,7 +272,7 @@ function playPlayerStep(direction) {
         playerAnimationTimer = null;
         token.classList.remove("walking");
         setPlayerFrame(direction, 0);
-    }, 540);
+    }, 980);
 }
 
 $("login-tab").addEventListener("click", () => setActiveAuthTab("login"));

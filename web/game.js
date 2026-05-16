@@ -8,12 +8,12 @@ const views = {
 const API_BASE = "";
 
 const itemMeta = {
-    key: { label: "key", weight: 0.1, icon: "assets/items/key.png" },
-    cookie: { label: "cookie", weight: 0.2, icon: "assets/items/cookie.png" },
-    computer: { label: "computer", weight: 2.5, icon: "assets/items/computer.png" },
-    cable: { label: "cable", weight: 0.1, icon: "assets/items/cable.png" },
-    coin: { label: "coin", weight: 0.1, icon: "assets/items/coin.png" },
-    bottle: { label: "bottle", weight: 0.4, icon: "assets/items/potion.png" },
+    key: { label: "key", weight: 0.1, icon: "assets/items/gold_key.png" },
+    cookie: { label: "cookie", weight: 0.2, icon: "assets/items/pumpkin.png" },
+    computer: { label: "computer", weight: 2.5, icon: "assets/items/crystal_ore.png" },
+    cable: { label: "cable", weight: 0.1, icon: "assets/items/pickaxe.png" },
+    coin: { label: "coin", weight: 0.1, icon: "assets/items/shield.png" },
+    bottle: { label: "bottle", weight: 0.4, icon: "assets/items/green_potion.png" },
     map: { label: "map", weight: 0.1, icon: "assets/items/scroll.png" }
 };
 
@@ -291,7 +291,22 @@ function setCommandControlsDisabled(disabled) {
     $("submit-btn").disabled = disabled;
     $("command-input").disabled = disabled;
     document.querySelectorAll(".direction-pad button").forEach((button) => {
-        button.disabled = disabled;
+        const direction = getDirection(button.dataset.command || "");
+        button.disabled = disabled || (direction && !canMoveToDirection(direction));
+    });
+}
+
+function canMoveToDirection(direction) {
+    const room = rooms[currentRoomId];
+    return Boolean(room && room.exits && room.exits[direction]);
+}
+
+function updateDirectionControls() {
+    document.querySelectorAll(".direction-pad button").forEach((button) => {
+        const direction = getDirection(button.dataset.command || "");
+        if (direction) {
+            button.disabled = isMoving || !canMoveToDirection(direction);
+        }
     });
 }
 
@@ -549,6 +564,7 @@ function renderRoom(entryPosition) {
 
     setPlayerPosition(entryPosition || room.start);
     updateHud();
+    updateDirectionControls();
 }
 
 function getDirection(command) {

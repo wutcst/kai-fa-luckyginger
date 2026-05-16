@@ -556,13 +556,45 @@ async function startGameFromMenu(mode) {
     enterGameFromAuth(pendingAuthData);
 
     if (mode === "load") {
-        try {
-            const response = await sendGameCommand("load");
-            appendApiMessage(response);
+        await loadSavedGame();
+    }
+}
+
+function closeGameMenu() {
+    $("game-menu-popover").classList.remove("open");
+}
+
+async function saveCurrentGame() {
+    if (!sessionId) {
+        appendLog("当前为离线会话，无法保存到服务器。", "error");
+        return;
+    }
+
+    try {
+        const response = await callApi("save", { sessionId });
+        appendApiMessage(response);
+        await refreshGameStatus();
+    } catch (error) {
+        appendLog("保存失败，请确认服务器和数据库连接正常。", "error");
+    }
+}
+
+async function loadSavedGame() {
+    if (!sessionId) {
+        appendLog("当前为离线会话，无法读取服务器存档。", "error");
+        return;
+    }
+
+    try {
+        const response = await callApi("load", { sessionId });
+        appendApiMessage(response);
+        if (response && response.gameStatus) {
+            syncFromBackendStatus(response.gameStatus);
+        } else {
             await refreshGameStatus();
-        } catch (error) {
-            appendLog("读取存档失败，请确认服务器已保存过进度。", "error");
         }
+    } catch (error) {
+        appendLog("读取存档失败，请确认服务器已保存过进度。", "error");
     }
 }
 
@@ -956,6 +988,17 @@ $("logout-btn").addEventListener("click", async () => {
 $("start-game-btn").addEventListener("click", () => startGameFromMenu("new"));
 $("load-game-btn").addEventListener("click", () => startGameFromMenu("load"));
 $("continue-game-btn").addEventListener("click", () => startGameFromMenu("continue"));
+
+$("save-game-btn").addEventListener("click", () => saveCurrentGame());
+$("game-menu-btn").addEventListener("click", () => $("game-menu-popover").classList.toggle("open"));
+$("menu-back-btn").addEventListener("click", () => {
+    closeGameMenu();
+    showView("menu");
+});
+$("menu-load-btn").addEventListener("click", async () => {
+    closeGameMenu();
+    await loadSavedGame();
+});
 
 $("submit-btn").addEventListener("click", () => submitCommand());
 

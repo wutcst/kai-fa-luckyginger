@@ -79,7 +79,9 @@ public class LockedRoom extends Room
     @Override
     public Room getExit(String direction)
     {
-        // 锁只阻止进入，不阻止离开，所以总是返回出口
+        if (!isUnlocked && !"south".equalsIgnoreCase(direction)) {
+            return null;
+        }
         return super.getExit(direction);
     }
     

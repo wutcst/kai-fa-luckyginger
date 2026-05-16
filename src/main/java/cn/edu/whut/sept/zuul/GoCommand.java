@@ -47,16 +47,7 @@ public class GoCommand implements CommandExecutor
             }
             System.out.println("那里没有门！");
         } else {
-            // 检查目标房间是否是上锁的房间且未解锁（防止未解锁就进入）
-            if (nextRoom instanceof LockedRoom) {
-                LockedRoom lockedRoom = (LockedRoom) nextRoom;
-                if (!lockedRoom.isUnlocked()) {
-                    System.out.println("这扇门是锁着的！你需要使用 " + 
-                                     lockedRoom.getRequiredKeyType() + " 来解锁。");
-                    System.out.println("提示：使用 'use key' 命令可以解锁上锁的房间。");
-                    return false;
-                }
-            }
+            // 上锁房间表示锁着的门口场景，允许玩家先走到门口再使用钥匙。
             // 记录房间历史（用于back命令）
             game.addRoomToHistory(currentRoom);
             player.setCurrentRoom(nextRoom);
@@ -69,8 +60,9 @@ public class GoCommand implements CommandExecutor
                 Room randomRoom = transporter.getRandomRoom();
                 // 如果传送到未解锁的上锁房间，重新选择一个已解锁的房间
                 int attempts = 0;
-                while (randomRoom instanceof LockedRoom && 
-                       !((LockedRoom) randomRoom).isUnlocked() && 
+                while (((randomRoom instanceof LockedRoom && 
+                       !((LockedRoom) randomRoom).isUnlocked()) ||
+                       (randomRoom != null && "解锁后的宝库".equals(randomRoom.getShortDescription()))) &&
                        attempts < 10) {
                     randomRoom = transporter.getRandomRoom();
                     attempts++;
@@ -89,4 +81,3 @@ public class GoCommand implements CommandExecutor
         return false;
     }
 }
-

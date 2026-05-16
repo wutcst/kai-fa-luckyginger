@@ -77,7 +77,7 @@ public class Game
      */
     private void createRooms()
     {
-        Room outside, theater, pub, lab, office, transporter;
+        Room outside, theater, pub, lab, office, transporter, treasureInterior;
 
         // create the rooms
         outside = new Room("大学主入口外");
@@ -86,8 +86,9 @@ public class Game
         lab = new Room("计算机实验室");
         office = new Room("计算机管理办公室");
         
-        // 创建上锁的房间（需要钥匙解锁）
+        // 创建上锁的宝库门口和解锁后的宝库内景
         LockedRoom treasureRoom = new LockedRoom("上锁的宝库", "key");
+        treasureInterior = new Room("解锁后的宝库");
 
         // 创建所有房间的映射表（用于传输房间）
         allRoomsMap = new HashMap<>();
@@ -97,6 +98,7 @@ public class Game
         allRoomsMap.put("lab", lab);
         allRoomsMap.put("office", office);
         allRoomsMap.put("treasure", treasureRoom);
+        allRoomsMap.put("treasureInterior", treasureInterior);
 
         // 创建传输房间
         transporter = new TransporterRoom("一个神秘的传输房间", allRoomsMap);
@@ -114,12 +116,14 @@ public class Game
 
         lab.setExit("north", outside);
         lab.setExit("east", office);
-        lab.setExit("south", treasureRoom);  // 从实验室南面可以到达宝库（需要解锁）
+        lab.setExit("south", treasureRoom);  // 从实验室南面可以到达上锁的宝库门口
 
         office.setExit("west", lab);
         
-        // 宝库可以返回实验室
-        treasureRoom.setExit("north", lab);
+        // 宝库门口：未解锁时只能向南返回实验室；解锁后向北进入宝库内景
+        treasureRoom.setExit("south", lab);
+        treasureRoom.setExit("north", treasureInterior);
+        treasureInterior.setExit("south", treasureRoom);
         
         // 传输房间可以"离开"到任何方向（实际是随机传输）
         transporter.setExit("north", outside);  // 这些出口会被重写为随机传输
@@ -141,8 +145,8 @@ public class Game
         lab.addItem(new Item("computer", "一台笔记本电脑", 2.5));
         lab.addItem(new Item("cable", "一根USB线", 0.1));
         
-        // 宝库中有特殊物品
-        treasureRoom.addItem(new Item("treasure", "一个神秘的宝箱", 3.0));
+        // 解锁后的宝库内景中有特殊物品
+        treasureInterior.addItem(new Item("treasure", "一个神秘的宝箱", 3.0));
         
         // 在随机房间添加魔法饼干
         Random random = new Random();

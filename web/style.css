@@ -188,7 +188,23 @@ input {
     width: 72px;
     aspect-ratio: 1;
     transform: translate(-50%, -50%);
-    background: url("assets/characters/player_girl_spritesheet.png") center / contain no-repeat;
+    background: url("assets/characters/player_frames/player_down_0.png") center bottom / contain no-repeat;
+    transition: left 0.45s ease, top 0.45s ease;
+}
+
+.player-token.walking {
+    animation: walk-bob 0.45s ease-in-out infinite;
+}
+
+@keyframes walk-bob {
+    0%,
+    100% {
+        transform: translate(-50%, -50%);
+    }
+
+    50% {
+        transform: translate(-50%, -54%);
+    }
 }
 
 .info-panel {

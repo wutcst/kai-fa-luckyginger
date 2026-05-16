@@ -542,17 +542,29 @@ function updateLockedTreasuryExit() {
     }
 }
 
-function setPlayerPosition(position) {
+function setPlayerPosition(position, options = {}) {
+    const token = $("player-token");
+    const instant = options.instant === true;
+
+    if (instant) {
+        token.classList.add("no-position-transition");
+    }
+
     currentPlayerPosition = { left: position.left, top: position.top };
-    $("player-token").style.left = position.left + "%";
-    $("player-token").style.top = position.top + "%";
+    token.style.left = position.left + "%";
+    token.style.top = position.top + "%";
+
+    if (instant) {
+        token.offsetHeight;
+        window.requestAnimationFrame(() => token.classList.remove("no-position-transition"));
+    }
 }
 
 function setPlayerVisible(visible) {
     $("player-token").style.opacity = visible ? "1" : "0";
 }
 
-function renderRoom(entryPosition) {
+function renderRoom(entryPosition, options = {}) {
     const room = rooms[currentRoomId];
     $("scene-bg").src = room.image;
     $("room-name").textContent = room.title;
@@ -562,7 +574,7 @@ function renderRoom(entryPosition) {
         : " 当前房间没有可拾取物品。";
     $("room-description").textContent = room.description + itemText;
 
-    setPlayerPosition(entryPosition || room.start);
+    setPlayerPosition(entryPosition || room.start, { instant: options.instantPlayerPosition });
     updateHud();
     updateDirectionControls();
 }
@@ -732,7 +744,7 @@ async function moveToDirection(direction) {
 
     currentRoomId = nextRoomId;
     gameState.completion.roomsExplored = Math.max(gameState.completion.roomsExplored, visitedRoomCount());
-    renderRoom(getEntryPositionForDirection(direction, path));
+    renderRoom(getEntryPositionForDirection(direction, path), { instantPlayerPosition: true });
     setPlayerFrame(direction, 0);
     await wait(80);
     setPlayerVisible(true);

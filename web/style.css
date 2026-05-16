@@ -210,6 +210,10 @@ input {
     animation: walk-bob 0.36s ease-in-out infinite alternate;
 }
 
+.player-token.no-position-transition {
+    transition: opacity 0.18s ease;
+}
+
 @keyframes walk-bob {
     from {
         transform: translate(-50%, -100%);

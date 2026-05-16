@@ -236,6 +236,20 @@ async function callApi(endpoint, payload) {
     return response.json();
 }
 
+async function sendGameCommand(command) {
+    if (!sessionId) {
+        return { success: true, message: "" };
+    }
+
+    return callApi("command", { command, sessionId });
+}
+
+function appendApiMessage(data) {
+    if (data && data.message) {
+        appendLog(data.message);
+    }
+}
+
 function enterGameFromAuth(data) {
     sessionId = data.sessionId || null;
     currentUsername = data.username || $("login-username").value.trim() || $("register-username").value.trim();
@@ -329,8 +343,9 @@ function useItem(itemName) {
     appendLog("The treasury door unlocks. A northern path is now open.");
 }
 
-function handleCommand(command) {
+function applyFrontEndCommand(command, options = {}) {
     const normalized = normalizeCommand(command);
+    const shouldEchoLook = options.echoLook !== false;
 
     if (normalized === "take key" || normalized === "get key") {
         takeItem("key");
@@ -348,7 +363,9 @@ function handleCommand(command) {
     }
 
     if (normalized === "look") {
-        appendLog(rooms[currentRoomId].description);
+        if (shouldEchoLook) {
+            appendLog(rooms[currentRoomId].description);
+        }
         return;
     }
 
@@ -359,6 +376,26 @@ function handleCommand(command) {
     }
 
     appendLog("Unknown command.");
+}
+
+async function handleCommand(command) {
+    const normalized = normalizeCommand(command);
+    let response = null;
+
+    try {
+        response = await sendGameCommand(normalized);
+    } catch (error) {
+        appendLog("Command service is unavailable.");
+        return;
+    }
+
+    if (response && response.success === false) {
+        appendApiMessage(response);
+        return;
+    }
+
+    appendApiMessage(response);
+    applyFrontEndCommand(normalized, { echoLook: !response || !response.message });
 }
 
 function moveToDirection(direction) {
@@ -476,25 +513,20 @@ $("logout-btn").addEventListener("click", async () => {
     showView("auth");
 });
 
-$("submit-btn").addEventListener("click", () => {
+$("submit-btn").addEventListener("click", async () => {
     const command = $("command-input").value.trim();
     if (!command) {
         appendLog("Please enter a command.");
         return;
     }
     appendLog("> " + command);
-    handleCommand(command);
+    await handleCommand(command);
     $("command-input").value = "";
 });
 
 document.querySelectorAll(".direction-pad button").forEach((button) => {
-    button.addEventListener("click", () => {
+    button.addEventListener("click", async () => {
         appendLog("> " + button.dataset.command);
-        const direction = getDirection(button.dataset.command);
-        if (direction) {
-            moveToDirection(direction);
-            return;
-        }
-        appendLog(rooms[currentRoomId].description);
+        await handleCommand(button.dataset.command);
     });
 });

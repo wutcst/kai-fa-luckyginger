@@ -14,6 +14,7 @@ package cn.edu.whut.sept.zuul;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -480,16 +481,16 @@ public class DatabaseManager {
                 state.put("maxWeight", rs.getDouble("max_weight"));
                 
                 String inventoryStr = rs.getString("inventory");
-                state.put("inventory", inventoryStr != null && !inventoryStr.isEmpty() 
-                          ? List.of(inventoryStr.split(",")) : new ArrayList<>());
+                state.put("inventory", inventoryStr != null && !inventoryStr.isEmpty()
+                          ? Arrays.asList(inventoryStr.split(",")) : new ArrayList<>());
                 
                 String roomsVisitedStr = rs.getString("rooms_visited");
-                state.put("roomsVisited", roomsVisitedStr != null && !roomsVisitedStr.isEmpty() 
-                         ? List.of(roomsVisitedStr.split(",")) : new ArrayList<>());
+                state.put("roomsVisited", roomsVisitedStr != null && !roomsVisitedStr.isEmpty()
+                         ? Arrays.asList(roomsVisitedStr.split(",")) : new ArrayList<>());
                 
                 String itemsCollectedStr = rs.getString("items_collected_list");
-                state.put("itemsCollected", itemsCollectedStr != null && !itemsCollectedStr.isEmpty() 
-                         ? List.of(itemsCollectedStr.split(",")) : new ArrayList<>());
+                state.put("itemsCollected", itemsCollectedStr != null && !itemsCollectedStr.isEmpty()
+                         ? Arrays.asList(itemsCollectedStr.split(",")) : new ArrayList<>());
                 
                 state.put("cookieEaten", rs.getBoolean("cookie_eaten"));
                 

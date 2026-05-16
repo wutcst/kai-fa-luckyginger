@@ -1,0 +1,85 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World of Zuul</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="app-shell">
+        <section class="auth-view view active" id="auth-view">
+            <div class="auth-panel">
+                <p class="eyebrow">World of Zuul</p>
+                <h1>校园探索游戏</h1>
+                <p class="muted">登录后进入可视化游戏界面。</p>
+
+                <div class="auth-tabs" role="tablist">
+                    <button class="tab active" id="login-tab" type="button">登录</button>
+                    <button class="tab" id="register-tab" type="button">注册</button>
+                </div>
+
+                <form class="auth-form active" id="login-form">
+                    <label>
+                        用户名
+                        <input id="login-username" type="text" autocomplete="username">
+                    </label>
+                    <label>
+                        密码
+                        <input id="login-password" type="password" autocomplete="current-password">
+                    </label>
+                    <button class="primary-action" id="login-btn" type="submit">进入游戏</button>
+                    <p class="form-message" id="login-message"></p>
+                </form>
+
+                <form class="auth-form" id="register-form">
+                    <label>
+                        用户名
+                        <input id="register-username" type="text" autocomplete="username">
+                    </label>
+                    <label>
+                        密码
+                        <input id="register-password" type="password" autocomplete="new-password">
+                    </label>
+                    <button class="primary-action" id="register-btn" type="submit">创建账号</button>
+                    <p class="form-message" id="register-message"></p>
+                </form>
+            </div>
+        </section>
+
+        <section class="game-view view" id="game-view">
+            <img class="scene-bg" id="scene-bg" src="assets/rooms/campus_gate.png" alt="当前房间背景">
+
+            <header class="game-titlebar">
+                <div>
+                    <p class="eyebrow">当前位置</p>
+                    <h2 id="room-name">校园入口</h2>
+                </div>
+                <button class="hud-button" id="logout-btn" type="button">退出</button>
+            </header>
+
+            <div class="player-token" id="player-token" aria-label="玩家角色"></div>
+
+            <section class="info-panel">
+                <h3>房间信息</h3>
+                <p id="room-description">你站在校园入口，前方有通往不同区域的道路。</p>
+                <div class="command-row">
+                    <input id="command-input" type="text" placeholder="输入命令，例如 look">
+                    <button class="primary-action small" id="submit-btn" type="button">执行</button>
+                </div>
+                <div class="log-panel" id="output-area" aria-live="polite"></div>
+            </section>
+
+            <nav class="direction-pad" aria-label="方向控制">
+                <button data-command="go north" id="go-north" type="button">↑</button>
+                <button data-command="go west" id="go-west" type="button">←</button>
+                <button data-command="look" id="look-room" type="button">◎</button>
+                <button data-command="go east" id="go-east" type="button">→</button>
+                <button data-command="go south" id="go-south" type="button">↓</button>
+            </nav>
+        </section>
+    </main>
+
+    <script src="game.js"></script>
+</body>
+</html>

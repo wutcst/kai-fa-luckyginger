@@ -185,7 +185,7 @@ input {
     justify-content: space-between;
     gap: 16px;
     padding: 18px 24px 70px;
-    background: linear-gradient(rgba(255, 248, 230, 0.82), rgba(255, 248, 230, 0));
+    background: linear-gradient(rgba(255, 248, 230, 0.42), rgba(255, 248, 230, 0));
     pointer-events: none;
 }
 

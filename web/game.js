@@ -533,6 +533,10 @@ function setPlayerPosition(position) {
     $("player-token").style.top = position.top + "%";
 }
 
+function setPlayerVisible(visible) {
+    $("player-token").style.opacity = visible ? "1" : "0";
+}
+
 function renderRoom(entryPosition) {
     const room = rooms[currentRoomId];
     $("scene-bg").src = room.image;
@@ -707,14 +711,40 @@ async function moveToDirection(direction) {
     }
 
     stopPlayerStep(direction);
-    await wait(120);
+    setPlayerVisible(false);
+    await wait(180);
 
     currentRoomId = nextRoomId;
     gameState.completion.roomsExplored = Math.max(gameState.completion.roomsExplored, visitedRoomCount());
-    renderRoom(path.enter);
+    renderRoom(getEntryPositionForDirection(direction, path));
+    setPlayerFrame(direction, 0);
+    await wait(80);
+    setPlayerVisible(true);
     appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
     isMoving = false;
     return true;
+}
+
+function getEntryPositionForDirection(direction, path) {
+    const fallback = path.enter || rooms[currentRoomId].start;
+
+    if (direction === "north") {
+        return { left: fallback.left, top: 86 };
+    }
+
+    if (direction === "south") {
+        return { left: fallback.left, top: 38 };
+    }
+
+    if (direction === "east") {
+        return { left: 14, top: fallback.top };
+    }
+
+    if (direction === "west") {
+        return { left: 86, top: fallback.top };
+    }
+
+    return fallback;
 }
 
 function getMovementRoute(path) {

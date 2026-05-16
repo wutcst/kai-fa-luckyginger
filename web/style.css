@@ -203,7 +203,7 @@ input {
     transform: translate(-50%, -100%);
     background: url("assets/characters/player_frames/player_down_0.png") center bottom / contain no-repeat;
     filter: drop-shadow(0 12px 8px rgba(54, 34, 18, 0.42));
-    transition: left 1.25s ease-in-out, top 1.25s ease-in-out;
+    transition: left 1.25s ease-in-out, top 1.25s ease-in-out, opacity 0.18s ease;
 }
 
 .player-token.walking {

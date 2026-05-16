@@ -39,9 +39,10 @@ const playerFrames = {
 const rooms = {
     campus_gate: {
         title: "Campus Gate",
-        description: "You are standing at the campus gate. A path leads north into the main hall.",
+        description: "You are standing at the campus gate. A small key lies near the stone path.",
         image: "assets/rooms/campus_gate.png",
         exits: { north: "main_hall" },
+        items: ["key"],
         start: { left: 48, top: 66 },
         paths: {
             north: {
@@ -145,6 +146,10 @@ const rooms = {
             west: {
                 exit: { left: 18, top: 76 },
                 enter: { left: 82, top: 58 }
+            },
+            north: {
+                exit: { left: 58, top: 44 },
+                enter: { left: 50, top: 76 }
             }
         }
     },
@@ -183,6 +188,10 @@ const rooms = {
 let playerAnimationTimer = null;
 let currentRoomId = "campus_gate";
 let isMoving = false;
+const gameState = {
+    inventory: [],
+    treasureUnlocked: false
+};
 
 function showView(name) {
     Object.values(views).forEach((view) => view.classList.remove("active"));
@@ -203,6 +212,22 @@ function appendLog(text) {
     $("output-area").scrollTop = $("output-area").scrollHeight;
 }
 
+function normalizeCommand(command) {
+    return command.trim().toLowerCase().replace(/\s+/g, " ");
+}
+
+function hasItem(itemName) {
+    return gameState.inventory.includes(itemName);
+}
+
+function updateLockedTreasuryExit() {
+    if (gameState.treasureUnlocked) {
+        rooms.locked_room.exits.north = "unlocked_treasure_room";
+    } else {
+        delete rooms.locked_room.exits.north;
+    }
+}
+
 function setPlayerPosition(position) {
     $("player-token").style.left = position.left + "%";
     $("player-token").style.top = position.top + "%";
@@ -212,7 +237,10 @@ function renderRoom(entryPosition) {
     const room = rooms[currentRoomId];
     $("scene-bg").src = room.image;
     $("room-name").textContent = room.title;
-    $("room-description").textContent = room.description;
+    const itemText = room.items && room.items.length
+        ? " Items here: " + room.items.join(", ") + "."
+        : "";
+    $("room-description").textContent = room.description + itemText;
     setPlayerPosition(entryPosition || room.start);
 }
 
@@ -222,6 +250,79 @@ function getDirection(command) {
     if (command.includes("west")) return "west";
     if (command.includes("east")) return "east";
     return null;
+}
+
+function takeItem(itemName) {
+    const room = rooms[currentRoomId];
+    const items = room.items || [];
+
+    if (!items.includes(itemName)) {
+        appendLog("There is no " + itemName + " here.");
+        return;
+    }
+
+    room.items = items.filter((item) => item !== itemName);
+    gameState.inventory.push(itemName);
+    renderRoom();
+    appendLog("You picked up the " + itemName + ".");
+}
+
+function useItem(itemName) {
+    if (itemName !== "key") {
+        appendLog("You cannot use that here.");
+        return;
+    }
+
+    if (!hasItem("key")) {
+        appendLog("You need a key first.");
+        return;
+    }
+
+    if (currentRoomId !== "locked_room") {
+        appendLog("The key does not fit anything nearby.");
+        return;
+    }
+
+    if (gameState.treasureUnlocked) {
+        appendLog("The treasury is already unlocked.");
+        return;
+    }
+
+    gameState.treasureUnlocked = true;
+    updateLockedTreasuryExit();
+    appendLog("The treasury door unlocks. A northern path is now open.");
+}
+
+function handleCommand(command) {
+    const normalized = normalizeCommand(command);
+
+    if (normalized === "take key" || normalized === "get key") {
+        takeItem("key");
+        return;
+    }
+
+    if (normalized === "use key") {
+        useItem("key");
+        return;
+    }
+
+    if (normalized === "items" || normalized === "inventory") {
+        appendLog("Inventory: " + (gameState.inventory.join(", ") || "empty") + ".");
+        return;
+    }
+
+    if (normalized === "look") {
+        appendLog(rooms[currentRoomId].description);
+        return;
+    }
+
+    const direction = getDirection(normalized);
+    if (direction) {
+        moveToDirection(direction);
+        return;
+    }
+
+    appendLog("Unknown command.");
 }
 
 function moveToDirection(direction) {
@@ -280,6 +381,7 @@ $("register-tab").addEventListener("click", () => setActiveAuthTab("register"));
 
 $("login-form").addEventListener("submit", (event) => {
     event.preventDefault();
+    updateLockedTreasuryExit();
     showView("game");
     renderRoom();
     appendLog("Entered the campus gate.");
@@ -301,7 +403,7 @@ $("submit-btn").addEventListener("click", () => {
         return;
     }
     appendLog("> " + command);
-    moveToDirection(getDirection(command));
+    handleCommand(command);
     $("command-input").value = "";
 });
 

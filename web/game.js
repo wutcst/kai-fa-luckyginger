@@ -57,7 +57,16 @@ const rooms = {
         items: ["key"],
         start: { left: 50, top: 76 },
         paths: {
-            north: { exit: { left: 50, top: 42 }, enter: { left: 50, top: 78 } }
+            north: {
+                route: [
+                    { left: 44, top: 76 },
+                    { left: 47, top: 64 },
+                    { left: 50, top: 52 },
+                    { left: 50, top: 40 }
+                ],
+                exit: { left: 50, top: 40 },
+                enter: { left: 50, top: 78 }
+            }
         }
     },
     main_hall: {
@@ -68,10 +77,26 @@ const rooms = {
         items: ["cookie"],
         start: { left: 50, top: 72 },
         paths: {
-            north: { exit: { left: 50, top: 38 }, enter: { left: 50, top: 78 } },
-            south: { exit: { left: 50, top: 86 }, enter: { left: 50, top: 42 } },
-            east: { exit: { left: 84, top: 62 }, enter: { left: 18, top: 62 } },
-            west: { exit: { left: 16, top: 62 }, enter: { left: 82, top: 62 } }
+            north: {
+                route: [{ left: 50, top: 64 }, { left: 50, top: 52 }, { left: 50, top: 38 }],
+                exit: { left: 50, top: 38 },
+                enter: { left: 50, top: 78 }
+            },
+            south: {
+                route: [{ left: 50, top: 78 }, { left: 50, top: 86 }],
+                exit: { left: 50, top: 86 },
+                enter: { left: 50, top: 42 }
+            },
+            east: {
+                route: [{ left: 62, top: 68 }, { left: 74, top: 64 }, { left: 84, top: 62 }],
+                exit: { left: 84, top: 62 },
+                enter: { left: 18, top: 62 }
+            },
+            west: {
+                route: [{ left: 38, top: 68 }, { left: 26, top: 64 }, { left: 16, top: 62 }],
+                exit: { left: 16, top: 62 },
+                enter: { left: 82, top: 62 }
+            }
         }
     },
     forest_path: {
@@ -82,8 +107,16 @@ const rooms = {
         items: ["bottle", "map"],
         start: { left: 50, top: 72 },
         paths: {
-            east: { exit: { left: 84, top: 66 }, enter: { left: 16, top: 62 } },
-            north: { exit: { left: 50, top: 42 }, enter: { left: 50, top: 76 } }
+            east: {
+                route: [{ left: 62, top: 72 }, { left: 74, top: 68 }, { left: 84, top: 66 }],
+                exit: { left: 84, top: 66 },
+                enter: { left: 16, top: 62 }
+            },
+            north: {
+                route: [{ left: 50, top: 62 }, { left: 50, top: 52 }, { left: 50, top: 42 }],
+                exit: { left: 50, top: 42 },
+                enter: { left: 50, top: 76 }
+            }
         }
     },
     library: {
@@ -94,8 +127,16 @@ const rooms = {
         items: ["coin"],
         start: { left: 52, top: 64 },
         paths: {
-            west: { exit: { left: 14, top: 60 }, enter: { left: 84, top: 62 } },
-            north: { exit: { left: 74, top: 42 }, enter: { left: 42, top: 78 } }
+            west: {
+                route: [{ left: 40, top: 64 }, { left: 26, top: 62 }, { left: 14, top: 60 }],
+                exit: { left: 14, top: 60 },
+                enter: { left: 84, top: 62 }
+            },
+            north: {
+                route: [{ left: 62, top: 58 }, { left: 70, top: 50 }, { left: 74, top: 42 }],
+                exit: { left: 74, top: 42 },
+                enter: { left: 42, top: 78 }
+            }
         }
     },
     lab: {
@@ -106,8 +147,16 @@ const rooms = {
         items: ["computer", "cable"],
         start: { left: 50, top: 68 },
         paths: {
-            south: { exit: { left: 50, top: 84 }, enter: { left: 50, top: 38 } },
-            east: { exit: { left: 82, top: 60 }, enter: { left: 22, top: 76 } }
+            south: {
+                route: [{ left: 50, top: 74 }, { left: 50, top: 84 }],
+                exit: { left: 50, top: 84 },
+                enter: { left: 50, top: 38 }
+            },
+            east: {
+                route: [{ left: 62, top: 66 }, { left: 74, top: 62 }, { left: 82, top: 60 }],
+                exit: { left: 82, top: 60 },
+                enter: { left: 22, top: 76 }
+            }
         }
     },
     locked_room: {
@@ -118,9 +167,21 @@ const rooms = {
         items: [],
         start: { left: 50, top: 76 },
         paths: {
-            south: { exit: { left: 42, top: 86 }, enter: { left: 74, top: 42 } },
-            west: { exit: { left: 18, top: 76 }, enter: { left: 82, top: 60 } },
-            north: { exit: { left: 58, top: 44 }, enter: { left: 50, top: 78 } }
+            south: {
+                route: [{ left: 46, top: 80 }, { left: 42, top: 86 }],
+                exit: { left: 42, top: 86 },
+                enter: { left: 74, top: 42 }
+            },
+            west: {
+                route: [{ left: 38, top: 76 }, { left: 28, top: 76 }, { left: 18, top: 76 }],
+                exit: { left: 18, top: 76 },
+                enter: { left: 82, top: 60 }
+            },
+            north: {
+                route: [{ left: 52, top: 68 }, { left: 56, top: 56 }, { left: 58, top: 44 }],
+                exit: { left: 58, top: 44 },
+                enter: { left: 50, top: 78 }
+            }
         }
     },
     unlocked_treasure_room: {
@@ -131,7 +192,11 @@ const rooms = {
         items: [],
         start: { left: 50, top: 78 },
         paths: {
-            south: { exit: { left: 50, top: 86 }, enter: { left: 58, top: 44 } }
+            south: {
+                route: [{ left: 50, top: 82 }, { left: 50, top: 86 }],
+                exit: { left: 50, top: 86 },
+                enter: { left: 58, top: 44 }
+            }
         }
     },
     teleport_room: {
@@ -142,8 +207,16 @@ const rooms = {
         items: [],
         start: { left: 50, top: 70 },
         paths: {
-            south: { exit: { left: 48, top: 84 }, enter: { left: 50, top: 42 } },
-            east: { exit: { left: 80, top: 58 }, enter: { left: 16, top: 62 } }
+            south: {
+                route: [{ left: 50, top: 76 }, { left: 48, top: 84 }],
+                exit: { left: 48, top: 84 },
+                enter: { left: 50, top: 42 }
+            },
+            east: {
+                route: [{ left: 62, top: 66 }, { left: 72, top: 60 }, { left: 80, top: 58 }],
+                exit: { left: 80, top: 58 },
+                enter: { left: 16, top: 62 }
+            }
         }
     }
 };
@@ -165,6 +238,7 @@ let commandBusy = false;
 let sessionId = null;
 let currentUsername = null;
 let lastBackendStatus = null;
+let currentPlayerPosition = { left: 50, top: 76 };
 
 const gameState = {
     inventory: [],
@@ -219,6 +293,10 @@ function setCommandControlsDisabled(disabled) {
     document.querySelectorAll(".direction-pad button").forEach((button) => {
         button.disabled = disabled;
     });
+}
+
+function wait(ms) {
+    return new Promise((resolve) => window.setTimeout(resolve, ms));
 }
 
 async function callApi(endpoint, payload) {
@@ -450,6 +528,7 @@ function updateLockedTreasuryExit() {
 }
 
 function setPlayerPosition(position) {
+    currentPlayerPosition = { left: position.left, top: position.top };
     $("player-token").style.left = position.left + "%";
     $("player-token").style.top = position.top + "%";
 }
@@ -570,7 +649,25 @@ function appendApiMessage(data) {
 
 async function handleCommand(command) {
     const normalized = normalizeCommand(command);
+    const direction = getDirection(normalized);
     let response = null;
+
+    if (direction) {
+        const moved = await moveToDirection(direction);
+
+        try {
+            response = await sendGameCommand(normalized);
+            appendApiMessage(response);
+        } catch (error) {
+            appendLog("后端命令暂时不可用，已保留前端移动结果。", "error");
+        }
+
+        if (!moved) {
+            return;
+        }
+
+        return;
+    }
 
     try {
         response = await sendGameCommand(normalized);
@@ -588,29 +685,51 @@ async function handleCommand(command) {
     await refreshGameStatus();
 }
 
-function moveToDirection(direction) {
-    if (!direction || isMoving) return;
+async function moveToDirection(direction) {
+    if (!direction || isMoving) return false;
 
     const room = rooms[currentRoomId];
     const nextRoomId = room.exits[direction];
     const path = room.paths && room.paths[direction];
 
-    playPlayerStep(direction);
-
     if (!nextRoomId || !path) {
         appendLog("这个方向没有出口。", "error");
-        return;
+        return false;
     }
 
     isMoving = true;
-    setPlayerPosition(path.exit);
-    window.setTimeout(() => {
-        currentRoomId = nextRoomId;
-        gameState.completion.roomsExplored = Math.max(gameState.completion.roomsExplored, visitedRoomCount());
-        renderRoom(path.enter);
-        appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
-        isMoving = false;
-    }, 1280);
+    startPlayerStep(direction);
+
+    const route = getMovementRoute(path);
+    for (const point of route) {
+        setPlayerPosition(point);
+        await wait(520);
+    }
+
+    stopPlayerStep(direction);
+    await wait(120);
+
+    currentRoomId = nextRoomId;
+    gameState.completion.roomsExplored = Math.max(gameState.completion.roomsExplored, visitedRoomCount());
+    renderRoom(path.enter);
+    appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
+    isMoving = false;
+    return true;
+}
+
+function getMovementRoute(path) {
+    if (Array.isArray(path.route) && path.route.length) {
+        return path.route;
+    }
+
+    const start = currentPlayerPosition;
+    const exit = path.exit;
+    const mid = {
+        left: Math.round(((start.left + exit.left) / 2) * 10) / 10,
+        top: Math.round(((start.top + exit.top) / 2) * 10) / 10
+    };
+
+    return [mid, exit];
 }
 
 function visitedRoomCount() {
@@ -622,7 +741,7 @@ function setPlayerFrame(direction, frameIndex) {
     $("player-token").style.backgroundImage = `url("${frames[frameIndex % frames.length]}")`;
 }
 
-function playPlayerStep(direction) {
+function startPlayerStep(direction) {
     if (!direction) return;
 
     const token = $("player-token");
@@ -636,12 +755,13 @@ function playPlayerStep(direction) {
         setPlayerFrame(direction, frameIndex);
     }, 110);
 
-    window.setTimeout(() => {
-        window.clearInterval(playerAnimationTimer);
-        playerAnimationTimer = null;
-        token.classList.remove("walking");
-        setPlayerFrame(direction, 0);
-    }, 1280);
+}
+
+function stopPlayerStep(direction) {
+    window.clearInterval(playerAnimationTimer);
+    playerAnimationTimer = null;
+    $("player-token").classList.remove("walking");
+    setPlayerFrame(direction || "south", 0);
 }
 
 async function submitCommand(presetCommand) {

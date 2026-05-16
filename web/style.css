@@ -30,6 +30,12 @@ button {
     cursor: pointer;
 }
 
+button:disabled,
+input:disabled {
+    cursor: not-allowed;
+    opacity: 0.58;
+}
+
 .app-shell,
 .view {
     min-height: 100vh;
@@ -237,6 +243,10 @@ input {
     overflow: auto;
     color: var(--muted);
     font-size: 14px;
+}
+
+.log-panel p {
+    margin: 0 0 8px;
 }
 
 .direction-pad {

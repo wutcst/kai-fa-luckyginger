@@ -190,6 +190,7 @@ const rooms = {
 let playerAnimationTimer = null;
 let currentRoomId = "campus_gate";
 let isMoving = false;
+let commandBusy = false;
 let sessionId = null;
 let currentUsername = null;
 const gameState = {
@@ -218,6 +219,26 @@ function appendLog(text) {
 
 function setFormMessage(id, text) {
     $(id).textContent = text;
+}
+
+function setBusy(buttonId, isBusy, busyText) {
+    const button = $(buttonId);
+    if (!button) return;
+
+    if (!button.dataset.idleText) {
+        button.dataset.idleText = button.textContent;
+    }
+
+    button.disabled = isBusy;
+    button.textContent = isBusy ? busyText : button.dataset.idleText;
+}
+
+function setCommandControlsDisabled(disabled) {
+    $("submit-btn").disabled = disabled;
+    $("command-input").disabled = disabled;
+    document.querySelectorAll(".direction-pad button").forEach((button) => {
+        button.disabled = disabled;
+    });
 }
 
 async function callApi(endpoint, payload) {
@@ -256,7 +277,7 @@ function enterGameFromAuth(data) {
     updateLockedTreasuryExit();
     showView("game");
     renderRoom();
-    appendLog("Signed in as " + (currentUsername || "player") + ".");
+    appendLog("已登录：" + (currentUsername || "player") + "。");
     if (data.message) {
         appendLog(data.message);
     }
@@ -307,40 +328,40 @@ function takeItem(itemName) {
     const items = room.items || [];
 
     if (!items.includes(itemName)) {
-        appendLog("There is no " + itemName + " here.");
+        appendLog("这里没有 " + itemName + "。");
         return;
     }
 
     room.items = items.filter((item) => item !== itemName);
     gameState.inventory.push(itemName);
     renderRoom();
-    appendLog("You picked up the " + itemName + ".");
+    appendLog("已拾取：" + itemName + "。");
 }
 
 function useItem(itemName) {
     if (itemName !== "key") {
-        appendLog("You cannot use that here.");
+        appendLog("这里不能使用该物品。");
         return;
     }
 
     if (!hasItem("key")) {
-        appendLog("You need a key first.");
+        appendLog("你需要先获得钥匙。");
         return;
     }
 
     if (currentRoomId !== "locked_room") {
-        appendLog("The key does not fit anything nearby.");
+        appendLog("附近没有可以用钥匙打开的入口。");
         return;
     }
 
     if (gameState.treasureUnlocked) {
-        appendLog("The treasury is already unlocked.");
+        appendLog("宝藏房间已经解锁。");
         return;
     }
 
     gameState.treasureUnlocked = true;
     updateLockedTreasuryExit();
-    appendLog("The treasury door unlocks. A northern path is now open.");
+    appendLog("宝库门锁已打开，北侧路径已经开放。");
 }
 
 function applyFrontEndCommand(command, options = {}) {
@@ -358,7 +379,7 @@ function applyFrontEndCommand(command, options = {}) {
     }
 
     if (normalized === "items" || normalized === "inventory") {
-        appendLog("Inventory: " + (gameState.inventory.join(", ") || "empty") + ".");
+        appendLog("背包：" + (gameState.inventory.join(", ") || "空") + "。");
         return;
     }
 
@@ -375,7 +396,7 @@ function applyFrontEndCommand(command, options = {}) {
         return;
     }
 
-    appendLog("Unknown command.");
+    appendLog("无法识别该命令。");
 }
 
 async function handleCommand(command) {
@@ -385,7 +406,7 @@ async function handleCommand(command) {
     try {
         response = await sendGameCommand(normalized);
     } catch (error) {
-        appendLog("Command service is unavailable.");
+        appendLog("命令服务暂时不可用。");
         return;
     }
 
@@ -408,7 +429,7 @@ function moveToDirection(direction) {
     playPlayerStep(direction);
 
     if (!nextRoomId || !path) {
-        appendLog("No exit in that direction.");
+        appendLog("这个方向没有出口。");
         return;
     }
 
@@ -417,7 +438,7 @@ function moveToDirection(direction) {
     window.setTimeout(() => {
         currentRoomId = nextRoomId;
         renderRoom(path.enter);
-        appendLog("Moved to " + rooms[currentRoomId].title + ".");
+        appendLog("已到达：" + rooms[currentRoomId].title + "。");
         isMoving = false;
     }, 980);
 }
@@ -458,21 +479,24 @@ $("login-form").addEventListener("submit", async (event) => {
     const password = $("login-password").value;
 
     if (!username || !password) {
-        setFormMessage("login-message", "Please enter username and password.");
+        setFormMessage("login-message", "请输入用户名和密码。");
         return;
     }
 
-    setFormMessage("login-message", "Signing in...");
+    setFormMessage("login-message", "正在登录...");
+    setBusy("login-btn", true, "登录中");
     try {
         const data = await callApi("login", { username, password });
         if (!data.success) {
-            setFormMessage("login-message", data.message || "Login failed.");
+            setFormMessage("login-message", data.message || "登录失败。");
             return;
         }
         setFormMessage("login-message", "");
         enterGameFromAuth(data);
     } catch (error) {
-        setFormMessage("login-message", "Unable to connect to the login service.");
+        setFormMessage("login-message", "暂时无法连接登录服务。");
+    } finally {
+        setBusy("login-btn", false);
     }
 });
 
@@ -482,21 +506,24 @@ $("register-form").addEventListener("submit", async (event) => {
     const password = $("register-password").value;
 
     if (!username || !password) {
-        setFormMessage("register-message", "Please enter username and password.");
+        setFormMessage("register-message", "请输入用户名和密码。");
         return;
     }
 
-    setFormMessage("register-message", "Creating account...");
+    setFormMessage("register-message", "正在创建账号...");
+    setBusy("register-btn", true, "创建中");
     try {
         const data = await callApi("register", { username, password });
         if (!data.success) {
-            setFormMessage("register-message", data.message || "Registration failed.");
+            setFormMessage("register-message", data.message || "注册失败。");
             return;
         }
         setFormMessage("register-message", "");
         enterGameFromAuth(data);
     } catch (error) {
-        setFormMessage("register-message", "Unable to connect to the registration service.");
+        setFormMessage("register-message", "暂时无法连接注册服务。");
+    } finally {
+        setBusy("register-btn", false);
     }
 });
 
@@ -505,7 +532,7 @@ $("logout-btn").addEventListener("click", async () => {
         try {
             await callApi("logout", { sessionId });
         } catch (error) {
-            appendLog("Logout service is unavailable.");
+            appendLog("退出服务暂时不可用。");
         }
     }
     sessionId = null;
@@ -513,20 +540,42 @@ $("logout-btn").addEventListener("click", async () => {
     showView("auth");
 });
 
-$("submit-btn").addEventListener("click", async () => {
+async function submitCommand() {
+    if (commandBusy) return;
+
     const command = $("command-input").value.trim();
     if (!command) {
-        appendLog("Please enter a command.");
+        appendLog("请输入命令。");
         return;
     }
+
+    commandBusy = true;
+    setCommandControlsDisabled(true);
     appendLog("> " + command);
     await handleCommand(command);
     $("command-input").value = "";
+    setCommandControlsDisabled(false);
+    commandBusy = false;
+}
+
+$("submit-btn").addEventListener("click", submitCommand);
+
+$("command-input").addEventListener("keydown", (event) => {
+    if (event.key === "Enter") {
+        event.preventDefault();
+        submitCommand();
+    }
 });
 
 document.querySelectorAll(".direction-pad button").forEach((button) => {
     button.addEventListener("click", async () => {
+        if (commandBusy) return;
+
+        commandBusy = true;
+        setCommandControlsDisabled(true);
         appendLog("> " + button.dataset.command);
         await handleCommand(button.dataset.command);
+        setCommandControlsDisabled(false);
+        commandBusy = false;
     });
 });

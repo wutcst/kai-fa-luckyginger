@@ -1,6 +1,9 @@
 /**
  * World of Zuul 游戏的图形用户界面。
  * 使用Java Swing创建现代化的游戏界面。
+ * 
+ * @author 扩展功能实现
+ * @version 2.0
  */
 package cn.edu.whut.sept.zuul;
 
@@ -276,4 +279,329 @@ public class GameGUI extends JFrame
         button.setPreferredSize(new Dimension(150, 30));
         return button;
     }
+    
+    /**
+     * 执行游戏命令。
+     */
+    private void executeCommand(String commandString)
+    {
+        if (commandString == null || commandString.trim().isEmpty()) {
+            return;
+        }
+        
+        // 显示用户输入的命令
+        appendMessage("> " + commandString);
+        
+        // 处理quit命令
+        if (commandString.trim().equalsIgnoreCase("quit")) {
+            int option = JOptionPane.showConfirmDialog(
+                this,
+                "确定要退出游戏吗？",
+                "退出确认",
+                JOptionPane.YES_NO_OPTION
+            );
+            if (option == JOptionPane.YES_OPTION) {
+                appendMessage("感谢游玩！再见！");
+                System.setOut(originalOut);
+                System.exit(0);
+            }
+            return;
+        }
+        
+        // 解析并执行命令
+        Command command = game.getParser().parseCommand(commandString);
+        boolean finished = processCommand(command);
+        
+        // 捕获输出
+        captureOutput();
+        
+        // 更新显示
+        updateDisplay();
+        
+        // 如果游戏结束
+        if (finished) {
+            appendMessage("感谢游玩！再见！");
+            System.setOut(originalOut);
+            System.exit(0);
+        }
+    }
+    
+    /**
+     * 处理命令。
+     */
+    private boolean processCommand(Command command)
+    {
+        if (command.isUnknown()) {
+            appendMessage("我不知道你在说什么...");
+            return false;
+        }
+        
+        // 使用反射或直接调用Game的processCommand方法
+        // 为了简化，我们直接使用Game的内部逻辑
+        String commandWord = command.getCommandWord();
+        
+        // 手动处理命令（因为我们需要捕获输出）
+        Player player = game.getPlayer();
+        
+        if (commandWord.equals("go")) {
+            if (!command.hasSecondWord()) {
+                appendMessage("去哪里？");
+                return false;
+            }
+            String direction = command.getSecondWord();
+            Room currentRoom = player.getCurrentRoom();
+            Room nextRoom = currentRoom.getExit(direction);
+            
+            if (nextRoom == null) {
+                appendMessage("那里没有门！");
+            } else {
+                game.addRoomToHistory(currentRoom);
+                player.setCurrentRoom(nextRoom);
+                
+                // 检查传输房间
+                if (nextRoom instanceof TransporterRoom) {
+                    TransporterRoom transporter = (TransporterRoom) nextRoom;
+                    Room randomRoom = transporter.getRandomRoom();
+                    if (randomRoom != null) {
+                        appendMessage("你踏入了一个神秘的传输房间...");
+                        appendMessage("突然，你被传送到另一个位置！");
+                        player.setCurrentRoom(randomRoom);
+                    }
+                }
+                
+                appendMessage(player.getCurrentRoom().getLongDescription());
+            }
+        } else if (commandWord.equals("look")) {
+            appendMessage(player.getCurrentRoom().getLongDescription());
+        } else if (commandWord.equals("back")) {
+            Room previousRoom = game.getPreviousRoom();
+            if (previousRoom == null) {
+                appendMessage("你已经回到了起点！");
+            } else {
+                player.setCurrentRoom(previousRoom);
+                appendMessage("你返回到: " + previousRoom.getLongDescription());
+            }
+        } else if (commandWord.equals("items")) {
+            Room currentRoom = player.getCurrentRoom();
+            appendMessage("房间内的物品:");
+            String roomItems = currentRoom.getItemsString();
+            if (roomItems.isEmpty()) {
+                appendMessage("  (无)");
+            } else {
+                appendMessage(roomItems);
+            }
+            appendMessage("房间总重量: " + String.format("%.2f", currentRoom.getTotalWeight()) + "kg");
+            appendMessage("");
+            appendMessage(player.getInventoryString());
+        } else if (commandWord.equals("take")) {
+            if (!command.hasSecondWord()) {
+                appendMessage("拾取什么？");
+                return false;
+            }
+            String itemName = command.getSecondWord();
+            Room currentRoom = player.getCurrentRoom();
+            Item item = currentRoom.getItem(itemName);
+            
+            if (item == null) {
+                appendMessage("这里没有 " + itemName + "！");
+            } else if (!player.canCarry(item)) {
+                appendMessage("你无法携带 " + item.getName() + "。它重 " + 
+                            String.format("%.2f", item.getWeight()) + "kg，但你只能再携带 " + 
+                            String.format("%.2f", player.getMaxWeight() - player.getTotalWeight()) + "kg。");
+            } else {
+                currentRoom.removeItem(itemName);
+                player.takeItem(item);
+                appendMessage("你拾取了 " + item.getName() + "。");
+            }
+        } else if (commandWord.equals("drop")) {
+            if (!command.hasSecondWord()) {
+                appendMessage("丢弃什么？");
+                return false;
+            }
+            String itemName = command.getSecondWord();
+            Item item = player.dropItem(itemName);
+            
+            if (item == null) {
+                appendMessage("你没有 " + itemName + "！");
+            } else {
+                player.getCurrentRoom().addItem(item);
+                appendMessage("你丢弃了 " + item.getName() + "。");
+            }
+        } else if (commandWord.equals("eat")) {
+            if (!command.hasSecondWord() || !command.getSecondWord().equals("cookie")) {
+                appendMessage("吃什么？");
+                return false;
+            }
+            Item cookie = player.getItem("cookie");
+            if (cookie == null) {
+                appendMessage("你没有魔法饼干！");
+            } else {
+                player.dropItem("cookie");
+                player.increaseMaxWeight(5.0);
+                appendMessage("你吃掉了魔法饼干。你的负重能力增加了5kg！");
+                appendMessage("新的最大负重: " + String.format("%.2f", player.getMaxWeight()) + "kg");
+            }
+        } else if (commandWord.equals("help")) {
+            appendMessage("你可以使用以下命令:");
+            appendMessage("  go <方向>  - 向指定方向移动 (north, south, east, west)");
+            appendMessage("  look       - 查看当前房间的详细信息");
+            appendMessage("  back       - 返回上一个房间");
+            appendMessage("  take <物品> - 拾取房间内的物品");
+            appendMessage("  drop <物品> - 丢弃身上的物品");
+            appendMessage("  items      - 查看房间和身上的物品");
+            appendMessage("  eat cookie  - 吃掉魔法饼干（增加负重）");
+            appendMessage("  help       - 显示此帮助信息");
+            appendMessage("  quit       - 退出游戏");
+        } else {
+            appendMessage("我不知道你在说什么...");
+        }
+        
+        return false;
+    }
+    
+    /**
+     * 捕获System.out的输出并显示在消息区域。
+     */
+    private void captureOutput()
+    {
+        String output = outputStream.toString();
+        if (!output.isEmpty()) {
+            appendMessage(output);
+            outputStream.reset();
+        }
+    }
+    
+    /**
+     * 更新显示（房间信息和物品列表）。
+     */
+    private void updateDisplay()
+    {
+        // 更新房间信息
+        Room currentRoom = player.getCurrentRoom();
+        roomInfoArea.setText(currentRoom.getLongDescription());
+        
+        // 更新物品信息
+        StringBuilder itemsText = new StringBuilder();
+        itemsText.append("房间内的物品:\n");
+        String roomItems = currentRoom.getItemsString();
+        if (roomItems.isEmpty()) {
+            itemsText.append("  (无)\n");
+        } else {
+            itemsText.append(roomItems).append("\n");
+        }
+        itemsText.append("房间总重量: ").append(String.format("%.2f", currentRoom.getTotalWeight())).append("kg\n\n");
+        itemsText.append(player.getInventoryString());
+        
+        itemsArea.setText(itemsText.toString());
+        
+        // 更新方向按钮状态
+        updateDirectionButtons(currentRoom);
+    }
+    
+    /**
+     * 更新方向按钮的启用状态。
+     */
+    private void updateDirectionButtons(Room room)
+    {
+        northButton.setEnabled(room.getExit("north") != null);
+        southButton.setEnabled(room.getExit("south") != null);
+        eastButton.setEnabled(room.getExit("east") != null);
+        westButton.setEnabled(room.getExit("west") != null);
+    }
+    
+    /**
+     * 显示拾取物品对话框。
+     */
+    private void showTakeDialog()
+    {
+        Room currentRoom = player.getCurrentRoom();
+        List<Item> roomItems = new ArrayList<>(currentRoom.getItems());
+        
+        if (roomItems.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "当前房间没有物品！", "提示", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        String[] itemNames = new String[roomItems.size()];
+        int i = 0;
+        for (Item item : roomItems) {
+            itemNames[i++] = item.getName();
+        }
+        
+        String selected = (String) JOptionPane.showInputDialog(
+            this,
+            "选择要拾取的物品:",
+            "拾取物品",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            itemNames,
+            itemNames[0]
+        );
+        
+        if (selected != null) {
+            executeCommand("take " + selected);
+        }
+    }
+    
+    /**
+     * 显示丢弃物品对话框。
+     */
+    private void showDropDialog()
+    {
+        List<Item> inventory = new ArrayList<>(player.getInventory());
+        
+        if (inventory.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "你没有携带任何物品！", "提示", JOptionPane.INFORMATION_MESSAGE);
+            return;
+        }
+        
+        String[] itemNames = new String[inventory.size()];
+        int i = 0;
+        for (Item item : inventory) {
+            itemNames[i++] = item.getName();
+        }
+        
+        String selected = (String) JOptionPane.showInputDialog(
+            this,
+            "选择要丢弃的物品:",
+            "丢弃物品",
+            JOptionPane.QUESTION_MESSAGE,
+            null,
+            itemNames,
+            itemNames[0]
+        );
+        
+        if (selected != null) {
+            executeCommand("drop " + selected);
+        }
+    }
+    
+    /**
+     * 向消息区域追加消息。
+     */
+    private void appendMessage(String message)
+    {
+        SwingUtilities.invokeLater(() -> {
+            messageArea.append(message + "\n");
+            messageArea.setCaretPosition(messageArea.getDocument().getLength());
+        });
+    }
+    
+    /**
+     * 主方法，启动图形界面。
+     */
+    public static void main(String[] args)
+    {
+        // 设置外观
+        try {
+            UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName());
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        
+        SwingUtilities.invokeLater(() -> {
+            new GameGUI().setVisible(true);
+        });
+    }
 }
+

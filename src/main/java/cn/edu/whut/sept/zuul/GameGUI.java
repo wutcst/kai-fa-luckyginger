@@ -30,4 +30,36 @@ public class GameGUI extends JFrame
     private ByteArrayOutputStream outputStream;
     private PrintStream originalOut;
     private PrintStream customOut;
+
+    /**
+     * 创建游戏图形界面。
+     */
+    public GameGUI()
+    {
+        game = new Game();
+        player = game.getPlayer();
+        
+        // 设置输出重定向
+        setupOutputCapture();
+
+        initializeGUI();
+        updateDisplay();
+        
+        // 显示欢迎信息
+        appendMessage("欢迎来到 World of Zuul！");
+        appendMessage("这是一个文本冒险游戏。");
+        appendMessage("使用方向按钮或输入命令来探索世界。");
+        appendMessage("输入 'help' 查看所有可用命令。\n");
+    }
+
+    /**
+     * 设置输出捕获，将System.out重定向到消息区域。
+     */
+    private void setupOutputCapture()
+    {
+        outputStream = new ByteArrayOutputStream();
+        originalOut = System.out;
+        customOut = new PrintStream(outputStream, true);
+        System.setOut(customOut);
+    }
 }

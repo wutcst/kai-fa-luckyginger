@@ -559,11 +559,55 @@ async function startGameFromMenu(mode) {
     }
 
     setMenuMessage(mode === "load" ? "正在读取存档..." : "正在进入游戏...");
-    enterGameFromAuth(pendingAuthData);
 
-    if (mode === "load") {
+    if (mode === "new") {
+        resetFrontendState();
+        sessionId = pendingAuthData.sessionId || null;
+        currentUsername = pendingAuthData.username || $("login-username").value.trim() || $("register-username").value.trim();
+        updateLockedTreasuryExit();
+        showView("game");
+        renderRoom();
+        appendLog("新游戏已开始！");
+        if (sessionId) {
+            try {
+                const response = await callApi("newgame", { sessionId });
+                if (response && response.success && response.gameStatus) {
+                    syncFromBackendStatus(response.gameStatus);
+                }
+            } catch (error) {
+                appendLog("后端新游戏重置失败，已使用前端初始状态。", "error");
+            }
+        }
+    } else if (mode === "load") {
+        enterGameFromAuth(pendingAuthData);
         await loadSavedGame();
+    } else {
+        enterGameFromAuth(pendingAuthData);
     }
+}
+
+function resetFrontendState() {
+    currentRoomId = "campus_gate";
+    currentPlayerPosition = { left: 50, top: 76 };
+    gameState.inventory = [];
+    gameState.treasureUnlocked = false;
+    gameState.visitedRooms = new Set(["campus_gate"]);
+    gameState.completion = {
+        roomsExplored: 1,
+        totalRooms: 7,
+        itemsCollected: 0,
+        totalItems: 8
+    };
+    lastBackendStatus = null;
+    rooms.campus_gate.items = ["key"];
+    rooms.main_hall.items = ["cookie"];
+    rooms.forest_path.items = ["bottle", "map"];
+    rooms.library.items = ["coin"];
+    rooms.lab.items = ["computer", "cable"];
+    rooms.locked_room.items = ["treasure"];
+    rooms.unlocked_treasure_room.items = [];
+    rooms.teleport_room.items = [];
+    updateLockedTreasuryExit();
 }
 
 function closeGameMenu() {

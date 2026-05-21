@@ -698,6 +698,25 @@ public class GameController {
         return response;
     }
     
+    public Map<String, Object> newGame(String sessionId) {
+        Map<String, Object> response = new HashMap<>();
+        
+        GameSession session = getSession(sessionId);
+        if (session == null) {
+            response.put("success", false);
+            response.put("message", "会话无效，请重新登录");
+            return response;
+        }
+        
+        GameSession newSession = new GameSession(session.username, session.userId);
+        sessions.put(sessionId, newSession);
+        
+        response.put("success", true);
+        response.put("message", "新游戏已开始！");
+        response.put("gameStatus", getGameStatus(sessionId));
+        return response;
+    }
+    
     /**
      * 加载游戏状态
      */

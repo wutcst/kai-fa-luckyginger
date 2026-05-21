@@ -26,7 +26,10 @@ public class GameStateManager {
         }
 
         Room currentRoom = player.getCurrentRoom();
-        String currentRoomName = currentRoom != null ? currentRoom.getShortDescription() : "大学主入口外";
+        String currentRoomId = game.getRoomId(currentRoom);
+        if (currentRoomId == null) {
+            currentRoomId = "campus_gate";
+        }
 
         List<String> inventory = new ArrayList<>();
         for (Item item : player.getInventory()) {
@@ -36,14 +39,21 @@ public class GameStateManager {
         List<String> roomsVisited = new ArrayList<>(player.getRoomsVisited());
         List<String> itemsCollected = new ArrayList<>(player.getItemsCollected());
 
+        boolean treasureUnlocked = false;
+        Room lockedRoom = game.getAllRoomsMap().get("locked_room");
+        if (lockedRoom instanceof LockedRoom) {
+            treasureUnlocked = ((LockedRoom) lockedRoom).isUnlocked();
+        }
+
         boolean saved = dbManager.savePlayerState(
             player.getUserId(),
-            currentRoomName,
+            currentRoomId,
             player.getMaxWeight(),
             inventory,
             roomsVisited,
             itemsCollected,
-            player.isCookieEaten()
+            player.isCookieEaten(),
+            treasureUnlocked
         );
 
         if (saved && player.getGameRecordId() != null) {
@@ -75,7 +85,10 @@ public class GameStateManager {
         }
 
         String currentRoomName = (String) state.get("currentRoom");
-        Room targetRoom = game.getRoomByName(currentRoomName);
+        Room targetRoom = game.getAllRoomsMap().get(currentRoomName);
+        if (targetRoom == null) {
+            targetRoom = game.getRoomByName(currentRoomName);
+        }
         if (targetRoom != null) {
             player.setCurrentRoom(targetRoom);
         }
@@ -95,6 +108,21 @@ public class GameStateManager {
         }
 
         player.setCookieEaten((Boolean) state.get("cookieEaten"));
+
+        if (player.isCookieEaten()) {
+            Room mainHall = game.getAllRoomsMap().get("main_hall");
+            if (mainHall != null) {
+                mainHall.removeItem("cookie");
+            }
+        }
+
+        Boolean treasureUnlocked = (Boolean) state.get("treasureUnlocked");
+        if (treasureUnlocked != null && treasureUnlocked) {
+            Room lockedRoom = game.getAllRoomsMap().get("locked_room");
+            if (lockedRoom instanceof LockedRoom) {
+                ((LockedRoom) lockedRoom).unlock("key");
+            }
+        }
 
         @SuppressWarnings("unchecked")
         List<String> inventory = (List<String>) state.get("inventory");

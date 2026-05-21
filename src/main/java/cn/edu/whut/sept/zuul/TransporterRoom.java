@@ -46,21 +46,7 @@ public class TransporterRoom extends Room
     @Override
     public Room getExit(String direction)
     {
-        // 获取所有可传输的房间
-        Set<String> roomKeys = allRooms.keySet();
-        if (roomKeys.isEmpty()) {
-            return null;
-        }
-        
-        // 随机选择一个房间（排除当前传输房间本身）
-        String[] keys = roomKeys.toArray(new String[0]);
-        Room randomRoom;
-        do {
-            String randomKey = keys[random.nextInt(keys.length)];
-            randomRoom = allRooms.get(randomKey);
-        } while (randomRoom == this && keys.length > 1);  // 避免传送到自己（除非只有一个房间）
-        
-        return randomRoom;
+        return super.getExit(direction);
     }
     
     /**

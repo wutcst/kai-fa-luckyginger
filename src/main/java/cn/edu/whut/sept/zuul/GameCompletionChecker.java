@@ -13,17 +13,16 @@ public class GameCompletionChecker {
     // 所有房间名称（用于通关检测）
     private static final String[] ALL_ROOMS = {
         "大学主入口外",
-        "演讲厅",
+        "主大厅",
         "校园酒吧",
+        "图书馆",
         "计算机实验室",
-        "计算机管理办公室",
-        "一个神秘的传输房间",
-        "上锁的宝库"
+        "上锁的宝库",
+        "一个神秘的传输房间"
     };
     
-    // 所有需要收集的物品（共9个，包括宝箱）
     private static final String[] ALL_ITEMS = {
-        "key", "map", "book", "coin", "bottle", "computer", "cable", "cookie", "treasure"
+        "key", "cookie", "bottle", "map", "coin", "computer", "cable", "treasure"
     };
     
     /**

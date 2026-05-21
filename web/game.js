@@ -245,11 +245,12 @@ let currentPlayerPosition = { left: 50, top: 76 };
 const gameState = {
     inventory: [],
     treasureUnlocked: false,
+    visitedRooms: new Set(["campus_gate"]),
     completion: {
         roomsExplored: 1,
         totalRooms: 7,
         itemsCollected: 0,
-        totalItems: 9
+        totalItems: 8
     }
 };
 
@@ -483,7 +484,7 @@ function syncFromBackendStatus(status) {
 
     lastBackendStatus = status;
     const roomInfo = status.currentRoom || {};
-    const visualRoomId = findVisualRoomId(roomInfo);
+    const visualRoomId = roomInfo.roomId || findVisualRoomId(roomInfo);
     const visualRoom = rooms[visualRoomId];
 
     if (visualRoom) {
@@ -504,6 +505,11 @@ function syncFromBackendStatus(status) {
         };
     }
 
+    if (status.treasureUnlocked !== undefined) {
+        gameState.treasureUnlocked = status.treasureUnlocked;
+    }
+
+    gameState.visitedRooms.add(currentRoomId);
     updateLockedTreasuryExit();
     renderRoom();
 }
@@ -573,7 +579,6 @@ async function saveCurrentGame() {
     try {
         const response = await callApi("save", { sessionId });
         appendApiMessage(response);
-        await refreshGameStatus();
     } catch (error) {
         appendLog("保存失败，请确认服务器和数据库连接正常。", "error");
     }
@@ -588,10 +593,12 @@ async function loadSavedGame() {
     try {
         const response = await callApi("load", { sessionId });
         appendApiMessage(response);
-        if (response && response.gameStatus) {
-            syncFromBackendStatus(response.gameStatus);
-        } else {
-            await refreshGameStatus();
+        if (response && response.success) {
+            if (response.gameStatus) {
+                syncFromBackendStatus(response.gameStatus);
+            } else {
+                await refreshGameStatus();
+            }
         }
     } catch (error) {
         appendLog("读取存档失败，请确认服务器已保存过进度。", "error");
@@ -786,7 +793,10 @@ async function handleCommand(command) {
 
     appendApiMessage(response);
     applyFrontEndCommand(normalized, { echoLook: !response || !response.message });
-    await refreshGameStatus();
+
+    if (normalized !== "look" && normalized !== "status" && normalized !== "items") {
+        await refreshGameStatus();
+    }
 }
 
 async function moveToDirection(direction) {
@@ -815,13 +825,19 @@ async function moveToDirection(direction) {
     await wait(180);
 
     currentRoomId = nextRoomId;
-    gameState.completion.roomsExplored = Math.max(gameState.completion.roomsExplored, visitedRoomCount());
+    gameState.visitedRooms.add(currentRoomId);
+    gameState.completion.roomsExplored = gameState.visitedRooms.size;
     renderRoom(getEntryPositionForDirection(direction, path), { instantPlayerPosition: true });
     setPlayerFrame(direction, 0);
     await wait(80);
     setPlayerVisible(true);
     appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
     isMoving = false;
+
+    if (currentRoomId === "teleport_room") {
+        await showTeleportDialog();
+    }
+
     return true;
 }
 
@@ -862,8 +878,19 @@ function getMovementRoute(path) {
     return [mid, exit];
 }
 
-function visitedRoomCount() {
-    return Math.min(gameState.completion.totalRooms, gameState.completion.roomsExplored + 1);
+async function showTeleportDialog() {
+    const confirmed = confirm("你进入了传送房间！是否要进行随机传送？\n\n点击[确定]随机传送到其他房间，点击[取消]留在此处用方向键移动。");
+    if (confirmed) {
+        try {
+            const response = await sendGameCommand("teleport");
+            if (response && response.success) {
+                appendApiMessage(response);
+                await refreshGameStatus();
+            }
+        } catch (error) {
+            appendLog("传送失败。", "error");
+        }
+    }
 }
 
 function setPlayerFrame(direction, frameIndex) {

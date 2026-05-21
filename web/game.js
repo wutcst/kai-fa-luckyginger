@@ -734,6 +734,7 @@ function applyFrontEndCommand(command, options = {}) {
     }
 
     if (normalized === "look") {
+        setPlayerPosition(rooms[currentRoomId].start);
         if (shouldEchoLook) appendLog(rooms[currentRoomId].description);
         return;
     }

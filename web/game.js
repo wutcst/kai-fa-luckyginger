@@ -467,7 +467,7 @@ function renderQuickActions() {
 function renderProgress() {
     const completion = gameState.completion;
     $("room-progress").textContent =
-        `房间 ${completion.roomsExplored}/${completion.totalRooms}，物品 ${completion.itemsCollected}/${completion.totalItems}`;
+        `房间 ${completion.roomsExplored}/${completion.totalRooms}，物品 ${gameState.inventory.length}/${completion.totalItems}`;
 }
 
 function updateHud() {
@@ -507,6 +507,10 @@ function syncFromBackendStatus(status) {
 
     if (status.treasureUnlocked !== undefined) {
         gameState.treasureUnlocked = status.treasureUnlocked;
+    }
+
+    if (status.completion && status.completion.cookieEaten) {
+        rooms.main_hall.items = (rooms.main_hall.items || []).filter((i) => i !== "cookie");
     }
 
     gameState.visitedRooms.add(currentRoomId);
@@ -767,6 +771,16 @@ function applyFrontEndCommand(command, options = {}) {
         return;
     }
 
+    if (normalized.startsWith("eat ")) {
+        const foodName = normalized.split(" ").slice(1).join(" ");
+        if (foodName === "cookie" && gameState.inventory.includes("cookie")) {
+            gameState.inventory = gameState.inventory.filter((i) => i !== "cookie");
+            rooms.main_hall.items = (rooms.main_hall.items || []).filter((i) => i !== "cookie");
+            renderRoom();
+        }
+        return;
+    }
+
     if (normalized === "items" || normalized === "inventory") {
         appendLog("背包：" + (gameState.inventory.join("、") || "空") + "。");
         return;
@@ -809,14 +823,14 @@ async function handleCommand(command) {
     let response = null;
 
     if (direction) {
-        const moved = await moveToDirection(direction);
-
         try {
             response = await sendGameCommand(normalized);
             appendApiMessage(response);
         } catch (error) {
             appendLog("后端命令暂时不可用，已保留前端移动结果。", "error");
         }
+
+        const moved = await moveToDirection(direction);
 
         if (!moved) {
             return;
@@ -924,18 +938,38 @@ function getMovementRoute(path) {
 }
 
 async function showTeleportDialog() {
-    const confirmed = confirm("你进入了传送房间！是否要进行随机传送？\n\n点击[确定]随机传送到其他房间，点击[取消]留在此处用方向键移动。");
-    if (confirmed) {
-        try {
-            const response = await sendGameCommand("teleport");
-            if (response && response.success) {
-                appendApiMessage(response);
-                await refreshGameStatus();
-            }
-        } catch (error) {
-            appendLog("传送失败。", "error");
+    return new Promise((resolve) => {
+        const modal = $("teleport-modal");
+        const confirmBtn = $("teleport-confirm");
+        const cancelBtn = $("teleport-cancel");
+
+        function cleanup() {
+            modal.classList.remove("open");
+            confirmBtn.removeEventListener("click", onConfirm);
+            cancelBtn.removeEventListener("click", onCancel);
         }
-    }
+
+        function onConfirm() {
+            cleanup();
+            sendGameCommand("teleport").then((response) => {
+                if (response && response.success) {
+                    appendApiMessage(response);
+                    refreshGameStatus();
+                }
+            }).catch(() => {
+                appendLog("传送失败。", "error");
+            }).finally(() => resolve());
+        }
+
+        function onCancel() {
+            cleanup();
+            resolve();
+        }
+
+        confirmBtn.addEventListener("click", onConfirm);
+        cancelBtn.addEventListener("click", onCancel);
+        modal.classList.add("open");
+    });
 }
 
 function setPlayerFrame(direction, frameIndex) {

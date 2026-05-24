@@ -556,3 +556,52 @@ input {
         width: min(380px, calc(100vw - 24px));
     }
 }
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.55);
+    z-index: 1000;
+    justify-content: center;
+    align-items: center;
+}
+
+.modal-overlay.open {
+    display: flex;
+}
+
+.modal-card {
+    background: var(--panel);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    padding: 28px 24px 20px;
+    max-width: 340px;
+    width: 90%;
+    text-align: center;
+    box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+}
+
+.modal-card h3 {
+    margin: 0 0 10px;
+    font-size: 1.2rem;
+    color: var(--ink);
+}
+
+.modal-card p {
+    margin: 0 0 20px;
+    font-size: 0.9rem;
+    color: var(--muted);
+    line-height: 1.5;
+}
+
+.modal-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+}
+
+.modal-actions .primary-action,
+.modal-actions .secondary-action {
+    min-width: 100px;
+}

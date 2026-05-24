@@ -467,7 +467,7 @@ function renderQuickActions() {
 function renderProgress() {
     const completion = gameState.completion;
     $("room-progress").textContent =
-        `房间 ${completion.roomsExplored}/${completion.totalRooms}，物品 ${completion.itemsCollected}/${completion.totalItems}`;
+        `房间 ${completion.roomsExplored}/${completion.totalRooms}，物品 ${gameState.inventory.length}/${completion.totalItems}`;
 }
 
 function updateHud() {
@@ -507,6 +507,10 @@ function syncFromBackendStatus(status) {
 
     if (status.treasureUnlocked !== undefined) {
         gameState.treasureUnlocked = status.treasureUnlocked;
+    }
+
+    if (status.completion && status.completion.cookieEaten) {
+        rooms.main_hall.items = (rooms.main_hall.items || []).filter((i) => i !== "cookie");
     }
 
     gameState.visitedRooms.add(currentRoomId);
@@ -764,6 +768,16 @@ function applyFrontEndCommand(command, options = {}) {
 
     if (normalized.startsWith("use ")) {
         useItem(normalized.split(" ").slice(1).join(" "));
+        return;
+    }
+
+    if (normalized.startsWith("eat ")) {
+        const foodName = normalized.split(" ").slice(1).join(" ");
+        if (foodName === "cookie" && gameState.inventory.includes("cookie")) {
+            gameState.inventory = gameState.inventory.filter((i) => i !== "cookie");
+            rooms.main_hall.items = (rooms.main_hall.items || []).filter((i) => i !== "cookie");
+            renderRoom();
+        }
         return;
     }
 

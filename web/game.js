@@ -320,6 +320,14 @@ let gameState = {
     lastProgress: null
 };
 
+// 按键按住状态追踪
+let keyHoldState = {
+    key: null,
+    startTime: 0,
+    isHolding: false,
+    holdTimer: null
+};
+
 // Lottie 动画相关
 let characterAnimation = null;
 const animationSegments = {
@@ -676,20 +684,66 @@ function setupEventListeners() {
             if (!gameState.isLoggedIn || gameState.isLoading) return;
             
             const keyMap = {
-                'w': 'go north',
-                'W': 'go north',
-                's': 'go south',
-                'S': 'go south',
-                'a': 'go west',
-                'A': 'go west',
-                'd': 'go east',
-                'D': 'go east'
+                'w': { command: 'go north', animation: 'walkNorth' },
+                'W': { command: 'go north', animation: 'walkNorth' },
+                's': { command: 'go south', animation: 'walkSouth' },
+                'S': { command: 'go south', animation: 'walkSouth' },
+                'a': { command: 'go west', animation: 'walkWest' },
+                'A': { command: 'go west', animation: 'walkWest' },
+                'd': { command: 'go east', animation: 'walkEast' },
+                'D': { command: 'go east', animation: 'walkEast' }
             };
             
-            const command = keyMap[e.key];
-            if (command) {
+            const action = keyMap[e.key];
+            if (action) {
                 e.preventDefault();
-                executeCommand(command);
+                
+                // 如果已经在按住同一方向键，忽略重复触发
+                if (keyHoldState.isHolding && keyHoldState.key === e.key) {
+                    return;
+                }
+                
+                // 开始按住状态
+                keyHoldState.key = e.key;
+                keyHoldState.startTime = Date.now();
+                keyHoldState.isHolding = true;
+                
+                // 立即执行一次移动
+                playCharacterAnimation(action.animation);
+                executeCommand(action.command);
+                
+                // 设置定时重复执行（按住时间越长，移动次数越多）
+                keyHoldState.holdTimer = setInterval(() => {
+                    if (keyHoldState.isHolding && !gameState.isLoading) {
+                        playCharacterAnimation(action.animation);
+                        executeCommand(action.command);
+                    }
+                }, 300); // 每300ms执行一次移动
+            }
+        });
+        
+        // 键盘按键松开事件
+        document.addEventListener('keyup', (e) => {
+            const keyMap = {
+                'w': true, 'W': true,
+                's': true, 'S': true,
+                'a': true, 'A': true,
+                'd': true, 'D': true
+            };
+            
+            if (keyMap[e.key] && keyHoldState.key === e.key) {
+                // 停止按住状态
+                keyHoldState.isHolding = false;
+                keyHoldState.key = null;
+                
+                // 清除定时器
+                if (keyHoldState.holdTimer) {
+                    clearInterval(keyHoldState.holdTimer);
+                    keyHoldState.holdTimer = null;
+                }
+                
+                // 恢复空闲动画
+                playCharacterAnimation('idle');
             }
         });
         

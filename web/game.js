@@ -22,12 +22,186 @@ async function resolveApiBaseUrl() {
     if (currentPort && currentPort !== 443 && currentPort !== 80) {
         portsToTry.push(`http://${defaultHost}:${currentPort}`);
     }
+<<<<<<< Updated upstream
     
     // 然后尝试常见端口（8080-8084）
     [8080, 8081, 8082, 8083, 8084].forEach(p => {
         const candidate = `http://${defaultHost}:${p}`;
         if (!portsToTry.includes(candidate)) {
             portsToTry.push(candidate);
+=======
+};
+
+const backendRoomAliases = [
+    { patterns: ["outside", "campus", "入口", "校园入口"], roomId: "campus_gate" },
+    { patterns: ["hall", "大厅", "main"], roomId: "main_hall" },
+    { patterns: ["library", "图书馆"], roomId: "library" },
+    { patterns: ["computer lab", "lab", "实验室", "计算机实验室"], roomId: "lab" },
+    { patterns: ["forest", "pub", "bar", "酒吧", "小路"], roomId: "forest_path" },
+    { patterns: ["locked", "treasury", "宝库", "上锁"], roomId: "locked_room" },
+    { patterns: ["unlocked", "开锁后", "宝藏", "treasure"], roomId: "unlocked_treasure_room" },
+    { patterns: ["teleport", "transporter", "传送"], roomId: "teleport_room" }
+];
+
+let playerAnimationTimer = null;
+let currentRoomId = "campus_gate";
+let isMoving = false;
+let commandBusy = false;
+let sessionId = null;
+let currentUsername = null;
+let pendingAuthData = null;
+let lastBackendStatus = null;
+let currentPlayerPosition = { left: 50, top: 76 };
+
+const gameState = {
+    inventory: [],
+    treasureUnlocked: false,
+    visitedRooms: new Set(["campus_gate"]),
+    completion: {
+        roomsExplored: 1,
+        totalRooms: 7,
+        itemsCollected: 0,
+        totalItems: 8
+    }
+};
+
+// WASD按键按住状态追踪
+let keyHoldState = {
+    key: null,
+    startTime: 0,
+    isHolding: false,
+    holdTimer: null
+};
+
+function showView(name) {
+    Object.values(views).forEach((view) => view.classList.remove("active"));
+    views[name].classList.add("active");
+}
+
+function setActiveAuthTab(mode) {
+    $("login-tab").classList.toggle("active", mode === "login");
+    $("register-tab").classList.toggle("active", mode === "register");
+    $("login-form").classList.toggle("active", mode === "login");
+    $("register-form").classList.toggle("active", mode === "register");
+}
+
+function appendLog(text, type = "") {
+    const line = document.createElement("p");
+    line.textContent = text;
+    if (type) line.classList.add(type);
+    $("output-area").appendChild(line);
+    $("output-area").scrollTop = $("output-area").scrollHeight;
+}
+
+function setFormMessage(id, text) {
+    $(id).textContent = text;
+}
+
+function setMenuMessage(text, type = "") {
+    const message = $("menu-message");
+    message.textContent = text;
+    message.className = "form-message";
+    if (type) message.classList.add(type);
+}
+
+function setBusy(buttonId, isBusy, busyText) {
+    const button = $(buttonId);
+    if (!button) return;
+
+    if (!button.dataset.idleText) {
+        button.dataset.idleText = button.textContent;
+    }
+
+    button.disabled = isBusy;
+    button.textContent = isBusy ? busyText : button.dataset.idleText;
+}
+
+function setCommandControlsDisabled(disabled) {
+    $("submit-btn").disabled = disabled;
+    $("command-input").disabled = disabled;
+    document.querySelectorAll(".direction-pad button").forEach((button) => {
+        const direction = getDirection(button.dataset.command || "");
+        button.disabled = disabled || (direction && !canMoveToDirection(direction));
+    });
+}
+
+function canMoveToDirection(direction) {
+    const room = rooms[currentRoomId];
+    return Boolean(room && room.exits && room.exits[direction]);
+}
+
+function updateDirectionControls() {
+    document.querySelectorAll(".direction-pad button").forEach((button) => {
+        const direction = getDirection(button.dataset.command || "");
+        if (direction) {
+            button.disabled = isMoving || !canMoveToDirection(direction);
+        }
+    });
+}
+
+function wait(ms) {
+    return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+async function callApi(endpoint, payload) {
+    const response = await fetch(`${API_BASE}/api/${endpoint}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload)
+    });
+
+    if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    return response.json();
+}
+
+async function getApi(endpoint, params = {}) {
+    const query = new URLSearchParams(params).toString();
+    const url = `${API_BASE}/api/${endpoint}${query ? "?" + query : ""}`;
+    const response = await fetch(url);
+
+    if (!response.ok) {
+        throw new Error(`Request failed with status ${response.status}`);
+    }
+
+    return response.json();
+}
+
+async function sendGameCommand(command) {
+    if (!sessionId) {
+        return { success: true, message: "" };
+    }
+
+    return callApi("command", { command, sessionId });
+}
+
+function bindFloatingPanels() {
+    document.querySelectorAll(".round-tool").forEach((button) => {
+        button.addEventListener("click", () => {
+            const target = button.dataset.panel;
+            document.querySelectorAll(".round-tool").forEach((tool) => {
+                tool.classList.toggle("active", tool === button);
+            });
+            document.querySelectorAll(".floating-panel").forEach((panel) => {
+                panel.classList.toggle("active", panel.id === target);
+            });
+        });
+    });
+
+    const dock = $("inventory-dock");
+    dock.querySelector(".dock-tab").addEventListener("click", () => {
+        dock.classList.toggle("open");
+    });
+
+    // 物品详情关闭按钮
+    $("item-detail-close").addEventListener("click", hideItemDetail);
+    // 点击遮罩也关闭
+    $("item-detail-modal").addEventListener("click", (e) => {
+        if (e.target === $("item-detail-modal")) {
+            hideItemDetail();
+>>>>>>> Stashed changes
         }
     });
     
@@ -746,6 +920,7 @@ async function handleLogin() {
         showMessage(messageEl, '请输入用户名和密码', 'error');
         return;
     }
+<<<<<<< Updated upstream
     
     try {
         const loginUrl = await buildApiUrl('login');
@@ -780,6 +955,236 @@ async function handleLogin() {
                     }
                 } catch (e) {
                     // 不是JSON，使用原始文本
+=======
+
+    appendApiMessage(response);
+    applyFrontEndCommand(normalized, { echoLook: !response || !response.message });
+
+    // 特殊处理：在 unlocked_treasure_room 拾取 treasure 或在 locked_room 使用 key 后，不刷新状态
+    const isSpecialCommand = 
+        (currentRoomId === 'unlocked_treasure_room' && normalized.startsWith('take')) ||
+        (currentRoomId === 'locked_room' && normalized.startsWith('use'));
+
+    if (!isSpecialCommand && normalized !== "look" && normalized !== "status" && normalized !== "items") {
+        await refreshGameStatus();
+    }
+}
+
+// 一键移动到下一个房间（用于方向按钮）
+async function moveToDirection(direction) {
+    if (!direction || isMoving) return false;
+
+    const room = rooms[currentRoomId];
+    const nextRoomId = room.exits[direction];
+    const path = room.paths && room.paths[direction];
+
+    if (!nextRoomId || !path) {
+        appendLog("这个方向没有出口。", "error");
+        return false;
+    }
+
+    isMoving = true;
+    startPlayerStep(direction);
+
+    const route = getMovementRoute(path);
+    for (const point of route) {
+        setPlayerPosition(point);
+        await wait(520);
+    }
+
+    stopPlayerStep(direction);
+    setPlayerVisible(false);
+    await wait(180);
+
+    currentRoomId = nextRoomId;
+    gameState.visitedRooms.add(currentRoomId);
+    gameState.completion.roomsExplored = gameState.visitedRooms.size;
+    renderRoom(getEntryPositionForDirection(direction, path), { instantPlayerPosition: true });
+    setPlayerFrame(direction, 0);
+    await wait(80);
+    setPlayerVisible(true);
+    appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
+    isMoving = false;
+
+    if (currentRoomId === "teleport_room") {
+        await showTeleportDialog();
+    }
+
+    return true;
+}
+
+// WASD自由移动 - 在房间内自由移动，到达出口才进入下一房间
+async function movePlayerStep(direction) {
+    if (!direction || isMoving) return false;
+
+    const room = rooms[currentRoomId];
+    const nextRoomId = room.exits[direction];
+    const path = room.paths && room.paths[direction];
+
+    isMoving = true;
+    startPlayerStep(direction);
+    
+    // 计算下一步位置（向前移动一小段）
+    const nextPosition = calculateNextStep(currentPlayerPosition, direction);
+    
+    // 检查是否即将到达房间边缘且该方向有出口
+    const isNearEdge = isNearRoomEdge(nextPosition, direction);
+    
+    if (isNearEdge && nextRoomId && path) {
+        // 到达出口，进入下一房间
+        setPlayerPosition(path.exit);
+        await wait(200);
+        stopPlayerStep(direction);
+        await enterNextRoom(direction, nextRoomId, path);
+    } else if (isNearEdge && !nextRoomId) {
+        // 到达边缘但没有出口，停在边缘
+        const edgePosition = getEdgePosition(direction);
+        setPlayerPosition(edgePosition);
+        await wait(200);
+        stopPlayerStep(direction);
+        appendLog("前方没有路了！", "error");
+    } else {
+        // 在房间内正常移动
+        setPlayerPosition(nextPosition);
+        await wait(200);
+        stopPlayerStep(direction);
+    }
+    
+    isMoving = false;
+    return true;
+}
+
+// 检查是否到达出口位置
+function isAtExit(position, exit) {
+    if (!exit) return false;
+    const threshold = 5; // 允许的误差范围
+    return Math.abs(position.left - exit.left) < threshold && 
+           Math.abs(position.top - exit.top) < threshold;
+}
+
+// 检查是否接近房间边缘
+function isNearRoomEdge(position, direction) {
+    const edgeThreshold = 12; // 边缘阈值
+    
+    switch(direction) {
+        case 'north': return position.top <= edgeThreshold;
+        case 'south': return position.top >= (100 - edgeThreshold);
+        case 'west': return position.left <= edgeThreshold;
+        case 'east': return position.left >= (100 - edgeThreshold);
+        default: return false;
+    }
+}
+
+// 获取房间边缘位置
+function getEdgePosition(direction) {
+    const edgePosition = 10; // 边缘位置
+    
+    switch(direction) {
+        case 'north': return { left: currentPlayerPosition.left, top: edgePosition };
+        case 'south': return { left: currentPlayerPosition.left, top: 100 - edgePosition };
+        case 'west': return { left: edgePosition, top: currentPlayerPosition.top };
+        case 'east': return { left: 100 - edgePosition, top: currentPlayerPosition.top };
+        default: return currentPlayerPosition;
+    }
+}
+
+// 计算下一步位置
+function calculateNextStep(current, direction) {
+    const stepSize = 8; // 每步移动的距离
+    let newLeft = current.left;
+    let newTop = current.top;
+    
+    switch(direction) {
+        case 'north': newTop -= stepSize; break;
+        case 'south': newTop += stepSize; break;
+        case 'west': newLeft -= stepSize; break;
+        case 'east': newLeft += stepSize; break;
+    }
+    
+    // 限制在房间范围内
+    newLeft = Math.max(5, Math.min(95, newLeft));
+    newTop = Math.max(5, Math.min(95, newTop));
+    
+    return { left: newLeft, top: newTop };
+}
+
+// 进入下一房间
+async function enterNextRoom(direction, nextRoomId, path) {
+    isMoving = true;
+    setPlayerVisible(false);
+    await wait(180);
+    
+    currentRoomId = nextRoomId;
+    gameState.visitedRooms.add(currentRoomId);
+    gameState.completion.roomsExplored = gameState.visitedRooms.size;
+    renderRoom(getEntryPositionForDirection(direction, path), { instantPlayerPosition: true });
+    setPlayerFrame(direction, 0);
+    await wait(80);
+    setPlayerVisible(true);
+    appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
+    isMoving = false;
+    
+    if (currentRoomId === "teleport_room") {
+        await showTeleportDialog();
+    }
+}
+
+function getEntryPositionForDirection(direction, path) {
+    const fallback = path.enter || rooms[currentRoomId].start;
+
+    if (direction === "north") {
+        return { left: fallback.left, top: 86 };
+    }
+
+    if (direction === "south") {
+        return { left: fallback.left, top: 38 };
+    }
+
+    if (direction === "east") {
+        return { left: 14, top: fallback.top };
+    }
+
+    if (direction === "west") {
+        return { left: 86, top: fallback.top };
+    }
+
+    return fallback;
+}
+
+function getMovementRoute(path) {
+    if (Array.isArray(path.route) && path.route.length) {
+        return path.route;
+    }
+
+    const start = currentPlayerPosition;
+    const exit = path.exit;
+    const mid = {
+        left: Math.round(((start.left + exit.left) / 2) * 10) / 10,
+        top: Math.round(((start.top + exit.top) / 2) * 10) / 10
+    };
+
+    return [mid, exit];
+}
+
+async function showTeleportDialog() {
+    return new Promise((resolve) => {
+        const modal = $("teleport-modal");
+        const confirmBtn = $("teleport-confirm");
+        const cancelBtn = $("teleport-cancel");
+
+        function cleanup() {
+            modal.classList.remove("open");
+            confirmBtn.removeEventListener("click", onConfirm);
+            cancelBtn.removeEventListener("click", onCancel);
+        }
+
+        function onConfirm() {
+            cleanup();
+            sendGameCommand("teleport").then((response) => {
+                if (response && response.success) {
+                    appendApiMessage(response);
+                    refreshGameStatus();
+>>>>>>> Stashed changes
                 }
             } catch (e) {
                 console.error('读取错误响应文本失败:', e);
@@ -1569,6 +1974,7 @@ function updateRoomItems() {
     });
 }
 
+<<<<<<< Updated upstream
 /**
  * 更新背包列表
  */
@@ -2215,3 +2621,91 @@ function toggleInventoryPanel(force) {
 document.addEventListener('DOMContentLoaded', () => {
     initGame();
 });
+=======
+// WASD键盘方向控制
+document.addEventListener("keydown", (e) => {
+    if (document.activeElement === $("command-input")) return;
+    if (!sessionId) return;
+    
+    const keyMap = {
+        'w': { dir: 'north', cmd: 'go north' },
+        'W': { dir: 'north', cmd: 'go north' },
+        's': { dir: 'south', cmd: 'go south' },
+        'S': { dir: 'south', cmd: 'go south' },
+        'a': { dir: 'west', cmd: 'go west' },
+        'A': { dir: 'west', cmd: 'go west' },
+        'd': { dir: 'east', cmd: 'go east' },
+        'D': { dir: 'east', cmd: 'go east' }
+    };
+    
+    const action = keyMap[e.key];
+    if (action) {
+        e.preventDefault();
+        
+        // 如果已经在按住同一方向键，忽略
+        if (keyHoldState.isHolding && keyHoldState.key === e.key) {
+            return;
+        }
+        
+        // 开始按住状态
+        keyHoldState.key = e.key;
+        keyHoldState.startTime = Date.now();
+        keyHoldState.isHolding = true;
+        
+        // 立即执行一次小步移动
+        movePlayerStep(action.dir).then(moved => {
+            if (moved) {
+                // 只有当真正进入新房间时才发送后端命令
+                sendGameCommand(action.cmd).then(response => {
+                    if (response && response.message) {
+                        appendLog(response.message, response.success === false ? "error" : "");
+                    }
+                }).catch(() => {});
+            }
+        });
+        
+        // 设置定时重复执行（按住时间越长，移动次数越多）
+        keyHoldState.holdTimer = setInterval(() => {
+            if (keyHoldState.isHolding && !isMoving) {
+                movePlayerStep(action.dir).then(moved => {
+                    if (moved) {
+                        sendGameCommand(action.cmd).then(response => {
+                            if (response && response.message) {
+                                appendLog(response.message, response.success === false ? "error" : "");
+                            }
+                        }).catch(() => {});
+                    }
+                });
+            }
+        }, 400); // 每400ms执行一次小步移动
+    }
+});
+
+// 键盘按键松开事件
+document.addEventListener("keyup", (e) => {
+    const keyMap = {
+        'w': true, 'W': true,
+        's': true, 'S': true,
+        'a': true, 'A': true,
+        'd': true, 'D': true
+    };
+    
+    if (keyMap[e.key] && keyHoldState.key === e.key) {
+        keyHoldState.isHolding = false;
+        keyHoldState.key = null;
+        
+        if (keyHoldState.holdTimer) {
+            clearInterval(keyHoldState.holdTimer);
+            keyHoldState.holdTimer = null;
+        }
+    }
+});
+
+document.querySelectorAll(".direction-pad button").forEach((button) => {
+    button.addEventListener("click", () => submitCommand(button.dataset.command));
+});
+
+bindFloatingPanels();
+updateLockedTreasuryExit();
+renderRoom();
+>>>>>>> Stashed changes

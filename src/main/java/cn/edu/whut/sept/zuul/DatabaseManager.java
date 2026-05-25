@@ -20,9 +20,15 @@ import java.util.List;
 import java.util.Map;
 
 public class DatabaseManager {
+<<<<<<< HEAD
     private static final String DB_URL = "jdbc:mysql://localhost:3306/zuul_game?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
     private static final String DB_USER = "root";
     private static final String DB_PASSWORD = "root";
+=======
+    private static final String DB_URL = "jdbc:mysql://127.0.0.1:3306/zuul_game?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8&allowPublicKeyRetrieval=true";
+    private static final String DB_USER = "root";
+    private static final String DB_PASSWORD = "Zxr20050404*";
+>>>>>>> feature/ui-quality-devops-docs
     
     private static DatabaseManager instance;
     private Connection connection;

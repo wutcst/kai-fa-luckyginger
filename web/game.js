@@ -1285,4 +1285,8 @@ document.querySelectorAll(".direction-pad button").forEach((button) => {
 
 bindFloatingPanels();
 updateLockedTreasuryExit();
+<<<<<<< HEAD
 renderRoom();
+=======
+renderRoom();
+>>>>>>> feature/ui-quality-devops-docs

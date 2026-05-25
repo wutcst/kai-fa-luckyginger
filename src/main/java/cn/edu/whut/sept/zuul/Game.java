@@ -126,7 +126,6 @@ public class Game
         library.addItem(new Item("coin", "一枚金币", 0.05));
         lab.addItem(new Item("computer", "一台笔记本电脑", 2.5));
         lab.addItem(new Item("cable", "一根USB线", 0.1));
-        locked_room.addItem(new Item("treasure", "一个神秘的宝箱", 3.0));
 
         startingRoom = campus_gate;
     }

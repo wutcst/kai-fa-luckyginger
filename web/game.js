@@ -256,6 +256,14 @@ const gameState = {
     }
 };
 
+// WASD按键按住状态追踪
+let keyHoldState = {
+    key: null,
+    startTime: 0,
+    isHolding: false,
+    holdTimer: null
+};
+
 function showView(name) {
     Object.values(views).forEach((view) => view.classList.remove("active"));
     views[name].classList.add("active");
@@ -1022,6 +1030,7 @@ async function handleCommand(command) {
     }
 }
 
+// 一键移动到下一个房间（用于方向按钮）
 async function moveToDirection(direction) {
     if (!direction || isMoving) return false;
 
@@ -1062,6 +1071,95 @@ async function moveToDirection(direction) {
     }
 
     return true;
+}
+
+// WASD小步移动 - 每次只移动一小段，走到出口才进入下一房间
+async function movePlayerStep(direction) {
+    if (!direction || isMoving) return false;
+
+    const room = rooms[currentRoomId];
+    const nextRoomId = room.exits[direction];
+    const path = room.paths && room.paths[direction];
+
+    if (!nextRoomId || !path) {
+        appendLog("这个方向没有出口。", "error");
+        return false;
+    }
+
+    const route = getMovementRoute(path);
+    // 如果还没走到出口，只走一小步
+    if (!isAtExit(currentPlayerPosition, path.exit)) {
+        isMoving = true;
+        startPlayerStep(direction);
+        
+        // 计算下一步位置（向前移动一小段）
+        const nextPosition = calculateNextStep(currentPlayerPosition, direction);
+        setPlayerPosition(nextPosition);
+        
+        await wait(300);
+        stopPlayerStep(direction);
+        isMoving = false;
+        
+        // 检查是否到达出口
+        if (isAtExit(nextPosition, path.exit)) {
+            // 到达出口，进入下一房间
+            await enterNextRoom(direction, nextRoomId, path);
+        }
+        return true;
+    } else {
+        // 已经在出口位置，直接进入下一房间
+        await enterNextRoom(direction, nextRoomId, path);
+        return true;
+    }
+}
+
+// 检查是否到达出口位置
+function isAtExit(position, exit) {
+    if (!exit) return false;
+    const threshold = 5; // 允许的误差范围
+    return Math.abs(position.left - exit.left) < threshold && 
+           Math.abs(position.top - exit.top) < threshold;
+}
+
+// 计算下一步位置
+function calculateNextStep(current, direction) {
+    const stepSize = 8; // 每步移动的距离
+    let newLeft = current.left;
+    let newTop = current.top;
+    
+    switch(direction) {
+        case 'north': newTop -= stepSize; break;
+        case 'south': newTop += stepSize; break;
+        case 'west': newLeft -= stepSize; break;
+        case 'east': newLeft += stepSize; break;
+    }
+    
+    // 限制在房间范围内
+    newLeft = Math.max(5, Math.min(95, newLeft));
+    newTop = Math.max(5, Math.min(95, newTop));
+    
+    return { left: newLeft, top: newTop };
+}
+
+// 进入下一房间
+async function enterNextRoom(direction, nextRoomId, path) {
+    isMoving = true;
+    setPlayerVisible(false);
+    await wait(180);
+    
+    currentRoomId = nextRoomId;
+    gameState.visitedRooms.add(currentRoomId);
+    gameState.completion.roomsExplored = gameState.visitedRooms.size;
+    renderRoom(getEntryPositionForDirection(direction, path), { instantPlayerPosition: true });
+    setPlayerFrame(direction, 0);
+    await wait(80);
+    setPlayerVisible(true);
+    appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
+    isMoving = false;
+    
+    if (currentRoomId === "teleport_room") {
+        await showTeleportDialog();
+    }
 }
 
 function getEntryPositionForDirection(direction, path) {
@@ -1276,6 +1374,85 @@ $("command-input").addEventListener("keydown", (event) => {
     if (event.key === "Enter") {
         event.preventDefault();
         submitCommand();
+    }
+});
+
+// WASD键盘方向控制
+document.addEventListener("keydown", (e) => {
+    if (document.activeElement === $("command-input")) return;
+    if (!sessionId) return;
+    
+    const keyMap = {
+        'w': { dir: 'north', cmd: 'go north' },
+        'W': { dir: 'north', cmd: 'go north' },
+        's': { dir: 'south', cmd: 'go south' },
+        'S': { dir: 'south', cmd: 'go south' },
+        'a': { dir: 'west', cmd: 'go west' },
+        'A': { dir: 'west', cmd: 'go west' },
+        'd': { dir: 'east', cmd: 'go east' },
+        'D': { dir: 'east', cmd: 'go east' }
+    };
+    
+    const action = keyMap[e.key];
+    if (action) {
+        e.preventDefault();
+        
+        // 如果已经在按住同一方向键，忽略
+        if (keyHoldState.isHolding && keyHoldState.key === e.key) {
+            return;
+        }
+        
+        // 开始按住状态
+        keyHoldState.key = e.key;
+        keyHoldState.startTime = Date.now();
+        keyHoldState.isHolding = true;
+        
+        // 立即执行一次小步移动
+        movePlayerStep(action.dir).then(moved => {
+            if (moved) {
+                // 只有当真正进入新房间时才发送后端命令
+                sendGameCommand(action.cmd).then(response => {
+                    if (response && response.message) {
+                        appendLog(response.message, response.success === false ? "error" : "");
+                    }
+                }).catch(() => {});
+            }
+        });
+        
+        // 设置定时重复执行（按住时间越长，移动次数越多）
+        keyHoldState.holdTimer = setInterval(() => {
+            if (keyHoldState.isHolding && !isMoving) {
+                movePlayerStep(action.dir).then(moved => {
+                    if (moved) {
+                        sendGameCommand(action.cmd).then(response => {
+                            if (response && response.message) {
+                                appendLog(response.message, response.success === false ? "error" : "");
+                            }
+                        }).catch(() => {});
+                    }
+                });
+            }
+        }, 400); // 每400ms执行一次小步移动
+    }
+});
+
+// 键盘按键松开事件
+document.addEventListener("keyup", (e) => {
+    const keyMap = {
+        'w': true, 'W': true,
+        's': true, 'S': true,
+        'a': true, 'A': true,
+        'd': true, 'D': true
+    };
+    
+    if (keyMap[e.key] && keyHoldState.key === e.key) {
+        keyHoldState.isHolding = false;
+        keyHoldState.key = null;
+        
+        if (keyHoldState.holdTimer) {
+            clearInterval(keyHoldState.holdTimer);
+            keyHoldState.holdTimer = null;
+        }
     }
 });
 

@@ -109,7 +109,7 @@
                 <h3>交互命令</h3>
                 <div class="quick-actions" id="quick-actions"></div>
                 <div class="command-row">
-                    <input id="command-input" type="text" placeholder="take key / use key / status">
+                    <input id="command-input" type="text" placeholder="take key / use key / eat cookie">
                     <button class="primary-action small" id="submit-btn" type="button">执行</button>
                 </div>
             </section>
@@ -136,6 +136,43 @@
             <div class="modal-actions">
                 <button class="primary-action" id="teleport-confirm" type="button">确定传送</button>
                 <button class="secondary-action" id="teleport-cancel" type="button">留在这里</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="item-detail-modal">
+        <div class="modal-card item-detail-card">
+            <div class="item-detail-header">
+                <img class="item-detail-icon" id="item-detail-icon" src="" alt="物品图标">
+                <h3 id="item-detail-title">物品名称</h3>
+            </div>
+            <p class="item-detail-weight" id="item-detail-weight">重量：0.1kg</p>
+            <p class="item-detail-description" id="item-detail-description">物品描述</p>
+            <img class="item-map-preview" id="item-map-preview" src="" alt="物品地图" style="display: none;">
+            <div class="modal-actions">
+                <button class="secondary-action" id="item-detail-close" type="button">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="room-status-modal">
+        <div class="modal-card">
+            <h3>房间状态</h3>
+            <p class="room-status-location" id="room-status-location">当前位置</p>
+            <p class="room-status-exits-title">可前往的方向：</p>
+            <div class="room-status-exits" id="room-status-exits"></div>
+            <div class="modal-actions">
+                <button class="secondary-action" id="room-status-close" type="button">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="room-items-modal">
+        <div class="modal-card">
+            <h3>房间物品</h3>
+            <p class="room-items-list" id="room-items-list"></p>
+            <div class="modal-actions">
+                <button class="secondary-action" id="room-items-close" type="button">关闭</button>
             </div>
         </div>
     </div>

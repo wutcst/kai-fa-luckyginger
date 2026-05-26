@@ -958,7 +958,7 @@ function applyFrontEndCommand(command, options = {}) {
 
     const direction = getDirection(normalized);
     if (direction) {
-        moveToDirection(direction);
+        movePlayerStep(direction);
         return;
     }
 
@@ -983,32 +983,25 @@ async function handleCommand(command) {
 
     // 特殊处理：从 locked_room 向北移动，直接进入 unlocked_treasure_room
     if (direction === 'north' && currentRoomId === 'locked_room' && gameState.treasureUnlocked) {
-        // 不调用后端，直接在前端处理
-        const moved = await moveToDirection(direction);
+        await movePlayerStep(direction);
         return;
     }
 
-    // 特殊处理：从 unlocked_treasure_room 向南移动，直接返回 locked_room
     if (direction === 'south' && currentRoomId === 'unlocked_treasure_room') {
-        // 不调用后端，直接在前端处理
-        const moved = await moveToDirection(direction);
+        await movePlayerStep(direction);
         return;
     }
 
     if (direction) {
+        const result = await movePlayerStep(direction);
+        if (result.roomChanged) {
         try {
             response = await sendGameCommand(normalized);
             appendApiMessage(response);
         } catch (error) {
             appendLog("后端命令暂时不可用，已保留前端移动结果。", "error");
         }
-
-        const moved = await moveToDirection(direction);
-
-        if (!moved) {
-            return;
         }
-
         return;
     }
 

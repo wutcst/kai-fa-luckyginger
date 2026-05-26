@@ -228,6 +228,95 @@ const rooms = {
 const GLOBAL_STEP_SIZE = 6;
 const GLOBAL_ANIMATION_SPEED = 500;
 
+const ROOM_CONFIGS = {
+    campus_gate: {
+        center: { x: 50, y: 76 },
+        channels: ['vertical'],
+        verticalRange: { min: 50, max: 95 },
+        entryPoints: {
+            south: { x: 50, y: 55 }
+        },
+        walkTo: { x: 50, y: 76 }
+    },
+    main_hall: {
+        center: { x: 50, y: 63 },
+        channels: ['vertical', 'horizontal'],
+        verticalRange: { min: 5, max: 95 },
+        horizontalRange: { min: 5, max: 95 },
+        entryPoints: {
+            north: { x: 50, y: 86 },
+            south: { x: 50, y: 14 },
+            east: { x: 14, y: 63 },
+            west: { x: 86, y: 63 }
+        },
+        walkTo: { x: 50, y: 63 }
+    },
+    forest_path: {
+        center: { x: 50, y: 50 },
+        channels: ['vertical', 'horizontal'],
+        verticalRange: { min: 20, max: 95 },
+        horizontalRange: { min: 20, max: 95 },
+        entryPoints: {
+            west: { x: 86, y: 50 },
+            south: { x: 50, y: 30 }
+        },
+        walkTo: { x: 50, y: 50 }
+    },
+    library: {
+        center: { x: 50, y: 65 },
+        channels: ['vertical', 'horizontal'],
+        verticalRange: { min: 5, max: 95 },
+        horizontalRange: { min: 5, max: 95 },
+        entryPoints: {
+            east: { x: 14, y: 65 },
+            south: { x: 50, y: 40 }
+        },
+        walkTo: { x: 50, y: 65 }
+    },
+    lab: {
+        center: { x: 50, y: 50 },
+        channels: ['vertical', 'horizontal'],
+        verticalRange: { min: 40, max: 95 },
+        horizontalRange: { min: 15, max: 95 },
+        entryPoints: {
+            north: { x: 50, y: 86 },
+            west: { x: 86, y: 50 }
+        },
+        walkTo: { x: 50, y: 50 }
+    },
+    locked_room: {
+        center: { x: 75, y: 75 },
+        channels: ['vertical', 'horizontal'],
+        verticalRange: { min: 60, max: 95 },
+        horizontalRange: { min: 5, max: 95 },
+        entryPoints: {
+            north: { x: 75, y: 80 },
+            east: { x: 14, y: 75 },
+            south: { x: 75, y: 65 }
+        },
+        walkTo: { x: 75, y: 75 }
+    },
+    unlocked_treasure_room: {
+        center: { x: 50, y: 50 },
+        channels: ['vertical'],
+        verticalRange: { min: 40, max: 95 },
+        entryPoints: {
+            north: { x: 50, y: 86 }
+        },
+        walkTo: { x: 50, y: 50 }
+    },
+    teleport_room: {
+        center: { x: 50, y: 50 },
+        channels: ['vertical', 'horizontal'],
+        verticalRange: { min: 5, max: 95 },
+        horizontalRange: { min: 5, max: 95 },
+        entryPoints: {
+            north: { x: 50, y: 86 },
+            west: { x: 86, y: 50 }
+        },
+        walkTo: { x: 50, y: 50 }
+    }
+};
 
 const backendRoomAliases = [
     { patterns: ["outside", "campus", "入口", "校园入口"], roomId: "campus_gate" },

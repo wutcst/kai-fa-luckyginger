@@ -61,13 +61,15 @@ const rooms = {
         paths: {
             north: {
                 route: [
-                    { left: 44, top: 76 },
-                    { left: 47, top: 64 },
+                    { left: 50, top: 76 },
+                    { left: 50, top: 64 },
                     { left: 50, top: 52 },
-                    { left: 50, top: 40 }
+                    { left: 50, top: 40 },
+                    { left: 50, top: 28 },
+                    { left: 50, top: 14 }
                 ],
-                exit: { left: 50, top: 40 },
-                enter: { left: 50, top: 78 }
+                exit: { left: 50, top: 50 },
+                enter: { left: 50, top: 55 }
             }
         }
     },
@@ -77,27 +79,27 @@ const rooms = {
         image: "assets/rooms/main_hall.png",
         exits: { south: "campus_gate", east: "library", west: "forest_path", north: "lab" },
         items: ["cookie"],
-        start: { left: 50, top: 72 },
+        start: { left: 50, top: 50 },
         paths: {
             north: {
-                route: [{ left: 50, top: 64 }, { left: 50, top: 52 }, { left: 50, top: 38 }],
-                exit: { left: 50, top: 38 },
-                enter: { left: 50, top: 78 }
+                route: [{ left: 50, top: 63 }, { left: 50, top: 38 }, { left: 50, top: 14 }],
+                exit: { left: 50, top: 14 },
+                enter: { left: 50, top: 86 }
             },
             south: {
-                route: [{ left: 50, top: 78 }, { left: 50, top: 86 }],
+                route: [{ left: 50, top: 63 }, { left: 50, top: 74 }, { left: 50, top: 86 }],
                 exit: { left: 50, top: 86 },
-                enter: { left: 50, top: 42 }
+                enter: { left: 50, top: 14 }
             },
             east: {
-                route: [{ left: 62, top: 68 }, { left: 74, top: 64 }, { left: 84, top: 62 }],
-                exit: { left: 84, top: 62 },
-                enter: { left: 18, top: 62 }
+                route: [{ left: 50, top: 63 }, { left: 62, top: 63 }, { left: 74, top: 63 }, { left: 86, top: 63 }],
+                exit: { left: 86, top: 63 },
+                enter: { left: 14, top: 63 }
             },
             west: {
-                route: [{ left: 38, top: 68 }, { left: 26, top: 64 }, { left: 16, top: 62 }],
-                exit: { left: 16, top: 62 },
-                enter: { left: 82, top: 62 }
+                route: [{ left: 50, top: 63 }, { left: 38, top: 63 }, { left: 26, top: 63 }, { left: 14, top: 63 }],
+                exit: { left: 14, top: 63 },
+                enter: { left: 86, top: 63 }
             }
         }
     },
@@ -107,17 +109,17 @@ const rooms = {
         image: "assets/rooms/forest_path.png",
         exits: { east: "main_hall", north: "teleport_room" },
         items: ["bottle", "map"],
-        start: { left: 50, top: 72 },
+        start: { left: 50, top: 50 },
         paths: {
             east: {
-                route: [{ left: 62, top: 72 }, { left: 74, top: 68 }, { left: 84, top: 66 }],
-                exit: { left: 84, top: 66 },
-                enter: { left: 16, top: 62 }
+                route: [{ left: 50, top: 50 }, { left: 62, top: 50 }, { left: 74, top: 50 }, { left: 86, top: 50 }],
+                exit: { left: 86, top: 50 },
+                enter: { left: 80, top: 50 }
             },
             north: {
-                route: [{ left: 50, top: 62 }, { left: 50, top: 52 }, { left: 50, top: 42 }],
-                exit: { left: 50, top: 42 },
-                enter: { left: 50, top: 76 }
+                route: [{ left: 50, top: 50 }, { left: 50, top: 38 }, { left: 50, top: 26 }, { left: 50, top: 14 }],
+                exit: { left: 50, top: 25 },
+                enter: { left: 50, top: 30 }
             }
         }
     },
@@ -127,37 +129,37 @@ const rooms = {
         image: "assets/rooms/library.png",
         exits: { west: "main_hall", north: "locked_room" },
         items: ["coin"],
-        start: { left: 52, top: 64 },
+        start: { left: 50, top: 65 },
         paths: {
             west: {
-                route: [{ left: 40, top: 64 }, { left: 26, top: 62 }, { left: 14, top: 60 }],
-                exit: { left: 14, top: 60 },
-                enter: { left: 84, top: 62 }
+                route: [{ left: 50, top: 65 }, { left: 38, top: 65 }, { left: 26, top: 65 }, { left: 14, top: 65 }],
+                exit: { left: 14, top: 65 },
+                enter: { left: 86, top: 65 }
             },
             north: {
-                route: [{ left: 62, top: 58 }, { left: 70, top: 50 }, { left: 74, top: 42 }],
-                exit: { left: 74, top: 42 },
-                enter: { left: 42, top: 78 }
+                route: [{ left: 50, top: 65 }, { left: 50, top: 38 }, { left: 50, top: 26 }, { left: 50, top: 14 }],
+                exit: { left: 50, top: 35 },
+                enter: { left: 50, top: 40 }
             }
         }
     },
     lab: {
-        title: "Computer Lab",
+        title: "计算机实验室",
         description: "你在计算机实验室。设备、线缆和笔记本电脑摆放在实验台附近。",
         image: "assets/rooms/lab.png",
         exits: { south: "main_hall", east: "locked_room" },
         items: ["computer", "cable"],
-        start: { left: 50, top: 68 },
+        start: { left: 50, top: 50 },
         paths: {
             south: {
-                route: [{ left: 50, top: 74 }, { left: 50, top: 84 }],
-                exit: { left: 50, top: 84 },
-                enter: { left: 50, top: 38 }
+                route: [{ left: 50, top: 50 }, { left: 50, top: 62 }, { left: 50, top: 74 }, { left: 50, top: 86 }],
+                exit: { left: 50, top: 86 },
+                enter: { left: 50, top: 14 }
             },
             east: {
-                route: [{ left: 62, top: 66 }, { left: 74, top: 62 }, { left: 82, top: 60 }],
-                exit: { left: 82, top: 60 },
-                enter: { left: 22, top: 76 }
+                route: [{ left: 50, top: 50 }, { left: 62, top: 50 }, { left: 74, top: 50 }, { left: 86, top: 50 }],
+                exit: { left: 86, top: 50 },
+                enter: { left: 14, top: 50 }
             }
         }
     },
@@ -165,24 +167,24 @@ const rooms = {
         title: "上锁的宝库",
         description: "厚重的宝库门被锁住了。使用钥匙后，向北可以进入宝藏房间。",
         image: "assets/rooms/locked_room.png",
-        exits: { south: "library", west: "lab" },
+        exits: { west: "lab", south: "library", north: "unlocked_treasure_room" },
         items: [],
-        start: { left: 50, top: 76 },
+        start: { left: 75, top: 75 },
         paths: {
-            south: {
-                route: [{ left: 46, top: 80 }, { left: 42, top: 86 }],
-                exit: { left: 42, top: 86 },
-                enter: { left: 74, top: 42 }
-            },
             west: {
-                route: [{ left: 38, top: 76 }, { left: 28, top: 76 }, { left: 18, top: 76 }],
-                exit: { left: 18, top: 76 },
-                enter: { left: 82, top: 60 }
+                route: [{ left: 50, top: 50 }, { left: 38, top: 50 }, { left: 26, top: 50 }, { left: 14, top: 50 }],
+                exit: { left: 14, top: 75 },
+                enter: { left: 86, top: 50 }
+            },
+            south: {
+                route: [{ left: 50, top: 50 }, { left: 50, top: 62 }, { left: 50, top: 74 }, { left: 50, top: 86 }],
+                exit: { left: 75, top: 95 },
+                enter: { left: 50, top: 14 }
             },
             north: {
-                route: [{ left: 52, top: 68 }, { left: 56, top: 56 }, { left: 58, top: 44 }],
-                exit: { left: 58, top: 44 },
-                enter: { left: 50, top: 78 }
+                route: [{ left: 50, top: 50 }, { left: 50, top: 38 }, { left: 50, top: 26 }, { left: 50, top: 14 }],
+                exit: { left: 75, top: 60 },
+                enter: { left: 50, top: 86 }
             }
         }
     },
@@ -192,12 +194,12 @@ const rooms = {
         image: "assets/rooms/unlocked_treasure_room2.png",
         exits: { south: "locked_room" },
         items: ["treasure"],
-        start: { left: 50, top: 78 },
+        start: { left: 50, top: 50 },
         paths: {
             south: {
-                route: [{ left: 50, top: 82 }, { left: 50, top: 86 }],
+                route: [{ left: 50, top: 50 }, { left: 50, top: 62 }, { left: 50, top: 74 }, { left: 50, top: 86 }],
                 exit: { left: 50, top: 86 },
-                enter: { left: 58, top: 44 }
+                enter: { left: 50, top: 14 }
             }
         }
     },
@@ -207,19 +209,112 @@ const rooms = {
         image: "assets/rooms/teleport_room.png",
         exits: { south: "forest_path", east: "main_hall" },
         items: [],
-        start: { left: 50, top: 70 },
+        start: { left: 50, top: 50 },
         paths: {
             south: {
-                route: [{ left: 50, top: 76 }, { left: 48, top: 84 }],
-                exit: { left: 48, top: 84 },
-                enter: { left: 50, top: 42 }
+                route: [{ left: 50, top: 50 }, { left: 50, top: 62 }, { left: 50, top: 74 }, { left: 50, top: 86 }],
+                exit: { left: 50, top: 86 },
+                enter: { left: 50, top: 14 }
             },
             east: {
-                route: [{ left: 62, top: 66 }, { left: 72, top: 60 }, { left: 80, top: 58 }],
-                exit: { left: 80, top: 58 },
-                enter: { left: 16, top: 62 }
+                route: [{ left: 50, top: 50 }, { left: 62, top: 50 }, { left: 74, top: 50 }, { left: 86, top: 50 }],
+                exit: { left: 86, top: 50 },
+                enter: { left: 14, top: 50 }
             }
         }
+    }
+};
+
+const GLOBAL_STEP_SIZE = 6;
+const GLOBAL_ANIMATION_SPEED = 500;
+
+const ROOM_CONFIGS = {
+    campus_gate: {
+        center: { x: 50, y: 76 },
+        channels: ['vertical'],
+        verticalRange: { min: 50, max: 95 },
+        entryPoints: {
+            south: { x: 50, y: 55 }
+        },
+        walkTo: { x: 50, y: 76 }
+    },
+    main_hall: {
+        center: { x: 50, y: 63 },
+        channels: ['vertical', 'horizontal'],
+        verticalRange: { min: 5, max: 95 },
+        horizontalRange: { min: 5, max: 95 },
+        entryPoints: {
+            north: { x: 50, y: 86 },
+            south: { x: 50, y: 14 },
+            east: { x: 14, y: 63 },
+            west: { x: 86, y: 63 }
+        },
+        walkTo: { x: 50, y: 63 }
+    },
+    forest_path: {
+        center: { x: 50, y: 50 },
+        channels: ['vertical', 'horizontal'],
+        verticalRange: { min: 20, max: 95 },
+        horizontalRange: { min: 20, max: 95 },
+        entryPoints: {
+            west: { x: 86, y: 50 },
+            south: { x: 50, y: 30 }
+        },
+        walkTo: { x: 50, y: 50 }
+    },
+    library: {
+        center: { x: 50, y: 65 },
+        channels: ['vertical', 'horizontal'],
+        verticalRange: { min: 5, max: 95 },
+        horizontalRange: { min: 5, max: 95 },
+        entryPoints: {
+            east: { x: 14, y: 65 },
+            south: { x: 50, y: 40 }
+        },
+        walkTo: { x: 50, y: 65 }
+    },
+    lab: {
+        center: { x: 50, y: 50 },
+        channels: ['vertical', 'horizontal'],
+        verticalRange: { min: 40, max: 95 },
+        horizontalRange: { min: 15, max: 95 },
+        entryPoints: {
+            north: { x: 50, y: 86 },
+            west: { x: 86, y: 50 }
+        },
+        walkTo: { x: 50, y: 50 }
+    },
+    locked_room: {
+        center: { x: 75, y: 75 },
+        channels: ['vertical', 'horizontal'],
+        verticalRange: { min: 60, max: 95 },
+        horizontalRange: { min: 5, max: 95 },
+        entryPoints: {
+            north: { x: 75, y: 80 },
+            east: { x: 14, y: 75 },
+            south: { x: 75, y: 65 }
+        },
+        walkTo: { x: 75, y: 75 }
+    },
+    unlocked_treasure_room: {
+        center: { x: 50, y: 50 },
+        channels: ['vertical'],
+        verticalRange: { min: 40, max: 95 },
+        entryPoints: {
+            north: { x: 50, y: 86 }
+        },
+        walkTo: { x: 50, y: 50 }
+    },
+    teleport_room: {
+        center: { x: 50, y: 50 },
+        channels: ['vertical', 'horizontal'],
+        verticalRange: { min: 5, max: 95 },
+        horizontalRange: { min: 5, max: 95 },
+        entryPoints: {
+            north: { x: 50, y: 86 },
+            west: { x: 86, y: 50 }
+        },
+        walkTo: { x: 50, y: 50 }
     }
 };
 
@@ -242,7 +337,7 @@ let sessionId = null;
 let currentUsername = null;
 let pendingAuthData = null;
 let lastBackendStatus = null;
-let currentPlayerPosition = { left: 50, top: 76 };
+let currentPlayerPosition = { left: 50, top: 50 };
 
 const gameState = {
     inventory: [],
@@ -317,8 +412,11 @@ function setCommandControlsDisabled(disabled) {
 }
 
 function canMoveToDirection(direction) {
-    const room = rooms[currentRoomId];
-    return Boolean(room && room.exits && room.exits[direction]);
+    const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+    const channels = roomConfig.channels || ['vertical', 'horizontal'];
+    if ((direction === 'north' || direction === 'south') && !channels.includes('vertical')) return false;
+    if ((direction === 'east' || direction === 'west') && !channels.includes('horizontal')) return false;
+    return true;
 }
 
 function updateDirectionControls() {
@@ -825,14 +923,17 @@ function updateLockedTreasuryExit() {
 function setPlayerPosition(position, options = {}) {
     const token = $("player-token");
     const instant = options.instant === true;
-
+    
+    const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+    const snappedPosition = snapToCrossPath(position, roomConfig);
+    
     if (instant) {
         token.classList.add("no-position-transition");
     }
 
-    currentPlayerPosition = { left: position.left, top: position.top };
-    token.style.left = position.left + "%";
-    token.style.top = position.top + "%";
+    currentPlayerPosition = { left: snappedPosition.left, top: snappedPosition.top };
+    token.style.left = snappedPosition.left + "%";
+    token.style.top = snappedPosition.top + "%";
 
     if (instant) {
         token.offsetHeight;
@@ -952,7 +1053,7 @@ function applyFrontEndCommand(command, options = {}) {
 
     const direction = getDirection(normalized);
     if (direction) {
-        moveToDirection(direction);
+        movePlayerStep(direction);
         return;
     }
 
@@ -977,32 +1078,25 @@ async function handleCommand(command) {
 
     // 特殊处理：从 locked_room 向北移动，直接进入 unlocked_treasure_room
     if (direction === 'north' && currentRoomId === 'locked_room' && gameState.treasureUnlocked) {
-        // 不调用后端，直接在前端处理
-        const moved = await moveToDirection(direction);
+        await movePlayerStep(direction);
         return;
     }
 
-    // 特殊处理：从 unlocked_treasure_room 向南移动，直接返回 locked_room
     if (direction === 'south' && currentRoomId === 'unlocked_treasure_room') {
-        // 不调用后端，直接在前端处理
-        const moved = await moveToDirection(direction);
+        await movePlayerStep(direction);
         return;
     }
 
     if (direction) {
-        try {
-            response = await sendGameCommand(normalized);
-            appendApiMessage(response);
-        } catch (error) {
-            appendLog("后端命令暂时不可用，已保留前端移动结果。", "error");
+        const result = await movePlayerStep(direction);
+        if (result.roomChanged) {
+            try {
+                response = await sendGameCommand(normalized);
+                appendApiMessage(response);
+            } catch (error) {
+                appendLog("后端命令暂时不可用，已保留前端移动结果。", "error");
+            }
         }
-
-        const moved = await moveToDirection(direction);
-
-        if (!moved) {
-            return;
-        }
-
         return;
     }
 
@@ -1030,118 +1124,142 @@ async function handleCommand(command) {
     }
 }
 
-// 一键移动到下一个房间（用于方向按钮）
-async function moveToDirection(direction) {
-    if (!direction || isMoving) return false;
+
+// WASD小步移动 - 每次只移动一小段，走到出口才进入下一房间
+async function movePlayerStep(direction) {
+    if (!direction || isMoving) return { moved: false, roomChanged: false };
 
     const room = rooms[currentRoomId];
+    const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+
+    const nextPosition = calculateNextStep(currentPlayerPosition, direction, roomConfig);
+    if (!nextPosition) return { moved: false, roomChanged: false };
+
     const nextRoomId = room.exits[direction];
     const path = room.paths && room.paths[direction];
 
-    if (!nextRoomId || !path) {
-        appendLog("这个方向没有出口。", "error");
-        return false;
+    if (nextRoomId && path && isAtExit(currentPlayerPosition, path.exit)) {
+        await enterNextRoom(direction, nextRoomId, path);
+        return { moved: true, roomChanged: true };
     }
 
     isMoving = true;
     startPlayerStep(direction);
+    setPlayerPosition(nextPosition);
 
-    const route = getMovementRoute(path);
-    for (const point of route) {
-        setPlayerPosition(point);
-        await wait(520);
-    }
-
+    await wait(300);
     stopPlayerStep(direction);
-    setPlayerVisible(false);
-    await wait(180);
-
-    currentRoomId = nextRoomId;
-    gameState.visitedRooms.add(currentRoomId);
-    gameState.completion.roomsExplored = gameState.visitedRooms.size;
-    renderRoom(getEntryPositionForDirection(direction, path), { instantPlayerPosition: true });
-    setPlayerFrame(direction, 0);
-    await wait(80);
-    setPlayerVisible(true);
-    appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
     isMoving = false;
 
-    if (currentRoomId === "teleport_room") {
-        await showTeleportDialog();
-    }
-
-    return true;
-}
-
-// WASD小步移动 - 每次只移动一小段，走到出口才进入下一房间
-async function movePlayerStep(direction) {
-    if (!direction || isMoving) return false;
-
-    const room = rooms[currentRoomId];
-    const nextRoomId = room.exits[direction];
-    const path = room.paths && room.paths[direction];
-
-    if (!nextRoomId || !path) {
-        appendLog("这个方向没有出口。", "error");
-        return false;
-    }
-
-    const route = getMovementRoute(path);
-    // 如果还没走到出口，只走一小步
-    if (!isAtExit(currentPlayerPosition, path.exit)) {
-        isMoving = true;
-        startPlayerStep(direction);
-        
-        // 计算下一步位置（向前移动一小段）
-        const nextPosition = calculateNextStep(currentPlayerPosition, direction);
-        setPlayerPosition(nextPosition);
-        
-        await wait(300);
-        stopPlayerStep(direction);
-        isMoving = false;
-        
-        // 检查是否到达出口
-        if (isAtExit(nextPosition, path.exit)) {
-            // 到达出口，进入下一房间
-            await enterNextRoom(direction, nextRoomId, path);
-        }
-        return true;
-    } else {
-        // 已经在出口位置，直接进入下一房间
+    if (nextRoomId && path && isAtExit(nextPosition, path.exit)) {
         await enterNextRoom(direction, nextRoomId, path);
-        return true;
+        return { moved: true, roomChanged: true };
     }
+
+    return { moved: true, roomChanged: false };
 }
 
 // 检查是否到达出口位置
 function isAtExit(position, exit) {
     if (!exit) return false;
-    const threshold = 5; // 允许的误差范围
+    const threshold = 6; // 允许的误差范围，稍微增大避免太敏感
     return Math.abs(position.left - exit.left) < threshold && 
            Math.abs(position.top - exit.top) < threshold;
 }
 
-// 计算下一步位置
-function calculateNextStep(current, direction) {
-    const stepSize = 8; // 每步移动的距离
+// 检查位置是否在十字通道上
+function isOnCrossPath(position) {
+    const centerX = 50;
+    const centerY = 50;
+    const tolerance = 12; // 十字通道的宽度容忍度
+    
+    // 检查是否在垂直通道上（x约等于50）
+    const onVertical = Math.abs(position.left - centerX) < tolerance;
+    // 检查是否在水平通道上（y约等于50）
+    const onHorizontal = Math.abs(position.top - centerY) < tolerance;
+    
+    return onVertical || onHorizontal;
+}
+
+// ========================================
+// 🛤️ 十字通道核心函数
+// ========================================
+
+function snapToCrossPath(position, roomConfig, direction) {
+    const centerX = roomConfig.center.x;
+    const centerY = roomConfig.center.y;
+    const channels = roomConfig.channels || ['vertical', 'horizontal'];
+    const hasVertical = channels.includes('vertical');
+    const hasHorizontal = channels.includes('horizontal');
+    
+    if (hasVertical && !hasHorizontal) {
+        return { left: centerX, top: position.top };
+    }
+    if (hasHorizontal && !hasVertical) {
+        return { left: position.left, top: centerY };
+    }
+    
+    if (direction === 'north' || direction === 'south') {
+        return { left: centerX, top: position.top };
+    }
+    if (direction === 'east' || direction === 'west') {
+        return { left: position.left, top: centerY };
+    }
+    
+    const distToVertical = Math.abs(position.left - centerX);
+    const distToHorizontal = Math.abs(position.top - centerY);
+    
+    if (distToVertical < distToHorizontal) {
+        return { left: centerX, top: position.top };
+    } else {
+        return { left: position.left, top: centerY };
+    }
+}
+
+function calculateNextStep(current, direction, roomConfig) {
+    const stepSize = GLOBAL_STEP_SIZE;
+    const channels = roomConfig.channels || ['vertical', 'horizontal'];
+    const hasVertical = channels.includes('vertical');
+    const hasHorizontal = channels.includes('horizontal');
+
+    if ((direction === 'north' || direction === 'south') && !hasVertical) return null;
+    if ((direction === 'east' || direction === 'west') && !hasHorizontal) return null;
+
     let newLeft = current.left;
     let newTop = current.top;
-    
+
+    const centerX = roomConfig.center.x;
+    const centerY = roomConfig.center.y;
+
+    const snapped = snapToCrossPath(current, roomConfig, direction);
+    newLeft = snapped.left;
+    newTop = snapped.top;
+
     switch(direction) {
         case 'north': newTop -= stepSize; break;
         case 'south': newTop += stepSize; break;
         case 'west': newLeft -= stepSize; break;
         case 'east': newLeft += stepSize; break;
     }
-    
-    // 限制在房间范围内
-    newLeft = Math.max(5, Math.min(95, newLeft));
-    newTop = Math.max(5, Math.min(95, newTop));
-    
+
+    const afterMove = { left: newLeft, top: newTop };
+    const snappedAfter = snapToCrossPath(afterMove, roomConfig, direction);
+    newLeft = snappedAfter.left;
+    newTop = snappedAfter.top;
+
+    const vRange = roomConfig.verticalRange || { min: 5, max: 95 };
+    const hRange = roomConfig.horizontalRange || { min: 5, max: 95 };
+
+    if (hasVertical) {
+        newTop = Math.max(vRange.min, Math.min(vRange.max, newTop));
+    }
+    if (hasHorizontal) {
+        newLeft = Math.max(hRange.min, Math.min(hRange.max, newLeft));
+    }
+
     return { left: newLeft, top: newTop };
 }
 
-// 进入下一房间
 async function enterNextRoom(direction, nextRoomId, path) {
     isMoving = true;
     setPlayerVisible(false);
@@ -1150,38 +1268,106 @@ async function enterNextRoom(direction, nextRoomId, path) {
     currentRoomId = nextRoomId;
     gameState.visitedRooms.add(currentRoomId);
     gameState.completion.roomsExplored = gameState.visitedRooms.size;
-    renderRoom(getEntryPositionForDirection(direction, path), { instantPlayerPosition: true });
+    
+    const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+    const targetX = roomConfig.walkTo.x;
+    const targetY = roomConfig.walkTo.y;
+    const entryPos = roomConfig.entryPoints[direction] || { x: targetX, y: targetY };
+    
+    // 传送房间直接到中心，不需要动画
+    if (currentRoomId === "teleport_room") {
+        renderRoom({ left: targetX, top: targetY }, { instantPlayerPosition: true });
+        setPlayerVisible(true);
+        appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
+        isMoving = false;
+        updateDirectionControls();
+        await showTeleportDialog();
+        return;
+    }
+    
+    // 其他房间：先在入口位置出现（不要经过中心！）
+    const token = $("player-token");
+    token.classList.add("no-position-transition");
+    currentPlayerPosition = { left: entryPos.x, top: entryPos.y };
+    token.style.left = entryPos.x + "%";
+    token.style.top = entryPos.y + "%";
+    
+    // 切换房间背景（玩家已经在入口位置了）
+    renderRoom({ left: entryPos.x, top: entryPos.y }, { instantPlayerPosition: true });
+    
     setPlayerFrame(direction, 0);
-    await wait(80);
+    await wait(50);
     setPlayerVisible(true);
+    
+    // 移除 no-position-transition，让后续移动有动画
+    token.classList.remove("no-position-transition");
+    token.offsetHeight;
+    
+    // 从入口慢慢走到中心
+    const stepsToCenter = calculateStepsToCenter(entryPos, targetX, targetY);
+    
+    startPlayerStep(direction);
+    
+    for (let i = 0; i < stepsToCenter.length; i++) {
+        const step = stepsToCenter[i];
+        currentPlayerPosition = { left: step.left, top: step.top };
+        token.style.left = step.left + "%";
+        token.style.top = step.top + "%";
+        
+        await wait(GLOBAL_ANIMATION_SPEED);
+    }
+    
+    currentPlayerPosition = { left: targetX, top: targetY };
+    token.style.left = targetX + "%";
+    token.style.top = targetY + "%";
+    stopPlayerStep(direction);
+    
+    await wait(100);
+    
     appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
     isMoving = false;
+    updateDirectionControls();
+}
+
+function calculateStepsToCenter(entryPos, targetX, targetY) {
+    const steps = [];
+    const stepSize = GLOBAL_STEP_SIZE;
     
-    if (currentRoomId === "teleport_room") {
-        await showTeleportDialog();
+    let currentX = entryPos.x;
+    let currentY = entryPos.y;
+    
+    const stepsX = Math.floor(Math.abs(currentX - targetX) / stepSize);
+    for (let i = 0; i < stepsX; i++) {
+        if (currentX < targetX) {
+            currentX = Math.min(currentX + stepSize, targetX);
+        } else {
+            currentX = Math.max(currentX - stepSize, targetX);
+        }
+        steps.push({ left: currentX, top: currentY });
     }
+    
+    const stepsY = Math.floor(Math.abs(currentY - targetY) / stepSize);
+    for (let i = 0; i < stepsY; i++) {
+        if (currentY < targetY) {
+            currentY = Math.min(currentY + stepSize, targetY);
+        } else {
+            currentY = Math.max(currentY - stepSize, targetY);
+        }
+        steps.push({ left: currentX, top: currentY });
+    }
+    
+    if (steps.length > 0) {
+        steps[steps.length - 1] = { left: targetX, top: targetY };
+    } else {
+        steps.push({ left: targetX, top: targetY });
+    }
+    
+    return steps;
 }
 
 function getEntryPositionForDirection(direction, path) {
-    const fallback = path.enter || rooms[currentRoomId].start;
-
-    if (direction === "north") {
-        return { left: fallback.left, top: 86 };
-    }
-
-    if (direction === "south") {
-        return { left: fallback.left, top: 38 };
-    }
-
-    if (direction === "east") {
-        return { left: 14, top: fallback.top };
-    }
-
-    if (direction === "west") {
-        return { left: 86, top: fallback.top };
-    }
-
-    return fallback;
+    const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+    return roomConfig.entryPoints[direction] || { x: 50, y: 50 };
 }
 
 function getMovementRoute(path) {
@@ -1385,12 +1571,16 @@ document.addEventListener("keydown", (e) => {
     const keyMap = {
         'w': { dir: 'north', cmd: 'go north' },
         'W': { dir: 'north', cmd: 'go north' },
+        'ArrowUp': { dir: 'north', cmd: 'go north' },
         's': { dir: 'south', cmd: 'go south' },
         'S': { dir: 'south', cmd: 'go south' },
+        'ArrowDown': { dir: 'south', cmd: 'go south' },
         'a': { dir: 'west', cmd: 'go west' },
         'A': { dir: 'west', cmd: 'go west' },
+        'ArrowLeft': { dir: 'west', cmd: 'go west' },
         'd': { dir: 'east', cmd: 'go east' },
-        'D': { dir: 'east', cmd: 'go east' }
+        'D': { dir: 'east', cmd: 'go east' },
+        'ArrowRight': { dir: 'east', cmd: 'go east' }
     };
     
     const action = keyMap[e.key];
@@ -1408,9 +1598,8 @@ document.addEventListener("keydown", (e) => {
         keyHoldState.isHolding = true;
         
         // 立即执行一次小步移动
-        movePlayerStep(action.dir).then(moved => {
-            if (moved) {
-                // 只有当真正进入新房间时才发送后端命令
+        movePlayerStep(action.dir).then(result => {
+            if (result.roomChanged) {
                 sendGameCommand(action.cmd).then(response => {
                     if (response && response.message) {
                         appendLog(response.message, response.success === false ? "error" : "");
@@ -1419,11 +1608,10 @@ document.addEventListener("keydown", (e) => {
             }
         });
         
-        // 设置定时重复执行（按住时间越长，移动次数越多）
         keyHoldState.holdTimer = setInterval(() => {
             if (keyHoldState.isHolding && !isMoving) {
-                movePlayerStep(action.dir).then(moved => {
-                    if (moved) {
+                movePlayerStep(action.dir).then(result => {
+                    if (result.roomChanged) {
                         sendGameCommand(action.cmd).then(response => {
                             if (response && response.message) {
                                 appendLog(response.message, response.success === false ? "error" : "");
@@ -1432,17 +1620,17 @@ document.addEventListener("keydown", (e) => {
                     }
                 });
             }
-        }, 400); // 每400ms执行一次小步移动
+        }, 400);
     }
 });
 
 // 键盘按键松开事件
 document.addEventListener("keyup", (e) => {
     const keyMap = {
-        'w': true, 'W': true,
-        's': true, 'S': true,
-        'a': true, 'A': true,
-        'd': true, 'D': true
+        'w': true, 'W': true, 'ArrowUp': true,
+        's': true, 'S': true, 'ArrowDown': true,
+        'a': true, 'A': true, 'ArrowLeft': true,
+        'd': true, 'D': true, 'ArrowRight': true
     };
     
     if (keyMap[e.key] && keyHoldState.key === e.key) {
@@ -1457,7 +1645,20 @@ document.addEventListener("keyup", (e) => {
 });
 
 document.querySelectorAll(".direction-pad button").forEach((button) => {
-    button.addEventListener("click", () => submitCommand(button.dataset.command));
+    button.addEventListener("click", () => {
+        const direction = getDirection(button.dataset.command || "");
+        if (direction) {
+            movePlayerStep(direction).then(result => {
+                if (result.roomChanged) {
+                    sendGameCommand(button.dataset.command).then(response => {
+                        if (response && response.message) {
+                            appendLog(response.message, response.success === false ? "error" : "");
+                        }
+                    }).catch(() => {});
+                }
+            });
+        }
+    });
 });
 
 bindFloatingPanels();

@@ -1092,46 +1092,59 @@ async function movePlayerStep(direction) {
         return false;
     }
 
-    const route = getMovementRoute(path);
-    // 如果还没走到出口，只走一小步
-    if (!isAtExit(currentPlayerPosition, path.exit)) {
-        isMoving = true;
-        startPlayerStep(direction);
-        
-        // 计算下一步位置（向前移动一小段）
-        const nextPosition = calculateNextStep(currentPlayerPosition, direction);
-        setPlayerPosition(nextPosition);
-        
-        await wait(300);
-        stopPlayerStep(direction);
-        isMoving = false;
-        
-        // 检查是否到达出口
-        if (isAtExit(nextPosition, path.exit)) {
-            // 到达出口，进入下一房间
-            await enterNextRoom(direction, nextRoomId, path);
-        }
-        return true;
+// ========================================
+// 🛤️ 十字通道核心函数
+// ========================================
+
+function snapToCrossPath(position, roomConfig, direction) {
+    const centerX = roomConfig.center.x;
+    const centerY = roomConfig.center.y;
+    const channels = roomConfig.channels || ['vertical', 'horizontal'];
+    const hasVertical = channels.includes('vertical');
+    const hasHorizontal = channels.includes('horizontal');
+    
+    if (hasVertical && !hasHorizontal) {
+        return { left: centerX, top: position.top };
+    }
+    if (hasHorizontal && !hasVertical) {
+        return { left: position.left, top: centerY };
+    }
+    
+    if (direction === 'north' || direction === 'south') {
+        return { left: centerX, top: position.top };
+    }
+    if (direction === 'east' || direction === 'west') {
+        return { left: position.left, top: centerY };
+    }
+    
+    const distToVertical = Math.abs(position.left - centerX);
+    const distToHorizontal = Math.abs(position.top - centerY);
+    
+    if (distToVertical < distToHorizontal) {
+        return { left: centerX, top: position.top };
     } else {
-        // 已经在出口位置，直接进入下一房间
-        await enterNextRoom(direction, nextRoomId, path);
-        return true;
+        return { left: position.left, top: centerY };
     }
 }
 
-// 检查是否到达出口位置
-function isAtExit(position, exit) {
-    if (!exit) return false;
-    const threshold = 5; // 允许的误差范围
-    return Math.abs(position.left - exit.left) < threshold && 
-           Math.abs(position.top - exit.top) < threshold;
-}
+function calculateNextStep(current, direction, roomConfig) {
+    const stepSize = GLOBAL_STEP_SIZE;
+    const channels = roomConfig.channels || ['vertical', 'horizontal'];
+    const hasVertical = channels.includes('vertical');
+    const hasHorizontal = channels.includes('horizontal');
 
-// 计算下一步位置
-function calculateNextStep(current, direction) {
-    const stepSize = 8; // 每步移动的距离
+    if ((direction === 'north' || direction === 'south') && !hasVertical) return null;
+    if ((direction === 'east' || direction === 'west') && !hasHorizontal) return null;
+
     let newLeft = current.left;
     let newTop = current.top;
+
+    const centerX = roomConfig.center.x;
+    const centerY = roomConfig.center.y;
+
+    const snapped = snapToCrossPath(current, roomConfig, direction);
+    newLeft = snapped.left;
+    newTop = snapped.top;
     
     switch(direction) {
         case 'north': newTop -= stepSize; break;
@@ -1140,9 +1153,20 @@ function calculateNextStep(current, direction) {
         case 'east': newLeft += stepSize; break;
     }
     
-    // 限制在房间范围内
-    newLeft = Math.max(5, Math.min(95, newLeft));
-    newTop = Math.max(5, Math.min(95, newTop));
+    const afterMove = { left: newLeft, top: newTop };
+    const snappedAfter = snapToCrossPath(afterMove, roomConfig, direction);
+    newLeft = snappedAfter.left;
+    newTop = snappedAfter.top;
+
+    const vRange = roomConfig.verticalRange || { min: 5, max: 95 };
+    const hRange = roomConfig.horizontalRange || { min: 5, max: 95 };
+
+    if (hasVertical) {
+        newTop = Math.max(vRange.min, Math.min(vRange.max, newTop));
+    }
+    if (hasHorizontal) {
+        newLeft = Math.max(hRange.min, Math.min(hRange.max, newLeft));
+    }
     
     return { left: newLeft, top: newTop };
 }

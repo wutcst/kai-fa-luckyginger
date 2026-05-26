@@ -337,7 +337,7 @@ let sessionId = null;
 let currentUsername = null;
 let pendingAuthData = null;
 let lastBackendStatus = null;
-let currentPlayerPosition = { left: 50, top: 76 };
+let currentPlayerPosition = { left: 50, top: 50 };
 
 const gameState = {
     inventory: [],
@@ -412,8 +412,11 @@ function setCommandControlsDisabled(disabled) {
 }
 
 function canMoveToDirection(direction) {
-    const room = rooms[currentRoomId];
-    return Boolean(room && room.exits && room.exits[direction]);
+    const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+    const channels = roomConfig.channels || ['vertical', 'horizontal'];
+    if ((direction === 'north' || direction === 'south') && !channels.includes('vertical')) return false;
+    if ((direction === 'east' || direction === 'west') && !channels.includes('horizontal')) return false;
+    return true;
 }
 
 function updateDirectionControls() {

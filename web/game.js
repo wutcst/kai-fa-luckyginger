@@ -1634,7 +1634,20 @@ document.addEventListener("keyup", (e) => {
 });
 
 document.querySelectorAll(".direction-pad button").forEach((button) => {
-    button.addEventListener("click", () => submitCommand(button.dataset.command));
+    button.addEventListener("click", () => {
+        const direction = getDirection(button.dataset.command || "");
+        if (direction) {
+            movePlayerStep(direction).then(result => {
+                if (result.roomChanged) {
+                    sendGameCommand(button.dataset.command).then(response => {
+                        if (response && response.message) {
+                            appendLog(response.message, response.success === false ? "error" : "");
+                        }
+                    }).catch(() => {});
+                }
+            });
+        }
+    });
 });
 
 bindFloatingPanels();

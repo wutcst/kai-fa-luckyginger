@@ -923,14 +923,17 @@ function updateLockedTreasuryExit() {
 function setPlayerPosition(position, options = {}) {
     const token = $("player-token");
     const instant = options.instant === true;
-
+    
+    const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+    const snappedPosition = snapToCrossPath(position, roomConfig);
+    
     if (instant) {
         token.classList.add("no-position-transition");
     }
 
-    currentPlayerPosition = { left: position.left, top: position.top };
-    token.style.left = position.left + "%";
-    token.style.top = position.top + "%";
+    currentPlayerPosition = { left: snappedPosition.left, top: snappedPosition.top };
+    token.style.left = snappedPosition.left + "%";
+    token.style.top = snappedPosition.top + "%";
 
     if (instant) {
         token.offsetHeight;
@@ -1087,12 +1090,12 @@ async function handleCommand(command) {
     if (direction) {
         const result = await movePlayerStep(direction);
         if (result.roomChanged) {
-        try {
-            response = await sendGameCommand(normalized);
-            appendApiMessage(response);
-        } catch (error) {
-            appendLog("后端命令暂时不可用，已保留前端移动结果。", "error");
-        }
+            try {
+                response = await sendGameCommand(normalized);
+                appendApiMessage(response);
+            } catch (error) {
+                appendLog("后端命令暂时不可用，已保留前端移动结果。", "error");
+            }
         }
         return;
     }
@@ -1121,61 +1124,62 @@ async function handleCommand(command) {
     }
 }
 
-// 一键移动到下一个房间（用于方向按钮）
-async function moveToDirection(direction) {
-    if (!direction || isMoving) return false;
+
+// WASD小步移动 - 每次只移动一小段，走到出口才进入下一房间
+async function movePlayerStep(direction) {
+    if (!direction || isMoving) return { moved: false, roomChanged: false };
 
     const room = rooms[currentRoomId];
+    const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+
+    const nextPosition = calculateNextStep(currentPlayerPosition, direction, roomConfig);
+    if (!nextPosition) return { moved: false, roomChanged: false };
+
     const nextRoomId = room.exits[direction];
     const path = room.paths && room.paths[direction];
 
-    if (!nextRoomId || !path) {
-        appendLog("这个方向没有出口。", "error");
-        return false;
+    if (nextRoomId && path && isAtExit(currentPlayerPosition, path.exit)) {
+        await enterNextRoom(direction, nextRoomId, path);
+        return { moved: true, roomChanged: true };
     }
 
     isMoving = true;
     startPlayerStep(direction);
+    setPlayerPosition(nextPosition);
 
-    const route = getMovementRoute(path);
-    for (const point of route) {
-        setPlayerPosition(point);
-        await wait(520);
-    }
-
+    await wait(300);
     stopPlayerStep(direction);
-    setPlayerVisible(false);
-    await wait(180);
-
-    currentRoomId = nextRoomId;
-    gameState.visitedRooms.add(currentRoomId);
-    gameState.completion.roomsExplored = gameState.visitedRooms.size;
-    renderRoom(getEntryPositionForDirection(direction, path), { instantPlayerPosition: true });
-    setPlayerFrame(direction, 0);
-    await wait(80);
-    setPlayerVisible(true);
-    appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
     isMoving = false;
 
-    if (currentRoomId === "teleport_room") {
-        await showTeleportDialog();
+    if (nextRoomId && path && isAtExit(nextPosition, path.exit)) {
+        await enterNextRoom(direction, nextRoomId, path);
+        return { moved: true, roomChanged: true };
     }
 
-    return true;
+    return { moved: true, roomChanged: false };
 }
 
-// WASD小步移动 - 每次只移动一小段，走到出口才进入下一房间
-async function movePlayerStep(direction) {
-    if (!direction || isMoving) return false;
+// 检查是否到达出口位置
+function isAtExit(position, exit) {
+    if (!exit) return false;
+    const threshold = 6; // 允许的误差范围，稍微增大避免太敏感
+    return Math.abs(position.left - exit.left) < threshold && 
+           Math.abs(position.top - exit.top) < threshold;
+}
 
-    const room = rooms[currentRoomId];
-    const nextRoomId = room.exits[direction];
-    const path = room.paths && room.paths[direction];
-
-    if (!nextRoomId || !path) {
-        appendLog("这个方向没有出口。", "error");
-        return false;
-    }
+// 检查位置是否在十字通道上
+function isOnCrossPath(position) {
+    const centerX = 50;
+    const centerY = 50;
+    const tolerance = 12; // 十字通道的宽度容忍度
+    
+    // 检查是否在垂直通道上（x约等于50）
+    const onVertical = Math.abs(position.left - centerX) < tolerance;
+    // 检查是否在水平通道上（y约等于50）
+    const onHorizontal = Math.abs(position.top - centerY) < tolerance;
+    
+    return onVertical || onHorizontal;
+}
 
 // ========================================
 // 🛤️ 十字通道核心函数
@@ -1230,14 +1234,14 @@ function calculateNextStep(current, direction, roomConfig) {
     const snapped = snapToCrossPath(current, roomConfig, direction);
     newLeft = snapped.left;
     newTop = snapped.top;
-    
+
     switch(direction) {
         case 'north': newTop -= stepSize; break;
         case 'south': newTop += stepSize; break;
         case 'west': newLeft -= stepSize; break;
         case 'east': newLeft += stepSize; break;
     }
-    
+
     const afterMove = { left: newLeft, top: newTop };
     const snappedAfter = snapToCrossPath(afterMove, roomConfig, direction);
     newLeft = snappedAfter.left;
@@ -1252,7 +1256,7 @@ function calculateNextStep(current, direction, roomConfig) {
     if (hasHorizontal) {
         newLeft = Math.max(hRange.min, Math.min(hRange.max, newLeft));
     }
-    
+
     return { left: newLeft, top: newTop };
 }
 
@@ -1273,9 +1277,9 @@ async function enterNextRoom(direction, nextRoomId, path) {
     // 传送房间直接到中心，不需要动画
     if (currentRoomId === "teleport_room") {
         renderRoom({ left: targetX, top: targetY }, { instantPlayerPosition: true });
-    setPlayerVisible(true);
-    appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
-    isMoving = false;
+        setPlayerVisible(true);
+        appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
+        isMoving = false;
         updateDirectionControls();
         await showTeleportDialog();
         return;
@@ -1341,7 +1345,7 @@ function calculateStepsToCenter(entryPos, targetX, targetY) {
         }
         steps.push({ left: currentX, top: currentY });
     }
-
+    
     const stepsY = Math.floor(Math.abs(currentY - targetY) / stepSize);
     for (let i = 0; i < stepsY; i++) {
         if (currentY < targetY) {
@@ -1351,15 +1355,19 @@ function calculateStepsToCenter(entryPos, targetX, targetY) {
         }
         steps.push({ left: currentX, top: currentY });
     }
-
+    
     if (steps.length > 0) {
         steps[steps.length - 1] = { left: targetX, top: targetY };
     } else {
         steps.push({ left: targetX, top: targetY });
     }
-
+    
     return steps;
 }
+
+function getEntryPositionForDirection(direction, path) {
+    const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+    return roomConfig.entryPoints[direction] || { x: 50, y: 50 };
 }
 
 function getMovementRoute(path) {

@@ -1164,7 +1164,6 @@ function calculateNextStep(current, direction, roomConfig) {
     return { left: newLeft, top: newTop };
 }
 
-// 进入下一房间
 async function enterNextRoom(direction, nextRoomId, path) {
     isMoving = true;
     setPlayerVisible(false);
@@ -1173,38 +1172,102 @@ async function enterNextRoom(direction, nextRoomId, path) {
     currentRoomId = nextRoomId;
     gameState.visitedRooms.add(currentRoomId);
     gameState.completion.roomsExplored = gameState.visitedRooms.size;
-    renderRoom(getEntryPositionForDirection(direction, path), { instantPlayerPosition: true });
-    setPlayerFrame(direction, 0);
-    await wait(80);
+    
+    const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+    const targetX = roomConfig.walkTo.x;
+    const targetY = roomConfig.walkTo.y;
+    const entryPos = roomConfig.entryPoints[direction] || { x: targetX, y: targetY };
+    
+    // 传送房间直接到中心，不需要动画
+    if (currentRoomId === "teleport_room") {
+        renderRoom({ left: targetX, top: targetY }, { instantPlayerPosition: true });
     setPlayerVisible(true);
     appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
     isMoving = false;
-    
-    if (currentRoomId === "teleport_room") {
+        updateDirectionControls();
         await showTeleportDialog();
+        return;
     }
+    
+    // 其他房间：先在入口位置出现（不要经过中心！）
+    const token = $("player-token");
+    token.classList.add("no-position-transition");
+    currentPlayerPosition = { left: entryPos.x, top: entryPos.y };
+    token.style.left = entryPos.x + "%";
+    token.style.top = entryPos.y + "%";
+    
+    // 切换房间背景（玩家已经在入口位置了）
+    renderRoom({ left: entryPos.x, top: entryPos.y }, { instantPlayerPosition: true });
+    
+    setPlayerFrame(direction, 0);
+    await wait(50);
+    setPlayerVisible(true);
+    
+    // 移除 no-position-transition，让后续移动有动画
+    token.classList.remove("no-position-transition");
+    token.offsetHeight;
+    
+    // 从入口慢慢走到中心
+    const stepsToCenter = calculateStepsToCenter(entryPos, targetX, targetY);
+    
+    startPlayerStep(direction);
+    
+    for (let i = 0; i < stepsToCenter.length; i++) {
+        const step = stepsToCenter[i];
+        currentPlayerPosition = { left: step.left, top: step.top };
+        token.style.left = step.left + "%";
+        token.style.top = step.top + "%";
+        
+        await wait(GLOBAL_ANIMATION_SPEED);
+    }
+    
+    currentPlayerPosition = { left: targetX, top: targetY };
+    token.style.left = targetX + "%";
+    token.style.top = targetY + "%";
+    stopPlayerStep(direction);
+    
+    await wait(100);
+    
+    appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
+    isMoving = false;
+    updateDirectionControls();
 }
 
-function getEntryPositionForDirection(direction, path) {
-    const fallback = path.enter || rooms[currentRoomId].start;
-
-    if (direction === "north") {
-        return { left: fallback.left, top: 86 };
+function calculateStepsToCenter(entryPos, targetX, targetY) {
+    const steps = [];
+    const stepSize = GLOBAL_STEP_SIZE;
+    
+    let currentX = entryPos.x;
+    let currentY = entryPos.y;
+    
+    const stepsX = Math.floor(Math.abs(currentX - targetX) / stepSize);
+    for (let i = 0; i < stepsX; i++) {
+        if (currentX < targetX) {
+            currentX = Math.min(currentX + stepSize, targetX);
+        } else {
+            currentX = Math.max(currentX - stepSize, targetX);
+        }
+        steps.push({ left: currentX, top: currentY });
     }
 
-    if (direction === "south") {
-        return { left: fallback.left, top: 38 };
+    const stepsY = Math.floor(Math.abs(currentY - targetY) / stepSize);
+    for (let i = 0; i < stepsY; i++) {
+        if (currentY < targetY) {
+            currentY = Math.min(currentY + stepSize, targetY);
+        } else {
+            currentY = Math.max(currentY - stepSize, targetY);
+        }
+        steps.push({ left: currentX, top: currentY });
     }
 
-    if (direction === "east") {
-        return { left: 14, top: fallback.top };
+    if (steps.length > 0) {
+        steps[steps.length - 1] = { left: targetX, top: targetY };
+    } else {
+        steps.push({ left: targetX, top: targetY });
     }
 
-    if (direction === "west") {
-        return { left: 86, top: fallback.top };
-    }
-
-    return fallback;
+    return steps;
+}
 }
 
 function getMovementRoute(path) {

@@ -61,13 +61,15 @@ const rooms = {
         paths: {
             north: {
                 route: [
-                    { left: 44, top: 76 },
-                    { left: 47, top: 64 },
+                    { left: 50, top: 76 },
+                    { left: 50, top: 64 },
                     { left: 50, top: 52 },
-                    { left: 50, top: 40 }
+                    { left: 50, top: 40 },
+                    { left: 50, top: 28 },
+                    { left: 50, top: 14 }
                 ],
-                exit: { left: 50, top: 40 },
-                enter: { left: 50, top: 78 }
+                exit: { left: 50, top: 50 },
+                enter: { left: 50, top: 55 }
             }
         }
     },
@@ -77,27 +79,27 @@ const rooms = {
         image: "assets/rooms/main_hall.png",
         exits: { south: "campus_gate", east: "library", west: "forest_path", north: "lab" },
         items: ["cookie"],
-        start: { left: 50, top: 72 },
+        start: { left: 50, top: 50 },
         paths: {
             north: {
-                route: [{ left: 50, top: 64 }, { left: 50, top: 52 }, { left: 50, top: 38 }],
-                exit: { left: 50, top: 38 },
-                enter: { left: 50, top: 78 }
+                route: [{ left: 50, top: 63 }, { left: 50, top: 38 }, { left: 50, top: 14 }],
+                exit: { left: 50, top: 14 },
+                enter: { left: 50, top: 86 }
             },
             south: {
-                route: [{ left: 50, top: 78 }, { left: 50, top: 86 }],
+                route: [{ left: 50, top: 63 }, { left: 50, top: 74 }, { left: 50, top: 86 }],
                 exit: { left: 50, top: 86 },
-                enter: { left: 50, top: 42 }
+                enter: { left: 50, top: 14 }
             },
             east: {
-                route: [{ left: 62, top: 68 }, { left: 74, top: 64 }, { left: 84, top: 62 }],
-                exit: { left: 84, top: 62 },
-                enter: { left: 18, top: 62 }
+                route: [{ left: 50, top: 63 }, { left: 62, top: 63 }, { left: 74, top: 63 }, { left: 86, top: 63 }],
+                exit: { left: 86, top: 63 },
+                enter: { left: 14, top: 63 }
             },
             west: {
-                route: [{ left: 38, top: 68 }, { left: 26, top: 64 }, { left: 16, top: 62 }],
-                exit: { left: 16, top: 62 },
-                enter: { left: 82, top: 62 }
+                route: [{ left: 50, top: 63 }, { left: 38, top: 63 }, { left: 26, top: 63 }, { left: 14, top: 63 }],
+                exit: { left: 14, top: 63 },
+                enter: { left: 86, top: 63 }
             }
         }
     },
@@ -107,17 +109,17 @@ const rooms = {
         image: "assets/rooms/forest_path.png",
         exits: { east: "main_hall", north: "teleport_room" },
         items: ["bottle", "map"],
-        start: { left: 50, top: 72 },
+        start: { left: 50, top: 50 },
         paths: {
             east: {
-                route: [{ left: 62, top: 72 }, { left: 74, top: 68 }, { left: 84, top: 66 }],
-                exit: { left: 84, top: 66 },
-                enter: { left: 16, top: 62 }
+                route: [{ left: 50, top: 50 }, { left: 62, top: 50 }, { left: 74, top: 50 }, { left: 86, top: 50 }],
+                exit: { left: 86, top: 50 },
+                enter: { left: 80, top: 50 }
             },
             north: {
-                route: [{ left: 50, top: 62 }, { left: 50, top: 52 }, { left: 50, top: 42 }],
-                exit: { left: 50, top: 42 },
-                enter: { left: 50, top: 76 }
+                route: [{ left: 50, top: 50 }, { left: 50, top: 38 }, { left: 50, top: 26 }, { left: 50, top: 14 }],
+                exit: { left: 50, top: 25 },
+                enter: { left: 50, top: 30 }
             }
         }
     },
@@ -127,37 +129,37 @@ const rooms = {
         image: "assets/rooms/library.png",
         exits: { west: "main_hall", north: "locked_room" },
         items: ["coin"],
-        start: { left: 52, top: 64 },
+        start: { left: 50, top: 65 },
         paths: {
             west: {
-                route: [{ left: 40, top: 64 }, { left: 26, top: 62 }, { left: 14, top: 60 }],
-                exit: { left: 14, top: 60 },
-                enter: { left: 84, top: 62 }
+                route: [{ left: 50, top: 65 }, { left: 38, top: 65 }, { left: 26, top: 65 }, { left: 14, top: 65 }],
+                exit: { left: 14, top: 65 },
+                enter: { left: 86, top: 65 }
             },
             north: {
-                route: [{ left: 62, top: 58 }, { left: 70, top: 50 }, { left: 74, top: 42 }],
-                exit: { left: 74, top: 42 },
-                enter: { left: 42, top: 78 }
+                route: [{ left: 50, top: 65 }, { left: 50, top: 38 }, { left: 50, top: 26 }, { left: 50, top: 14 }],
+                exit: { left: 50, top: 35 },
+                enter: { left: 50, top: 40 }
             }
         }
     },
     lab: {
-        title: "Computer Lab",
+        title: "计算机实验室",
         description: "你在计算机实验室。设备、线缆和笔记本电脑摆放在实验台附近。",
         image: "assets/rooms/lab.png",
         exits: { south: "main_hall", east: "locked_room" },
         items: ["computer", "cable"],
-        start: { left: 50, top: 68 },
+        start: { left: 50, top: 50 },
         paths: {
             south: {
-                route: [{ left: 50, top: 74 }, { left: 50, top: 84 }],
-                exit: { left: 50, top: 84 },
-                enter: { left: 50, top: 38 }
+                route: [{ left: 50, top: 50 }, { left: 50, top: 62 }, { left: 50, top: 74 }, { left: 50, top: 86 }],
+                exit: { left: 50, top: 86 },
+                enter: { left: 50, top: 14 }
             },
             east: {
-                route: [{ left: 62, top: 66 }, { left: 74, top: 62 }, { left: 82, top: 60 }],
-                exit: { left: 82, top: 60 },
-                enter: { left: 22, top: 76 }
+                route: [{ left: 50, top: 50 }, { left: 62, top: 50 }, { left: 74, top: 50 }, { left: 86, top: 50 }],
+                exit: { left: 86, top: 50 },
+                enter: { left: 14, top: 50 }
             }
         }
     },
@@ -165,24 +167,24 @@ const rooms = {
         title: "上锁的宝库",
         description: "厚重的宝库门被锁住了。使用钥匙后，向北可以进入宝藏房间。",
         image: "assets/rooms/locked_room.png",
-        exits: { south: "library", west: "lab" },
+        exits: { west: "lab", south: "library", north: "unlocked_treasure_room" },
         items: [],
-        start: { left: 50, top: 76 },
+        start: { left: 75, top: 75 },
         paths: {
-            south: {
-                route: [{ left: 46, top: 80 }, { left: 42, top: 86 }],
-                exit: { left: 42, top: 86 },
-                enter: { left: 74, top: 42 }
-            },
             west: {
-                route: [{ left: 38, top: 76 }, { left: 28, top: 76 }, { left: 18, top: 76 }],
-                exit: { left: 18, top: 76 },
-                enter: { left: 82, top: 60 }
+                route: [{ left: 50, top: 50 }, { left: 38, top: 50 }, { left: 26, top: 50 }, { left: 14, top: 50 }],
+                exit: { left: 14, top: 75 },
+                enter: { left: 86, top: 50 }
+            },
+            south: {
+                route: [{ left: 50, top: 50 }, { left: 50, top: 62 }, { left: 50, top: 74 }, { left: 50, top: 86 }],
+                exit: { left: 75, top: 95 },
+                enter: { left: 50, top: 14 }
             },
             north: {
-                route: [{ left: 52, top: 68 }, { left: 56, top: 56 }, { left: 58, top: 44 }],
-                exit: { left: 58, top: 44 },
-                enter: { left: 50, top: 78 }
+                route: [{ left: 50, top: 50 }, { left: 50, top: 38 }, { left: 50, top: 26 }, { left: 50, top: 14 }],
+                exit: { left: 75, top: 60 },
+                enter: { left: 50, top: 86 }
             }
         }
     },
@@ -192,12 +194,12 @@ const rooms = {
         image: "assets/rooms/unlocked_treasure_room2.png",
         exits: { south: "locked_room" },
         items: ["treasure"],
-        start: { left: 50, top: 78 },
+        start: { left: 50, top: 50 },
         paths: {
             south: {
-                route: [{ left: 50, top: 82 }, { left: 50, top: 86 }],
+                route: [{ left: 50, top: 50 }, { left: 50, top: 62 }, { left: 50, top: 74 }, { left: 50, top: 86 }],
                 exit: { left: 50, top: 86 },
-                enter: { left: 58, top: 44 }
+                enter: { left: 50, top: 14 }
             }
         }
     },
@@ -207,21 +209,25 @@ const rooms = {
         image: "assets/rooms/teleport_room.png",
         exits: { south: "forest_path", east: "main_hall" },
         items: [],
-        start: { left: 50, top: 70 },
+        start: { left: 50, top: 50 },
         paths: {
             south: {
-                route: [{ left: 50, top: 76 }, { left: 48, top: 84 }],
-                exit: { left: 48, top: 84 },
-                enter: { left: 50, top: 42 }
+                route: [{ left: 50, top: 50 }, { left: 50, top: 62 }, { left: 50, top: 74 }, { left: 50, top: 86 }],
+                exit: { left: 50, top: 86 },
+                enter: { left: 50, top: 14 }
             },
             east: {
-                route: [{ left: 62, top: 66 }, { left: 72, top: 60 }, { left: 80, top: 58 }],
-                exit: { left: 80, top: 58 },
-                enter: { left: 16, top: 62 }
+                route: [{ left: 50, top: 50 }, { left: 62, top: 50 }, { left: 74, top: 50 }, { left: 86, top: 50 }],
+                exit: { left: 86, top: 50 },
+                enter: { left: 14, top: 50 }
             }
         }
     }
 };
+
+const GLOBAL_STEP_SIZE = 6;
+const GLOBAL_ANIMATION_SPEED = 500;
+
 
 const backendRoomAliases = [
     { patterns: ["outside", "campus", "入口", "校园入口"], roomId: "campus_gate" },

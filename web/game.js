@@ -1560,12 +1560,16 @@ document.addEventListener("keydown", (e) => {
     const keyMap = {
         'w': { dir: 'north', cmd: 'go north' },
         'W': { dir: 'north', cmd: 'go north' },
+        'ArrowUp': { dir: 'north', cmd: 'go north' },
         's': { dir: 'south', cmd: 'go south' },
         'S': { dir: 'south', cmd: 'go south' },
+        'ArrowDown': { dir: 'south', cmd: 'go south' },
         'a': { dir: 'west', cmd: 'go west' },
         'A': { dir: 'west', cmd: 'go west' },
+        'ArrowLeft': { dir: 'west', cmd: 'go west' },
         'd': { dir: 'east', cmd: 'go east' },
-        'D': { dir: 'east', cmd: 'go east' }
+        'D': { dir: 'east', cmd: 'go east' },
+        'ArrowRight': { dir: 'east', cmd: 'go east' }
     };
     
     const action = keyMap[e.key];
@@ -1583,9 +1587,8 @@ document.addEventListener("keydown", (e) => {
         keyHoldState.isHolding = true;
         
         // 立即执行一次小步移动
-        movePlayerStep(action.dir).then(moved => {
-            if (moved) {
-                // 只有当真正进入新房间时才发送后端命令
+        movePlayerStep(action.dir).then(result => {
+            if (result.roomChanged) {
                 sendGameCommand(action.cmd).then(response => {
                     if (response && response.message) {
                         appendLog(response.message, response.success === false ? "error" : "");
@@ -1594,11 +1597,10 @@ document.addEventListener("keydown", (e) => {
             }
         });
         
-        // 设置定时重复执行（按住时间越长，移动次数越多）
         keyHoldState.holdTimer = setInterval(() => {
             if (keyHoldState.isHolding && !isMoving) {
-                movePlayerStep(action.dir).then(moved => {
-                    if (moved) {
+                movePlayerStep(action.dir).then(result => {
+                    if (result.roomChanged) {
                         sendGameCommand(action.cmd).then(response => {
                             if (response && response.message) {
                                 appendLog(response.message, response.success === false ? "error" : "");
@@ -1607,17 +1609,17 @@ document.addEventListener("keydown", (e) => {
                     }
                 });
             }
-        }, 400); // 每400ms执行一次小步移动
+        }, 400);
     }
 });
 
 // 键盘按键松开事件
 document.addEventListener("keyup", (e) => {
     const keyMap = {
-        'w': true, 'W': true,
-        's': true, 'S': true,
-        'a': true, 'A': true,
-        'd': true, 'D': true
+        'w': true, 'W': true, 'ArrowUp': true,
+        's': true, 'S': true, 'ArrowDown': true,
+        'a': true, 'A': true, 'ArrowLeft': true,
+        'd': true, 'D': true, 'ArrowRight': true
     };
     
     if (keyMap[e.key] && keyHoldState.key === e.key) {

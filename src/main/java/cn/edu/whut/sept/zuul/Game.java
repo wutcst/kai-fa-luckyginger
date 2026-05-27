@@ -81,7 +81,7 @@ public class Game
 
         campus_gate = new Room("大学主入口外");
         main_hall = new Room("主大厅");
-        forest_path = new Room("校园酒吧");
+        forest_path = new Room("室外花园");
         library = new Room("图书馆");
         lab = new Room("计算机实验室");
         locked_room = new LockedRoom("上锁的宝库", "key");
@@ -121,11 +121,11 @@ public class Game
 
         campus_gate.addItem(new Item("key", "一把生锈的旧钥匙", 0.1, "KEY", "可以解锁上锁的房间"));
         main_hall.addItem(new Item("cookie", "一块可以增加负重的魔法饼干", 0.1));
-        forest_path.addItem(new Item("bottle", "一个空瓶子", 0.3));
+        forest_path.addItem(new Item("box", "一个带密码锁的箱子，看起来很重要", 1.0, "TOOL", "需要4位数字密码才能打开"));
         forest_path.addItem(new Item("map", "一张校园地图", 0.2, "MAP", "显示当前位置的详细信息"));
-        library.addItem(new Item("coin", "一枚金币", 0.05));
+        library.addItem(new Item("notebook", "一本带锁的笔记本，封面刻着奇怪的符号", 0.3, "TOOL", "需要金钥匙才能打开"));
         lab.addItem(new Item("computer", "一台笔记本电脑", 2.5));
-        lab.addItem(new Item("cable", "一根USB线", 0.1));
+        lab.addItem(new Item("cable", "一根USB数据线", 0.1));
 
         startingRoom = campus_gate;
     }

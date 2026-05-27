@@ -12,11 +12,12 @@ const itemMeta = {
     key: { label: "key", weight: 0.1, icon: "assets/items/gold_key.png", description: "一把生锈的旧钥匙，可以打开上锁的房间。" },
     cookie: { label: "cookie", weight: 0.2, icon: "assets/items/pumpkin.png", description: "一块美味的饼干，吃了可以增加5kg的负重能力。" },
     computer: { label: "computer", weight: 2.5, icon: "assets/items/crystal_ore.png", description: "一台古老的计算机，似乎藏着什么秘密。" },
-    cable: { label: "cable", weight: 0.1, icon: "assets/items/pickaxe.png", description: "一根数据线，可以连接计算机和其他设备。" },
-    coin: { label: "coin", weight: 0.1, icon: "assets/items/shield.png", description: "一枚金币，可能在某个地方派上用场。" },
-    bottle: { label: "bottle", weight: 0.4, icon: "assets/items/green_potion.png", description: "一瓶神秘的绿色药水，暂时不知道有什么用。" },
+    cable: { label: "cable", weight: 0.1, icon: "assets/items/pickaxe.png", description: "一根USB数据线，可以连接计算机和其他设备。" },
+    notebook: { label: "notebook", weight: 0.3, icon: "assets/items/scroll.png", description: "一本带锁的笔记本，或许需要宝库里的金钥匙才能打开。" },
+    box: { label: "box", weight: 1.0, icon: "assets/items/green_potion.png", description: "花园中拾到的带密码锁的箱子，看起来很重要，需要4位数字密码才能打开。或许出口也在这附近。" },
     map: { label: "map", weight: 0.1, icon: "assets/items/scroll.png", description: "一张校园地图，可以帮助你探索。", mapImage: "assets/maps/campus_overview.png" },
-    treasure: { label: "treasure", weight: 0.1, icon: "assets/items/gold_key.png", description: "传说中的宝藏！" }
+    treasure: { label: "treasure", weight: 0.1, icon: "assets/items/gold_key.png", description: "装满金币的宝箱，里面还有一把金钥匙。" },
+    final_key: { label: "final_key", weight: 0.1, icon: "assets/items/silver_key_new.png", description: "从箱子里得到的最终钥匙，似乎能打开最终的重要的门。" }
 };
 
 const playerFrames = {
@@ -79,7 +80,7 @@ const rooms = {
         image: "assets/rooms/main_hall.png",
         exits: { south: "campus_gate", east: "library", west: "forest_path", north: "lab" },
         items: ["cookie"],
-        start: { left: 50, top: 50 },
+        start: { left: 50, top: 63 },
         paths: {
             north: {
                 route: [{ left: 50, top: 63 }, { left: 50, top: 38 }, { left: 50, top: 14 }],
@@ -104,11 +105,11 @@ const rooms = {
         }
     },
     forest_path: {
-        title: "校园酒吧",
+        title: "室外花园",
         description: "花园小路旁有休息区和温室，石板路通向更深处。",
         image: "assets/rooms/forest_path.png",
         exits: { east: "main_hall", north: "teleport_room" },
-        items: ["bottle", "map"],
+        items: ["box", "map"],
         start: { left: 50, top: 50 },
         paths: {
             east: {
@@ -128,7 +129,7 @@ const rooms = {
         description: "温暖的灯光照在长桌和书架上，桌面上散落着笔记。",
         image: "assets/rooms/library.png",
         exits: { west: "main_hall", north: "locked_room" },
-        items: ["coin"],
+        items: ["notebook"],
         start: { left: 50, top: 65 },
         paths: {
             west: {
@@ -228,6 +229,11 @@ const rooms = {
 const GLOBAL_STEP_SIZE = 6;
 const GLOBAL_ANIMATION_SPEED = 500;
 
+const PASSWORDS = {
+    computer: '1235',
+    box: '1768'
+};
+
 const ROOM_CONFIGS = {
     campus_gate: {
         center: { x: 50, y: 76 },
@@ -308,8 +314,8 @@ const ROOM_CONFIGS = {
     teleport_room: {
         center: { x: 50, y: 50 },
         channels: ['vertical', 'horizontal'],
-        verticalRange: { min: 5, max: 95 },
-        horizontalRange: { min: 5, max: 95 },
+        verticalRange: { min: 30, max: 95 },
+        horizontalRange: { min: 10, max: 95 },
         entryPoints: {
             north: { x: 50, y: 86 },
             west: { x: 86, y: 50 }
@@ -345,10 +351,17 @@ const gameState = {
     visitedRooms: new Set(["campus_gate"]),
     completion: {
         roomsExplored: 1,
-        totalRooms: 7,
+        totalRooms: 8,
         itemsCollected: 0,
-        totalItems: 8
-    }
+        totalItems: 9
+    },
+    notebookUnlocked: false,
+    notebookOpened: false,
+    computerStarted: false,
+    computerPasswordCorrect: false,
+    boxOpened: false,
+    hasFinalKey: false,
+    gameWon: false
 };
 
 // WASD按键按住状态追踪
@@ -572,7 +585,6 @@ function showItemDetail(itemName) {
     $("item-detail-weight").textContent = `重量：${meta.weight}kg`;
     $("item-detail-description").textContent = meta.description || "暂无描述";
     
-    // 处理地图预览
     const mapPreview = $("item-map-preview");
     const modalCard = $("item-detail-modal").querySelector(".modal-card");
     if (meta.mapImage) {
@@ -583,7 +595,109 @@ function showItemDetail(itemName) {
         mapPreview.style.display = "none";
         modalCard.classList.remove("item-detail-card--map");
     }
-    
+
+    let actionsHtml = '<button class="secondary-action" id="item-detail-close" type="button">关闭</button>';
+
+    if (itemName === 'notebook') {
+        if (gameState.notebookUnlocked) {
+            actionsHtml = '<button class="primary-action" id="item-detail-action-btn" type="button">查看内容</button>' + actionsHtml;
+        } else if (hasItem('treasure')) {
+            actionsHtml = '<button class="primary-action" id="item-detail-action-btn" type="button">使用金钥匙打开</button>' + actionsHtml;
+        } else {
+            $("item-detail-description").textContent = "一本带锁的笔记本，或许需要宝库里的金钥匙才能打开。";
+        }
+    } else if (itemName === 'computer') {
+        if (gameState.computerPasswordCorrect && hasItem('cable')) {
+            actionsHtml = '<button class="primary-action" id="item-detail-action-btn" type="button">查看屏幕</button>' + actionsHtml;
+        } else if (gameState.computerStarted && hasItem('cable')) {
+            actionsHtml = '<button class="primary-action" id="item-detail-action-btn" type="button">输入密码</button>' + actionsHtml;
+        } else if (hasItem('cable')) {
+            actionsHtml = '<button class="primary-action" id="item-detail-action-btn" type="button">开启电脑</button>' + actionsHtml;
+        } else {
+            $("item-detail-description").textContent = "一台古老的计算机，似乎藏着什么秘密。需要数据线才能启动。";
+        }
+    } else if (itemName === 'box') {
+        if (gameState.boxOpened) {
+            $("item-detail-description").textContent = "箱子已经空了，你取出了里面的最终钥匙。";
+        } else {
+            actionsHtml = '<button class="primary-action" id="item-detail-action-btn" type="button">输入密码</button>' + actionsHtml;
+        }
+    } else if (itemName === 'treasure') {
+        $("item-detail-description").textContent = "装满金币的宝箱，里面还有一把金钥匙。用金钥匙可以打开图书馆上锁的笔记本。";
+    } else if (itemName === 'final_key') {
+        $("item-detail-description").textContent = "从箱子里得到的最终钥匙，似乎能打开室外花园出口的大门。"
+    }
+
+    const actionsContainer = $("item-detail-actions");
+    actionsContainer.innerHTML = actionsHtml;
+
+    actionsContainer.querySelector("#item-detail-close").addEventListener("click", hideItemDetail);
+
+    const actionBtn = actionsContainer.querySelector("#item-detail-action-btn");
+    if (actionBtn) {
+        actionBtn.addEventListener("click", () => {
+            hideItemDetail();
+            if (itemName === 'notebook') {
+                if (gameState.notebookUnlocked) {
+                    showContentModal('笔记本内容', 'assets/puzzles/notebook_puzzle.png', '笔记本中展示的谜题似乎暗示着实验室电脑的密码...');
+                } else if (hasItem('treasure')) {
+                    gameState.notebookUnlocked = true;
+                    gameState.notebookOpened = true;
+                    savePuzzleState();
+                    appendLog("你用金钥匙打开了笔记本！");
+                    showContentModal('笔记本内容', 'assets/puzzles/notebook_puzzle.png', '笔记本中展示的谜题似乎暗示着实验室电脑的密码...');
+                }
+            } else if (itemName === 'computer') {
+                if (gameState.computerPasswordCorrect) {
+                    showContentModal('电脑屏幕', 'assets/puzzles/computer_puzzle.png', '电脑屏幕上显示着一组图案，或许跟花园中箱子的密码有关...');
+                } else if (gameState.computerStarted) {
+                    showPasswordModal('输入电脑开机密码', (password) => {
+                        if (password === PASSWORDS.computer) {
+                            gameState.computerPasswordCorrect = true;
+                            savePuzzleState();
+                            appendLog("电脑密码正确！");
+                            showContentModal('电脑屏幕', 'assets/puzzles/computer_puzzle.png', '电脑屏幕上显示着一组图案，或许跟花园中箱子的密码有关...');
+                            return true;
+                        } else {
+                            return "密码错误，或许我该看看笔记本寻找线索...";
+                        }
+                    });
+                } else if (hasItem('cable')) {
+                    gameState.computerStarted = true;
+                    savePuzzleState();
+                    appendLog("你用数据线启动了电脑！屏幕上出现了密码输入框。");
+                    showPasswordModal('输入电脑开机密码', (password) => {
+                        if (password === PASSWORDS.computer) {
+                            gameState.computerPasswordCorrect = true;
+                            savePuzzleState();
+                            appendLog("电脑密码正确！");
+                            showContentModal('电脑屏幕', 'assets/puzzles/computer_puzzle.png', '电脑屏幕上显示着一组图案，或许跟花园中箱子的密码有关...');
+                            return true;
+                        } else {
+                            return "密码错误，或许我该看看笔记本寻找线索...";
+                        }
+                    });
+                }
+            } else if (itemName === 'box') {
+                if (!gameState.boxOpened) {
+                    showPasswordModal('输入箱子密码', (password) => {
+                        if (password === PASSWORDS.box) {
+                            gameState.boxOpened = true;
+                            gameState.hasFinalKey = true;
+                            savePuzzleState();
+                            addFinalKeyToInventory();
+                            appendLog("箱子打开了！你获得了最终钥匙！");
+                            showContentModal('箱子打开了！', '', '你在箱子中发现了一把闪烁着奇异光芒的钥匙——最终钥匙！它似乎能打开最终的重要大门...');
+                            return true;
+                        } else {
+                            return "密码错误，我该认真查看电脑屏幕来寻找答案...";
+                        }
+                    });
+                }
+            }
+        });
+    }
+
     $("item-detail-modal").classList.add("open");
 }
 
@@ -768,16 +882,40 @@ function updateHud() {
     renderProgress();
 }
 
-function syncFromBackendStatus(status) {
+function syncFromBackendStatus(status, options = {}) {
     if (!status || status.error) {
         if (status && status.error) appendLog(status.error, "error");
         return;
     }
 
     lastBackendStatus = status;
+
+    if (status.treasureUnlocked !== undefined) {
+        gameState.treasureUnlocked = status.treasureUnlocked;
+    }
+
+    if (status.completion && status.completion.cookieEaten) {
+        rooms.main_hall.items = (rooms.main_hall.items || []).filter((i) => i !== "cookie");
+    }
+
+    if (status.completion) {
+        gameState.completion = {
+            roomsExplored: gameState.visitedRooms.size,
+            totalRooms: Object.keys(rooms).length,
+            itemsCollected: status.completion.itemsCollected || gameState.completion.itemsCollected,
+            totalItems: status.completion.totalItems || gameState.completion.totalItems
+        };
+    }
+
+    if (!options.allowRoomChange) {
+        gameState.visitedRooms.add(currentRoomId);
+        updateLockedTreasuryExit();
+        updateHud();
+        return;
+    }
+
     const roomInfo = status.currentRoom || {};
     
-    // 如果当前是在 unlocked_treasure_room，保持当前房间不变
     let visualRoomId;
     if (currentRoomId === 'unlocked_treasure_room') {
         visualRoomId = 'unlocked_treasure_room';
@@ -788,48 +926,32 @@ function syncFromBackendStatus(status) {
     const visualRoom = rooms[visualRoomId];
 
     if (visualRoom) {
-        // 如果当前不是在特殊房间，才更新 currentRoomId
-        if (currentRoomId !== 'unlocked_treasure_room') {
+        if (visualRoomId !== currentRoomId) {
             currentRoomId = visualRoomId;
+            gameState.visitedRooms.add(currentRoomId);
         }
         visualRoom.description = roomInfo.longDescription || roomInfo.shortDescription || visualRoom.description;
-        // 不要让后端覆盖我们对 locked_room 和 unlocked_treasure_room 的物品配置
         if (visualRoomId !== 'locked_room' && visualRoomId !== 'unlocked_treasure_room') {
             visualRoom.items = itemNames(roomInfo.items);
         }
     }
 
     const playerInfo = status.player || {};
-    gameState.inventory = itemNames(playerInfo.inventory);
-
-    if (status.completion) {
-        gameState.completion = {
-            roomsExplored: status.completion.roomsExplored || gameState.completion.roomsExplored,
-            totalRooms: status.completion.totalRooms || gameState.completion.totalRooms,
-            itemsCollected: status.completion.itemsCollected || gameState.completion.itemsCollected,
-            totalItems: status.completion.totalItems || gameState.completion.totalItems
-        };
-    }
-
-    if (status.treasureUnlocked !== undefined) {
-        gameState.treasureUnlocked = status.treasureUnlocked;
-    }
-
-    if (status.completion && status.completion.cookieEaten) {
-        rooms.main_hall.items = (rooms.main_hall.items || []).filter((i) => i !== "cookie");
-    }
+    const backendInventory = itemNames(playerInfo.inventory);
+    const frontendOnlyItems = gameState.inventory.filter(item => item === 'final_key' || item === 'treasure');
+    gameState.inventory = [...new Set([...backendInventory, ...frontendOnlyItems])];
 
     gameState.visitedRooms.add(currentRoomId);
     updateLockedTreasuryExit();
     renderRoom();
 }
 
-async function refreshGameStatus() {
+async function refreshGameStatus(options = {}) {
     if (!sessionId) return;
 
     try {
         const status = await getApi("status", { sessionId });
-        syncFromBackendStatus(status);
+        syncFromBackendStatus(status, options);
     } catch (error) {
         appendLog("暂时无法同步后端状态，已保留当前前端状态。", "error");
     }
@@ -845,9 +967,9 @@ function enterGameFromAuth(data) {
     if (data.message) appendLog(data.message);
 
     if (data.gameStatus) {
-        syncFromBackendStatus(data.gameStatus);
+        syncFromBackendStatus(data.gameStatus, { allowRoomChange: true });
     } else {
-        refreshGameStatus();
+        refreshGameStatus({ allowRoomChange: true });
     }
 }
 
@@ -871,32 +993,56 @@ async function startGameFromMenu(mode) {
     setMenuMessage(mode === "load" ? "正在读取存档..." : "正在进入游戏...");
 
     if (mode === "new") {
-        resetFrontendState();
+        const username = pendingAuthData.username || $("login-username").value.trim() || $("register-username").value.trim();
+        resetFrontendState(username);
         sessionId = pendingAuthData.sessionId || null;
-        currentUsername = pendingAuthData.username || $("login-username").value.trim() || $("register-username").value.trim();
+        currentUsername = username;
         updateLockedTreasuryExit();
         showView("game");
-        renderRoom();
-        appendLog("新游戏已开始！");
         if (sessionId) {
             try {
                 const response = await callApi("newgame", { sessionId });
                 if (response && response.success && response.gameStatus) {
-                    syncFromBackendStatus(response.gameStatus);
+                    syncFromBackendStatus(response.gameStatus, { allowRoomChange: true });
                 }
             } catch (error) {
                 appendLog("后端新游戏重置失败，已使用前端初始状态。", "error");
             }
         }
+        currentRoomId = "campus_gate";
+        const gateConfig = ROOM_CONFIGS.campus_gate || ROOM_CONFIGS.main_hall;
+        currentPlayerPosition = { left: gateConfig.center.x, top: gateConfig.center.y };
+        renderRoom({ left: gateConfig.center.x, top: gateConfig.center.y }, { instantPlayerPosition: true });
+        appendLog("新游戏已开始！");
     } else if (mode === "load") {
         enterGameFromAuth(pendingAuthData);
         await loadSavedGame();
     } else {
-        enterGameFromAuth(pendingAuthData);
+        sessionId = pendingAuthData.sessionId || null;
+        currentUsername = pendingAuthData.username || $("login-username").value.trim() || $("register-username").value.trim();
+        showView("game");
+        
+        const autoKey = 'zuul_auto_' + currentUsername;
+        const loaded = loadFullState(autoKey);
+        if (loaded) {
+            renderRoom({ left: currentPlayerPosition.left, top: currentPlayerPosition.top }, { instantPlayerPosition: true });
+            appendLog("已恢复上次进度。");
+        } else {
+            if (pendingAuthData.gameStatus) {
+                syncFromBackendStatus(pendingAuthData.gameStatus, { allowRoomChange: true });
+            } else if (sessionId) {
+                await refreshGameStatus({ allowRoomChange: true });
+            }
+            const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+            currentPlayerPosition = { left: roomConfig.center.x, top: roomConfig.center.y };
+            renderRoom({ left: roomConfig.center.x, top: roomConfig.center.y }, { instantPlayerPosition: true });
+            appendLog(`欢迎进入游戏，${currentUsername || "player"}。`);
+        }
+        if (pendingAuthData.message) appendLog(pendingAuthData.message);
     }
 }
 
-function resetFrontendState() {
+function resetFrontendState(username) {
     currentRoomId = "campus_gate";
     currentPlayerPosition = { left: 50, top: 76 };
     gameState.inventory = [];
@@ -904,20 +1050,32 @@ function resetFrontendState() {
     gameState.visitedRooms = new Set(["campus_gate"]);
     gameState.completion = {
         roomsExplored: 1,
-        totalRooms: 7,
+        totalRooms: 8,
         itemsCollected: 0,
-        totalItems: 8
+        totalItems: 9
     };
+    gameState.notebookUnlocked = false;
+    gameState.notebookOpened = false;
+    gameState.computerStarted = false;
+    gameState.computerPasswordCorrect = false;
+    gameState.boxOpened = false;
+    gameState.hasFinalKey = false;
+    gameState.gameWon = false;
     lastBackendStatus = null;
     rooms.campus_gate.items = ["key"];
     rooms.main_hall.items = ["cookie"];
-    rooms.forest_path.items = ["bottle", "map"];
-    rooms.library.items = ["coin"];
+    rooms.forest_path.items = ["box", "map"];
+    rooms.library.items = ["notebook"];
     rooms.lab.items = ["computer", "cable"];
     rooms.locked_room.items = [];
     rooms.unlocked_treasure_room.items = ["treasure"];
     rooms.teleport_room.items = [];
     updateLockedTreasuryExit();
+    try { localStorage.removeItem('zuul_puzzle_state'); } catch (e) {}
+    if (username) {
+        try { localStorage.removeItem('zuul_save_' + username); } catch (e) {}
+        try { localStorage.removeItem('zuul_auto_' + username); } catch (e) {}
+    }
 }
 
 function closeGameMenu() {
@@ -933,6 +1091,9 @@ async function saveCurrentGame() {
     try {
         const response = await callApi("save", { sessionId });
         appendApiMessage(response);
+        if (response && response.success) {
+            saveFullState('zuul_save_' + currentUsername);
+        }
     } catch (error) {
         appendLog("保存失败，请确认服务器和数据库连接正常。", "error");
     }
@@ -948,11 +1109,37 @@ async function loadSavedGame() {
         const response = await callApi("load", { sessionId });
         appendApiMessage(response);
         if (response && response.success) {
-            if (response.gameStatus) {
-                syncFromBackendStatus(response.gameStatus);
+            const saveKey = 'zuul_save_' + currentUsername;
+            const loaded = loadFullState(saveKey);
+            if (!loaded) {
+                if (response.gameStatus) {
+                    syncFromBackendStatus(response.gameStatus, { allowRoomChange: true });
+                } else {
+                    await refreshGameStatus({ allowRoomChange: true });
+                }
+                loadPuzzleState();
+                if (gameState.hasFinalKey && !gameState.inventory.includes('final_key')) {
+                    gameState.inventory.push('final_key');
+                }
+                if (gameState.treasureUnlocked) {
+                    updateLockedTreasuryExit();
+                }
+                if (gameState.boxOpened) {
+                    rooms.forest_path.items = (rooms.forest_path.items || []).filter(i => i !== 'box');
+                }
+                if (gameState.notebookUnlocked) {
+                    rooms.library.items = (rooms.library.items || []).filter(i => i !== 'notebook');
+                }
             } else {
-                await refreshGameStatus();
+                if (response.gameStatus) {
+                    lastBackendStatus = response.gameStatus;
+                }
             }
+            const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+            currentPlayerPosition = { left: roomConfig.center.x, top: roomConfig.center.y };
+            renderRoom({ left: roomConfig.center.x, top: roomConfig.center.y }, { instantPlayerPosition: true });
+            renderInventory();
+            appendLog("存档已读取！");
         }
     } catch (error) {
         appendLog("读取存档失败，请确认服务器已保存过进度。", "error");
@@ -1010,7 +1197,9 @@ function renderRoom(entryPosition, options = {}) {
         : " 当前房间没有可拾取物品。";
     $("room-description").textContent = room.description + itemText;
 
-    setPlayerPosition(entryPosition || room.start, { instant: options.instantPlayerPosition });
+    if (entryPosition) {
+        setPlayerPosition(entryPosition, { instant: options.instantPlayerPosition });
+    }
     updateHud();
     updateDirectionControls();
 }
@@ -1024,6 +1213,11 @@ function getDirection(command) {
 }
 
 function takeItem(itemName) {
+    if (isMoving) {
+        appendLog("请等走到位置后再拾取物品。", "error");
+        return;
+    }
+
     const room = rooms[currentRoomId];
     const items = room.items || [];
 
@@ -1169,12 +1363,15 @@ async function handleCommand(command) {
     appendApiMessage(response);
     applyFrontEndCommand(normalized, { echoLook: !response || !response.message });
 
-    // 特殊处理：在 unlocked_treasure_room 拾取 treasure 或在 locked_room 使用 key 后，不刷新状态
     const isSpecialCommand = 
         (currentRoomId === 'unlocked_treasure_room' && normalized.startsWith('take')) ||
         (currentRoomId === 'locked_room' && normalized.startsWith('use'));
 
-    if (!isSpecialCommand && normalized !== "look" && normalized !== "status" && normalized !== "items") {
+    const isItemCommand = normalized.startsWith("take") || normalized.startsWith("get") || 
+                           normalized.startsWith("drop") || normalized.startsWith("use") || 
+                           normalized.startsWith("eat");
+
+    if (!isItemCommand && !isSpecialCommand && normalized !== "look" && normalized !== "status" && normalized !== "items") {
         await refreshGameStatus();
     }
 }
@@ -1188,6 +1385,14 @@ async function movePlayerStep(direction) {
 
     const nextPosition = calculateNextStep(currentPlayerPosition, direction, roomConfig);
     if (!nextPosition) return { moved: false, roomChanged: false };
+
+    if (currentRoomId === 'forest_path' && direction === 'west') {
+        const hRange = roomConfig.horizontalRange || { min: 5, max: 95 };
+        if (nextPosition.left <= hRange.min + 2) {
+            showExitDialog();
+            return { moved: false, roomChanged: false };
+        }
+    }
 
     const nextRoomId = room.exits[direction];
     const path = room.paths && room.paths[direction];
@@ -1330,6 +1535,7 @@ async function enterNextRoom(direction, nextRoomId, path) {
     
     // 传送房间直接到中心，不需要动画
     if (currentRoomId === "teleport_room") {
+        currentPlayerPosition = { left: targetX, top: targetY };
         renderRoom({ left: targetX, top: targetY }, { instantPlayerPosition: true });
         setPlayerVisible(true);
         appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
@@ -1451,16 +1657,38 @@ async function showTeleportDialog() {
             cancelBtn.removeEventListener("click", onCancel);
         }
 
-        function onConfirm() {
+        async function onConfirm() {
             cleanup();
-            sendGameCommand("teleport").then((response) => {
+            try {
+                const response = await sendGameCommand("teleport");
                 if (response && response.success) {
                     appendApiMessage(response);
-                    refreshGameStatus();
+                    const validTargets = ['campus_gate', 'main_hall', 'forest_path', 'library', 'lab'];
+                    let targetRoomId = findVisualRoomId(response.currentRoom || {});
+                    if (!validTargets.includes(targetRoomId)) {
+                        targetRoomId = validTargets[Math.floor(Math.random() * validTargets.length)];
+                    }
+                    const targetConfig = ROOM_CONFIGS[targetRoomId] || ROOM_CONFIGS.main_hall;
+                    isMoving = true;
+                    setPlayerVisible(false);
+                    currentRoomId = targetRoomId;
+                    gameState.visitedRooms.add(currentRoomId);
+                    gameState.completion.roomsExplored = gameState.visitedRooms.size;
+                    const cx = targetConfig.center.x;
+                    const cy = targetConfig.center.y;
+                    currentPlayerPosition = { left: cx, top: cy };
+                    renderRoom({ left: cx, top: cy }, { instantPlayerPosition: true });
+                    setPlayerVisible(true);
+                    appendLog(`传送到了 ${rooms[targetRoomId].title}！`);
+                    isMoving = false;
+                    updateDirectionControls();
+                    await refreshGameStatus({ allowRoomChange: true });
                 }
-            }).catch(() => {
+            } catch (error) {
                 appendLog("传送失败。", "error");
-            }).finally(() => resolve());
+            } finally {
+                resolve();
+            }
         }
 
         function onCancel() {
@@ -1580,6 +1808,9 @@ $("register-form").addEventListener("submit", async (event) => {
 });
 
 $("logout-btn").addEventListener("click", async () => {
+    if (currentUsername && currentRoomId) {
+        saveFullState('zuul_auto_' + currentUsername);
+    }
     if (sessionId) {
         try {
             await callApi("logout", { sessionId });
@@ -1726,4 +1957,246 @@ document.querySelectorAll(".direction-pad button").forEach((button) => {
 
 bindFloatingPanels();
 updateLockedTreasuryExit();
+loadPuzzleState();
 renderRoom();
+
+function showPasswordModal(title, callback) {
+    const modal = $("password-modal");
+    const titleEl = modal.querySelector("h3");
+    const input = $("password-input");
+    const confirmBtn = $("password-confirm");
+    const cancelBtn = $("password-cancel");
+    const errorMsg = $("password-error");
+
+    titleEl.textContent = title;
+    input.value = "";
+    errorMsg.textContent = "";
+    modal.classList.add("open");
+
+    function cleanup() {
+        modal.classList.remove("open");
+        confirmBtn.removeEventListener("click", onConfirm);
+        cancelBtn.removeEventListener("click", onCancel);
+        input.removeEventListener("keydown", onKeydown);
+    }
+
+    function onConfirm() {
+        const password = input.value.trim();
+        if (password.length !== 4) {
+            errorMsg.textContent = "请输入4位数字密码";
+            return;
+        }
+        const result = callback(password);
+        if (result === true) {
+            cleanup();
+        } else {
+            errorMsg.textContent = result || "密码错误";
+            input.value = "";
+            input.focus();
+        }
+    }
+
+    function onCancel() {
+        cleanup();
+    }
+
+    function onKeydown(e) {
+        if (e.key === "Enter") {
+            e.preventDefault();
+            onConfirm();
+        }
+    }
+
+    confirmBtn.addEventListener("click", onConfirm);
+    cancelBtn.addEventListener("click", onCancel);
+    input.addEventListener("keydown", onKeydown);
+    setTimeout(() => input.focus(), 100);
+}
+
+function showContentModal(title, imageUrl, text) {
+    const modal = $("content-modal");
+    const titleEl = modal.querySelector("h3");
+    const image = $("content-image");
+    const textEl = $("content-text");
+    const closeBtn = $("content-close");
+
+    titleEl.textContent = title;
+    image.src = imageUrl;
+    image.style.display = imageUrl ? "block" : "none";
+    textEl.textContent = text || "";
+    modal.classList.add("open");
+
+    function cleanup() {
+        modal.classList.remove("open");
+        closeBtn.removeEventListener("click", cleanup);
+    }
+
+    closeBtn.addEventListener("click", cleanup);
+}
+
+function showExitDialog() {
+    const modal = $("exit-modal");
+    const titleEl = modal.querySelector("h3");
+    const descEl = $("exit-description");
+    const openBtn = $("exit-open");
+    const backBtn = $("exit-back");
+
+    if (gameState.hasFinalKey) {
+        titleEl.textContent = "出口";
+        descEl.textContent = "你已到达出口，是否使用最终钥匙开门？";
+        openBtn.textContent = "开门";
+        openBtn.style.display = "inline-block";
+    } else {
+        titleEl.textContent = "锁住的门";
+        descEl.textContent = "你已到达出口，但门锁住了，需要一把特殊的钥匙。";
+        openBtn.style.display = "none";
+    }
+
+    modal.classList.add("open");
+
+    function cleanup() {
+        modal.classList.remove("open");
+        openBtn.removeEventListener("click", onOpen);
+        backBtn.removeEventListener("click", onBack);
+    }
+
+    function onOpen() {
+        cleanup();
+        if (gameState.hasFinalKey) {
+            gameState.gameWon = true;
+            savePuzzleState();
+            showWinModal();
+        }
+    }
+
+    function onBack() {
+        cleanup();
+    }
+
+    openBtn.addEventListener("click", onOpen);
+    backBtn.addEventListener("click", onBack);
+}
+
+function showWinModal() {
+    $("win-modal").classList.add("open");
+    $("win-close").onclick = () => {
+        $("win-modal").classList.remove("open");
+        showView("menu");
+    };
+}
+
+function addFinalKeyToInventory() {
+    if (!gameState.inventory.includes('final_key')) {
+        gameState.inventory.push('final_key');
+        renderInventory();
+    }
+}
+
+function savePuzzleState() {
+    try {
+        const state = {
+            notebookUnlocked: gameState.notebookUnlocked,
+            notebookOpened: gameState.notebookOpened,
+            computerStarted: gameState.computerStarted,
+            computerPasswordCorrect: gameState.computerPasswordCorrect,
+            boxOpened: gameState.boxOpened,
+            hasFinalKey: gameState.hasFinalKey,
+            gameWon: gameState.gameWon
+        };
+        localStorage.setItem('zuul_puzzle_state', JSON.stringify(state));
+    } catch (e) {}
+    if (currentUsername) {
+        saveFullState('zuul_auto_' + currentUsername);
+    }
+}
+
+function loadPuzzleState() {
+    try {
+        const saved = localStorage.getItem('zuul_puzzle_state');
+        if (saved) {
+            const state = JSON.parse(saved);
+            if (state.notebookUnlocked !== undefined) gameState.notebookUnlocked = state.notebookUnlocked;
+            if (state.notebookOpened !== undefined) gameState.notebookOpened = state.notebookOpened;
+            if (state.computerStarted !== undefined) gameState.computerStarted = state.computerStarted;
+            if (state.computerPasswordCorrect !== undefined) gameState.computerPasswordCorrect = state.computerPasswordCorrect;
+            if (state.boxOpened !== undefined) gameState.boxOpened = state.boxOpened;
+            if (state.hasFinalKey !== undefined) gameState.hasFinalKey = state.hasFinalKey;
+            if (state.gameWon !== undefined) gameState.gameWon = state.gameWon;
+            if (gameState.hasFinalKey && !gameState.inventory.includes('final_key')) {
+                gameState.inventory.push('final_key');
+            }
+        }
+    } catch (e) {}
+}
+
+function saveFullState(storageKey) {
+    try {
+        const state = {
+            currentRoomId: currentRoomId,
+            currentPlayerPosition: { ...currentPlayerPosition },
+            inventory: [...gameState.inventory],
+            visitedRooms: [...gameState.visitedRooms],
+            treasureUnlocked: gameState.treasureUnlocked,
+            notebookUnlocked: gameState.notebookUnlocked,
+            notebookOpened: gameState.notebookOpened,
+            computerStarted: gameState.computerStarted,
+            computerPasswordCorrect: gameState.computerPasswordCorrect,
+            boxOpened: gameState.boxOpened,
+            hasFinalKey: gameState.hasFinalKey,
+            gameWon: gameState.gameWon,
+            roomItems: {}
+        };
+        for (const roomId in rooms) {
+            state.roomItems[roomId] = [...(rooms[roomId].items || [])];
+        }
+        localStorage.setItem(storageKey, JSON.stringify(state));
+    } catch (e) {}
+}
+
+function loadFullState(storageKey) {
+    try {
+        const saved = localStorage.getItem(storageKey);
+        if (!saved) return false;
+        const state = JSON.parse(saved);
+        
+        currentRoomId = state.currentRoomId || 'campus_gate';
+        currentPlayerPosition = state.currentPlayerPosition || { left: 50, top: 50 };
+        gameState.inventory = state.inventory || [];
+        gameState.visitedRooms = new Set(state.visitedRooms || ['campus_gate']);
+        gameState.treasureUnlocked = !!state.treasureUnlocked;
+        gameState.notebookUnlocked = !!state.notebookUnlocked;
+        gameState.notebookOpened = !!state.notebookOpened;
+        gameState.computerStarted = !!state.computerStarted;
+        gameState.computerPasswordCorrect = !!state.computerPasswordCorrect;
+        gameState.boxOpened = !!state.boxOpened;
+        gameState.hasFinalKey = !!state.hasFinalKey;
+        gameState.gameWon = !!state.gameWon;
+        
+        if (state.roomItems) {
+            for (const roomId in state.roomItems) {
+                if (rooms[roomId]) {
+                    rooms[roomId].items = state.roomItems[roomId];
+                }
+            }
+        }
+        
+        gameState.completion = {
+            roomsExplored: gameState.visitedRooms.size,
+            totalRooms: Object.keys(rooms).length,
+            itemsCollected: gameState.inventory.length,
+            totalItems: 9
+        };
+        
+        updateLockedTreasuryExit();
+        
+        return true;
+    } catch (e) {
+        return false;
+    }
+}
+
+window.addEventListener('beforeunload', () => {
+    if (currentUsername && currentRoomId) {
+        saveFullState('zuul_auto_' + currentUsername);
+    }
+});

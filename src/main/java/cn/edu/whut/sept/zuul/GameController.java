@@ -802,6 +802,9 @@ public class GameController {
             itemInfo.put("name", item.getName());
             itemInfo.put("description", item.getDescription());
             itemInfo.put("weight", item.getWeight());
+            itemInfo.put("itemType", item.getItemType());
+            itemInfo.put("useEffect", item.getUseEffect());
+            itemInfo.put("usable", item.isUsable());
             roomItems.add(itemInfo);
         }
         System.out.println("DEBUG: 返回的物品数组大小: " + roomItems.size());
@@ -822,6 +825,9 @@ public class GameController {
             itemInfo.put("name", item.getName());
             itemInfo.put("description", item.getDescription());
             itemInfo.put("weight", item.getWeight());
+            itemInfo.put("itemType", item.getItemType());
+            itemInfo.put("useEffect", item.getUseEffect());
+            itemInfo.put("usable", item.isUsable());
             inventory.add(itemInfo);
         }
         playerInfo.put("inventory", inventory);

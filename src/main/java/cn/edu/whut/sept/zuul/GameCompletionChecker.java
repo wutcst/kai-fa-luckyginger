@@ -14,7 +14,7 @@ public class GameCompletionChecker {
     private static final String[] ALL_ROOMS = {
         "大学主入口外",
         "主大厅",
-        "校园酒吧",
+        "室外花园",
         "图书馆",
         "计算机实验室",
         "上锁的宝库",
@@ -22,7 +22,7 @@ public class GameCompletionChecker {
     };
     
     private static final String[] ALL_ITEMS = {
-        "key", "cookie", "bottle", "map", "coin", "computer", "cable", "treasure"
+        "key", "cookie", "box", "map", "notebook", "computer", "cable", "treasure", "final_key"
     };
     
     /**
@@ -69,10 +69,8 @@ public class GameCompletionChecker {
         info.setCookieEaten(cookieEaten);
         
         // 综合判断是否通关
-        boolean isCompleted = atStartRoom && 
-                              info.isAllRoomsExplored() && 
-                              info.isAllItemsCollected() && 
-                              cookieEaten;
+        boolean hasFinalKey = player.hasItem("final_key");
+        boolean isCompleted = hasFinalKey;
         info.setCompleted(isCompleted);
         
         return info;

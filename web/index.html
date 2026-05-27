@@ -149,7 +149,7 @@
             <p class="item-detail-weight" id="item-detail-weight">重量：0.1kg</p>
             <p class="item-detail-description" id="item-detail-description">物品描述</p>
             <img class="item-map-preview" id="item-map-preview" src="" alt="物品地图" style="display: none;">
-            <div class="modal-actions">
+            <div class="modal-actions" id="item-detail-actions">
                 <button class="secondary-action" id="item-detail-close" type="button">关闭</button>
             </div>
         </div>
@@ -173,6 +173,51 @@
             <p class="room-items-list" id="room-items-list"></p>
             <div class="modal-actions">
                 <button class="secondary-action" id="room-items-close" type="button">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="password-modal">
+        <div class="modal-card puzzle-modal-content">
+            <h3>输入密码</h3>
+            <p>请输入4位数字密码：</p>
+            <input type="text" id="password-input" maxlength="4" placeholder="****" autocomplete="off">
+            <p class="password-error" id="password-error"></p>
+            <div class="modal-actions">
+                <button class="primary-action" id="password-confirm" type="button">确认</button>
+                <button class="secondary-action" id="password-cancel" type="button">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="content-modal">
+        <div class="modal-card puzzle-modal-content puzzle-modal-content--wide">
+            <h3>内容</h3>
+            <img class="puzzle-image" id="content-image" src="" alt="谜题图片" style="display: none;">
+            <p id="content-text"></p>
+            <div class="modal-actions">
+                <button class="secondary-action" id="content-close" type="button">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="exit-modal">
+        <div class="modal-card puzzle-modal-content">
+            <h3>出口</h3>
+            <p id="exit-description"></p>
+            <div class="modal-actions">
+                <button class="primary-action" id="exit-open" type="button">开门</button>
+                <button class="secondary-action" id="exit-back" type="button">返回</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="win-modal">
+        <div class="modal-card win-modal-content">
+            <h3>🎉 恭喜通关！</h3>
+            <p>你成功使用最终钥匙打开了出口大门，校园冒险圆满结束啦！</p>
+            <div class="modal-actions">
+                <button class="primary-action" id="win-close" type="button">太棒了</button>
             </div>
         </div>
     </div>

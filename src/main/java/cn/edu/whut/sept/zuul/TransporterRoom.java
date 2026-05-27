@@ -67,7 +67,7 @@ public class TransporterRoom extends Room
         do {
             String randomKey = keys[random.nextInt(keys.length)];
             randomRoom = allRooms.get(randomKey);
-        } while (randomRoom == this && keys.length > 1);
+        } while ((randomRoom == this || randomRoom instanceof LockedRoom) && keys.length > 1);
         
         return randomRoom;
     }

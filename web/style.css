@@ -765,3 +765,58 @@ input {
 .modal-actions .secondary-action {
     min-width: 100px;
 }
+
+.puzzle-modal-content {
+    max-width: 400px;
+}
+
+.puzzle-modal-content--wide {
+    max-width: 600px;
+}
+
+#password-input {
+    width: 100%;
+    min-height: 48px;
+    border: 2px solid var(--accent);
+    border-radius: 8px;
+    padding: 0 16px;
+    font-size: 24px;
+    text-align: center;
+    letter-spacing: 8px;
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.9);
+    margin: 12px 0;
+}
+
+.password-error {
+    color: #a13c20;
+    font-size: 14px;
+    min-height: 20px;
+    margin: 0;
+}
+
+.puzzle-image {
+    width: 100%;
+    max-height: 400px;
+    object-fit: contain;
+    border: 2px solid var(--line);
+    border-radius: 8px;
+    margin: 12px 0;
+    background: white;
+}
+
+.win-modal-content {
+    max-width: 420px;
+    border: 3px solid #d4a24e;
+    background: linear-gradient(135deg, #fff8e8, #fff0d0);
+}
+
+.win-modal-content h3 {
+    font-size: 1.6rem;
+    color: #865126;
+}
+
+.win-modal-content p {
+    font-size: 1rem;
+    color: var(--ink);
+}

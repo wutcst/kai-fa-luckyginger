@@ -483,6 +483,11 @@ function bindFloatingPanels() {
     dock.querySelector(".dock-tab").addEventListener("click", () => {
         dock.classList.toggle("open");
     });
+    
+    // 查看按钮点击处理
+    $("look-room").addEventListener("click", () => {
+        enterInspectMode();
+    });
 
     // 物品详情关闭按钮
     $("item-detail-close").addEventListener("click", hideItemDetail);
@@ -638,6 +643,56 @@ function renderQuickActions() {
         }
         box.appendChild(button);
     });
+}
+
+// 是否处于查看模式
+let isInspectMode = false;
+
+// 进入查看模式：展开背包 + 显示日志
+function enterInspectMode() {
+    isInspectMode = true;
+    
+    // 展开左侧背包面板
+    $("inventory-dock").classList.add("open");
+    
+    // 切换到日志面板（同时激活日志按钮）
+    document.querySelectorAll(".round-tool").forEach((tool) => {
+        tool.classList.remove("active");
+        // 找到日志按钮并激活
+        if (tool.dataset.panel === "log-floating") {
+            tool.classList.add("active");
+        }
+    });
+    document.querySelectorAll(".floating-panel").forEach((panel) => {
+        panel.classList.remove("active");
+    });
+    $("log-floating").classList.add("active");
+    
+    // 执行look命令显示房间描述
+    setPlayerPosition(rooms[currentRoomId].start);
+    appendLog(rooms[currentRoomId].description);
+}
+
+// 退出查看模式：恢复原样
+function exitInspectMode() {
+    if (isInspectMode) {
+        isInspectMode = false;
+        // 关闭背包面板
+        $("inventory-dock").classList.remove("open");
+        
+        // 恢复房间按钮和房间面板的显示
+        document.querySelectorAll(".round-tool").forEach((tool) => {
+            tool.classList.remove("active");
+            // 找到房间按钮并激活
+            if (tool.dataset.panel === "room-floating") {
+                tool.classList.add("active");
+            }
+        });
+        document.querySelectorAll(".floating-panel").forEach((panel) => {
+            panel.classList.remove("active");
+        });
+        $("room-floating").classList.add("active");
+    }
 }
 
 function showRoomStatus() {
@@ -1124,7 +1179,6 @@ async function handleCommand(command) {
     }
 }
 
-
 // WASD小步移动 - 每次只移动一小段，走到出口才进入下一房间
 async function movePlayerStep(direction) {
     if (!direction || isMoving) return { moved: false, roomChanged: false };
@@ -1597,6 +1651,9 @@ document.addEventListener("keydown", (e) => {
         keyHoldState.startTime = Date.now();
         keyHoldState.isHolding = true;
         
+        // 退出查看模式
+        exitInspectMode();
+        
         // 立即执行一次小步移动
         movePlayerStep(action.dir).then(result => {
             if (result.roomChanged) {
@@ -1610,6 +1667,9 @@ document.addEventListener("keydown", (e) => {
         
         keyHoldState.holdTimer = setInterval(() => {
             if (keyHoldState.isHolding && !isMoving) {
+                // 退出查看模式
+                exitInspectMode();
+                
                 movePlayerStep(action.dir).then(result => {
                     if (result.roomChanged) {
                         sendGameCommand(action.cmd).then(response => {
@@ -1648,6 +1708,9 @@ document.querySelectorAll(".direction-pad button").forEach((button) => {
     button.addEventListener("click", () => {
         const direction = getDirection(button.dataset.command || "");
         if (direction) {
+            // 退出查看模式
+            exitInspectMode();
+            
             movePlayerStep(direction).then(result => {
                 if (result.roomChanged) {
                     sendGameCommand(button.dataset.command).then(response => {

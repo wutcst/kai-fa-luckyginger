@@ -425,11 +425,17 @@ function setCommandControlsDisabled(disabled) {
 }
 
 function canMoveToDirection(direction) {
+    const room = rooms[currentRoomId];
+    if (!room) return false;
+
     const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
     const channels = roomConfig.channels || ['vertical', 'horizontal'];
     if ((direction === 'north' || direction === 'south') && !channels.includes('vertical')) return false;
     if ((direction === 'east' || direction === 'west') && !channels.includes('horizontal')) return false;
-    return true;
+
+    if (room.exits && room.exits[direction]) return true;
+
+    return currentRoomId === 'forest_path' && direction === 'west';
 }
 
 function updateDirectionControls() {

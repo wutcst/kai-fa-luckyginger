@@ -14,8 +14,8 @@
 package cn.edu.whut.sept.zuul;
 
 import java.util.HashMap;
+import java.util.Map;
 import java.util.Stack;
-import java.util.Random;
 
 public class Game
 {
@@ -77,81 +77,57 @@ public class Game
      */
     private void createRooms()
     {
-        Room outside, theater, pub, lab, office, transporter;
+        Room campus_gate, main_hall, forest_path, library, lab, locked_room, teleport_room;
 
-        // create the rooms
-        outside = new Room("大学主入口外");
-        theater = new Room("演讲厅");
-        pub = new Room("校园酒吧");
+        campus_gate = new Room("大学主入口外");
+        main_hall = new Room("主大厅");
+        forest_path = new Room("室外花园");
+        library = new Room("图书馆");
         lab = new Room("计算机实验室");
-        office = new Room("计算机管理办公室");
-        
-        // 创建上锁的房间（需要钥匙解锁）
-        LockedRoom treasureRoom = new LockedRoom("上锁的宝库", "key");
+        locked_room = new LockedRoom("上锁的宝库", "key");
 
-        // 创建所有房间的映射表（用于传输房间）
         allRoomsMap = new HashMap<>();
-        allRoomsMap.put("outside", outside);
-        allRoomsMap.put("theater", theater);
-        allRoomsMap.put("pub", pub);
+        allRoomsMap.put("campus_gate", campus_gate);
+        allRoomsMap.put("main_hall", main_hall);
+        allRoomsMap.put("forest_path", forest_path);
+        allRoomsMap.put("library", library);
         allRoomsMap.put("lab", lab);
-        allRoomsMap.put("office", office);
-        allRoomsMap.put("treasure", treasureRoom);
+        allRoomsMap.put("locked_room", locked_room);
 
-        // 创建传输房间
-        transporter = new TransporterRoom("一个神秘的传输房间", allRoomsMap);
-        allRoomsMap.put("transporter", transporter);
+        teleport_room = new TransporterRoom("一个神秘的传输房间", allRoomsMap);
+        allRoomsMap.put("teleport_room", teleport_room);
 
-        // initialise room exits
-        outside.setExit("east", theater);
-        outside.setExit("south", lab);
-        outside.setExit("west", pub);
-        outside.setExit("north", transporter);  // 添加传输房间入口
+        campus_gate.setExit("north", main_hall);
 
-        theater.setExit("west", outside);
+        main_hall.setExit("south", campus_gate);
+        main_hall.setExit("east", library);
+        main_hall.setExit("west", forest_path);
+        main_hall.setExit("north", lab);
 
-        pub.setExit("east", outside);
+        forest_path.setExit("east", main_hall);
+        forest_path.setExit("north", teleport_room);
 
-        lab.setExit("north", outside);
-        lab.setExit("east", office);
-        lab.setExit("south", treasureRoom);  // 从实验室南面可以到达宝库（需要解锁）
+        library.setExit("west", main_hall);
+        library.setExit("north", locked_room);
 
-        office.setExit("west", lab);
-        
-        // 宝库可以返回实验室
-        treasureRoom.setExit("north", lab);
-        
-        // 传输房间可以"离开"到任何方向（实际是随机传输）
-        transporter.setExit("north", outside);  // 这些出口会被重写为随机传输
-        transporter.setExit("south", outside);
-        transporter.setExit("east", outside);
-        transporter.setExit("west", outside);
+        lab.setExit("south", main_hall);
+        lab.setExit("east", locked_room);
 
-        // 添加物品到房间
-        // 钥匙：可使用的物品，用于解锁上锁的房间
-        outside.addItem(new Item("key", "一把生锈的旧钥匙", 0.1, "KEY", "可以解锁上锁的房间"));
-        // 地图：可使用的物品，显示房间详细信息
-        pub.addItem(new Item("map", "一张校园地图", 0.2, "MAP", "显示当前位置的详细信息"));
-        
-        theater.addItem(new Item("book", "一本编程教科书", 1.5));
-        
-        pub.addItem(new Item("coin", "一枚金币", 0.05));
-        pub.addItem(new Item("bottle", "一个空瓶子", 0.3));
-        
+        locked_room.setExit("south", library);
+        locked_room.setExit("west", lab);
+
+        teleport_room.setExit("south", forest_path);
+        teleport_room.setExit("east", main_hall);
+
+        campus_gate.addItem(new Item("key", "一把生锈的旧钥匙", 0.1, "KEY", "可以解锁上锁的房间"));
+        main_hall.addItem(new Item("cookie", "一块可以增加负重的魔法饼干", 0.1));
+        forest_path.addItem(new Item("box", "一个带密码锁的箱子，看起来很重要", 1.0, "TOOL", "需要4位数字密码才能打开"));
+        forest_path.addItem(new Item("map", "一张校园地图", 0.2, "MAP", "显示当前位置的详细信息"));
+        library.addItem(new Item("notebook", "一本带锁的笔记本，封面刻着奇怪的符号", 0.3, "TOOL", "需要金钥匙才能打开"));
         lab.addItem(new Item("computer", "一台笔记本电脑", 2.5));
-        lab.addItem(new Item("cable", "一根USB线", 0.1));
-        
-        // 宝库中有特殊物品
-        treasureRoom.addItem(new Item("treasure", "一个神秘的宝箱", 3.0));
-        
-        // 在随机房间添加魔法饼干
-        Random random = new Random();
-        Room[] rooms = {outside, theater, pub, lab, office};
-        Room cookieRoom = rooms[random.nextInt(rooms.length)];
-        cookieRoom.addItem(new Item("cookie", "一块可以增加负重的魔法饼干", 0.1));
-        
-        // 保存起始房间（用于back命令的起点判断）
-        startingRoom = outside;
+        lab.addItem(new Item("cable", "一根USB数据线", 0.1));
+
+        startingRoom = campus_gate;
     }
     
     /**
@@ -326,5 +302,19 @@ public class Game
      */
     public Room getStartingRoom() {
         return startingRoom;
+    }
+
+    public String getRoomId(Room room) {
+        if (allRoomsMap == null) return null;
+        for (Map.Entry<String, Room> entry : allRoomsMap.entrySet()) {
+            if (entry.getValue() == room) {
+                return entry.getKey();
+            }
+        }
+        return null;
+    }
+
+    public HashMap<String, Room> getAllRoomsMap() {
+        return allRoomsMap;
     }
 }

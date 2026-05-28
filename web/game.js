@@ -51,6 +51,18 @@ const playerFrames = {
     ]
 };
 
+const playerFrameSequences = {
+    north: [0, 1, 2, 3, 4],
+    south: [0, 1, 2, 3, 4],
+    west: [1, 3, 4, 2, 0],
+    east: [1, 3, 4, 2, 0]
+};
+
+const playerIdleSequenceIndexes = {
+    west: 3,
+    east: 3
+};
+
 const rooms = {
     campus_gate: {
         title: "校园入口",
@@ -1729,7 +1741,9 @@ async function showTeleportDialog() {
 
 function setPlayerFrame(direction, frameIndex) {
     const frames = playerFrames[direction] || playerFrames.south;
-    $("player-token").style.backgroundImage = `url("${frames[frameIndex % frames.length]}")`;
+    const sequence = playerFrameSequences[direction] || playerFrameSequences.south;
+    const frameNumber = sequence[frameIndex % sequence.length];
+    $("player-token").style.backgroundImage = `url("${frames[frameNumber % frames.length]}")`;
 }
 
 function startPlayerStep(direction) {
@@ -1752,7 +1766,7 @@ function stopPlayerStep(direction) {
     window.clearInterval(playerAnimationTimer);
     playerAnimationTimer = null;
     $("player-token").classList.remove("walking");
-    setPlayerFrame(direction || "south", 0);
+    setPlayerFrame(direction || "south", playerIdleSequenceIndexes[direction] || 0);
 }
 
 async function submitCommand(presetCommand) {

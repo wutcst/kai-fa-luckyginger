@@ -356,6 +356,11 @@ let currentUsername = null;
 let pendingAuthData = null;
 let lastBackendStatus = null;
 let currentPlayerPosition = { left: 50, top: 50 };
+let currentGameRunId = createGameRunId();
+
+function createGameRunId() {
+    return `run_${Date.now()}_${Math.floor(Math.random() * 100000)}`;
+}
 
 const gameState = {
     inventory: [],
@@ -1062,6 +1067,7 @@ async function startGameFromMenu(mode) {
 
 function resetFrontendState(username) {
     currentRoomId = "campus_gate";
+    currentGameRunId = createGameRunId();
     currentPlayerPosition = { left: 50, top: 76 };
     gameState.inventory = [];
     gameState.treasureUnlocked = false;
@@ -2177,7 +2183,11 @@ function loadPuzzleState() {
 }
 
 function buildFullState() {
+    if (!currentGameRunId) {
+        currentGameRunId = createGameRunId();
+    }
     const state = {
+        gameRunId: currentGameRunId,
         currentRoomId: currentRoomId,
         currentPlayerPosition: { ...currentPlayerPosition },
         inventory: [...gameState.inventory],
@@ -2217,6 +2227,7 @@ function loadFullState(storageKey) {
 }
 
 function applyFullState(state) {
+    currentGameRunId = state.gameRunId || currentGameRunId || createGameRunId();
     currentRoomId = state.currentRoomId || 'campus_gate';
     currentPlayerPosition = state.currentPlayerPosition || { left: 50, top: 50 };
     gameState.inventory = state.inventory || [];
@@ -2287,15 +2298,26 @@ function buildSaveSummary(state) {
 }
 
 function saveManualSlot() {
+    if (!currentGameRunId) {
+        currentGameRunId = createGameRunId();
+    }
     const state = buildFullState();
+    const slots = getManualSaveSlots();
+    const existingIndex = slots.findIndex(slot => {
+        const slotRunId = slot.gameRunId || (slot.state && slot.state.gameRunId);
+        return slotRunId === currentGameRunId;
+    });
     const slot = {
-        id: String(Date.now()),
+        id: existingIndex >= 0 ? slots[existingIndex].id : currentGameRunId,
+        gameRunId: currentGameRunId,
         savedAt: new Date().toISOString(),
         summary: buildSaveSummary(state),
         state
     };
-    const slots = [slot, ...getManualSaveSlots()].slice(0, 3);
-    setManualSaveSlots(slots);
+    const nextSlots = existingIndex >= 0
+        ? [slot, ...slots.filter((_, index) => index !== existingIndex)]
+        : [slot, ...slots];
+    setManualSaveSlots(nextSlots.slice(0, 3));
     return slot;
 }
 
@@ -2349,6 +2371,9 @@ function showSaveSlotsModal(mode, highlightedId) {
             button.addEventListener("click", () => {
                 const slot = getManualSaveSlots().find(item => item.id === button.dataset.saveId);
                 if (!slot) return;
+                if (!slot.state.gameRunId) {
+                    slot.state.gameRunId = slot.gameRunId || slot.id || createGameRunId();
+                }
                 applyFullState(slot.state);
                 renderRoom(
                     { left: currentPlayerPosition.left, top: currentPlayerPosition.top },

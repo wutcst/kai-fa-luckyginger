@@ -235,6 +235,7 @@ input {
     position: relative;
     display: flex;
     gap: 8px;
+    align-items: flex-start;
     pointer-events: auto;
 }
 
@@ -242,8 +243,9 @@ input {
     position: absolute;
     top: calc(100% + 8px);
     right: 0;
+    z-index: 20;
     display: none;
-    min-width: 148px;
+    min-width: 156px;
     padding: 8px;
     border: 1px solid rgba(255, 255, 255, 0.62);
     border-radius: 8px;
@@ -264,6 +266,7 @@ input {
     color: var(--accent-dark);
     background: rgba(255, 251, 239, 0.86);
     font-weight: 800;
+    white-space: nowrap;
 }
 
 .player-token {
@@ -614,6 +617,78 @@ input {
     display: flex;
     gap: 10px;
     justify-content: center;
+}
+
+.save-slots-card {
+    width: min(620px, calc(100vw - 28px));
+    max-width: 620px;
+    text-align: left;
+}
+
+.save-slots-hint {
+    margin-bottom: 16px !important;
+}
+
+.save-slots-list {
+    display: grid;
+    gap: 12px;
+    margin-bottom: 18px;
+}
+
+.save-slot {
+    width: 100%;
+    border: 1px solid rgba(180, 123, 68, 0.36);
+    border-radius: 8px;
+    padding: 12px 14px;
+    color: var(--ink);
+    background: rgba(255, 251, 239, 0.9);
+    text-align: left;
+    box-shadow: 0 6px 16px rgba(78, 45, 20, 0.12);
+}
+
+.save-slot--empty {
+    color: var(--muted);
+    text-align: center;
+    cursor: default;
+}
+
+.save-slot-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.save-slot-title {
+    font-weight: 900;
+    color: var(--accent-dark);
+}
+
+.save-slot-time {
+    color: var(--muted);
+    font-size: 0.82rem;
+    white-space: nowrap;
+}
+
+.save-slot-summary {
+    margin: 0 0 10px !important;
+    color: var(--muted);
+    font-size: 0.88rem !important;
+}
+
+.save-slot-progress {
+    height: 8px;
+    overflow: hidden;
+    border-radius: 999px;
+    background: rgba(180, 123, 68, 0.18);
+}
+
+.save-slot-progress span {
+    display: block;
+    height: 100%;
+    border-radius: inherit;
+    background: linear-gradient(90deg, #7b9f5a, #d0a24a);
 }
 
 .item-detail-card {

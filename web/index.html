@@ -85,12 +85,14 @@
             <div class="player-token" id="player-token" aria-label="玩家角色"></div>
 
             <aside class="inventory-dock" id="inventory-dock">
-                <button class="dock-tab" type="button">背包</button>
                 <div class="dock-panel">
                     <h3>背包</h3>
                     <div class="inventory-list" id="inventory-list">暂无物品</div>
                     <div class="weight-line" id="weight-info">负重 0/10kg</div>
                 </div>
+                <button class="dock-tab" type="button" aria-label="打开背包" title="背包">
+                    <span aria-hidden="true">🎒</span>
+                </button>
             </aside>
 
             <nav class="floating-tools" aria-label="游戏信息">

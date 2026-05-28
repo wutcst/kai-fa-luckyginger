@@ -1667,29 +1667,40 @@ async function showTeleportDialog() {
             cleanup();
             try {
                 const response = await sendGameCommand("teleport");
-                if (response && response.success) {
+                if (response && response.success === false) {
                     appendApiMessage(response);
-                    const validTargets = ['campus_gate', 'main_hall', 'forest_path', 'library', 'lab'];
-                    let targetRoomId = findVisualRoomId(response.currentRoom || {});
-                    if (!validTargets.includes(targetRoomId)) {
-                        targetRoomId = validTargets[Math.floor(Math.random() * validTargets.length)];
-                    }
-                    const targetConfig = ROOM_CONFIGS[targetRoomId] || ROOM_CONFIGS.main_hall;
-                    isMoving = true;
-                    setPlayerVisible(false);
-                    currentRoomId = targetRoomId;
-                    gameState.visitedRooms.add(currentRoomId);
-                    gameState.completion.roomsExplored = gameState.visitedRooms.size;
-                    const cx = targetConfig.center.x;
-                    const cy = targetConfig.center.y;
-                    currentPlayerPosition = { left: cx, top: cy };
-                    renderRoom({ left: cx, top: cy }, { instantPlayerPosition: true });
-                    setPlayerVisible(true);
-                    appendLog(`传送到了 ${rooms[targetRoomId].title}！`);
-                    isMoving = false;
-                    updateDirectionControls();
-                    await refreshGameStatus({ allowRoomChange: true });
+                    resolve();
+                    return;
                 }
+
+                const validTargets = ['campus_gate', 'main_hall', 'forest_path', 'library', 'lab'];
+                let targetRoomId = findVisualRoomId(response && response.currentRoom ? response.currentRoom : {});
+                if (!validTargets.includes(targetRoomId)) {
+                    targetRoomId = findVisualRoomId({ longDescription: response && response.message ? response.message : "" });
+                }
+                if (!validTargets.includes(targetRoomId)) {
+                    targetRoomId = validTargets[Math.floor(Math.random() * validTargets.length)];
+                }
+
+                const targetConfig = ROOM_CONFIGS[targetRoomId] || ROOM_CONFIGS.main_hall;
+                isMoving = true;
+                setPlayerVisible(false);
+                await wait(180);
+
+                currentRoomId = targetRoomId;
+                gameState.visitedRooms.add(currentRoomId);
+                gameState.completion.roomsExplored = gameState.visitedRooms.size;
+                const cx = targetConfig.center.x;
+                const cy = targetConfig.center.y;
+                currentPlayerPosition = { left: cx, top: cy };
+                renderRoom({ left: cx, top: cy }, { instantPlayerPosition: true });
+                setPlayerVisible(true);
+                isMoving = false;
+                updateDirectionControls();
+
+                const roomTitle = rooms[targetRoomId].title;
+                appendLog(`传送到了 ${roomTitle}！`);
+                showContentModal("传送完成", "", `你已被随机传送到：${roomTitle}`);
             } catch (error) {
                 appendLog("传送失败。", "error");
             } finally {

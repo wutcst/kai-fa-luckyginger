@@ -22,32 +22,32 @@ const itemMeta = {
 
 const playerFrames = {
     north: [
-        "assets/characters/player_frames/player_up_0.png",
-        "assets/characters/player_frames/player_up_1.png",
-        "assets/characters/player_frames/player_up_2.png",
-        "assets/characters/player_frames/player_up_3.png",
-        "assets/characters/player_frames/player_up_4.png"
+        "assets/characters/adventurer_frames_v2/player_up_0.png",
+        "assets/characters/adventurer_frames_v2/player_up_1.png",
+        "assets/characters/adventurer_frames_v2/player_up_2.png",
+        "assets/characters/adventurer_frames_v2/player_up_3.png",
+        "assets/characters/adventurer_frames_v2/player_up_4.png"
     ],
     south: [
-        "assets/characters/player_frames/player_down_0.png",
-        "assets/characters/player_frames/player_down_1.png",
-        "assets/characters/player_frames/player_down_2.png",
-        "assets/characters/player_frames/player_down_3.png",
-        "assets/characters/player_frames/player_down_4.png"
+        "assets/characters/adventurer_frames_v2/player_down_0.png",
+        "assets/characters/adventurer_frames_v2/player_down_1.png",
+        "assets/characters/adventurer_frames_v2/player_down_2.png",
+        "assets/characters/adventurer_frames_v2/player_down_3.png",
+        "assets/characters/adventurer_frames_v2/player_down_4.png"
     ],
     west: [
-        "assets/characters/player_frames/player_left_0.png",
-        "assets/characters/player_frames/player_left_1.png",
-        "assets/characters/player_frames/player_left_2.png",
-        "assets/characters/player_frames/player_left_3.png",
-        "assets/characters/player_frames/player_left_4.png"
+        "assets/characters/adventurer_frames_v2/player_left_0.png",
+        "assets/characters/adventurer_frames_v2/player_left_1.png",
+        "assets/characters/adventurer_frames_v2/player_left_2.png",
+        "assets/characters/adventurer_frames_v2/player_left_3.png",
+        "assets/characters/adventurer_frames_v2/player_left_4.png"
     ],
     east: [
-        "assets/characters/player_frames/player_right_0.png",
-        "assets/characters/player_frames/player_right_1.png",
-        "assets/characters/player_frames/player_right_2.png",
-        "assets/characters/player_frames/player_right_3.png",
-        "assets/characters/player_frames/player_right_4.png"
+        "assets/characters/adventurer_frames_v2/player_right_0.png",
+        "assets/characters/adventurer_frames_v2/player_right_1.png",
+        "assets/characters/adventurer_frames_v2/player_right_2.png",
+        "assets/characters/adventurer_frames_v2/player_right_3.png",
+        "assets/characters/adventurer_frames_v2/player_right_4.png"
     ]
 };
 

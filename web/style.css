@@ -277,7 +277,7 @@ input {
     width: clamp(92px, 10.5vh, 132px);
     aspect-ratio: 176 / 292;
     transform: translate(-50%, -100%);
-    background: url("assets/characters/player_frames/player_down_0.png") center bottom / contain no-repeat;
+    background: url("assets/characters/adventurer_frames_v2/player_down_0.png") center bottom / contain no-repeat;
     filter: drop-shadow(0 12px 8px rgba(54, 34, 18, 0.42));
     transition: left 0.5s ease-in-out, top 0.5s ease-in-out, opacity 0.18s ease;
 }

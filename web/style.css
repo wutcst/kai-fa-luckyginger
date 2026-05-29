@@ -280,14 +280,15 @@ input {
     position: absolute;
     display: grid;
     place-items: center;
-    width: 58px;
-    height: 58px;
-    border: 1px solid rgba(255, 255, 255, 0.72);
+    width: 72px;
+    height: 72px;
+    border: 1px solid rgba(255, 255, 255, 0.42);
     border-radius: 50%;
-    padding: 8px;
+    padding: 2px;
     color: #5a351b;
-    background: radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.96), rgba(255, 238, 180, 0.74));
-    box-shadow: 0 12px 26px rgba(68, 42, 19, 0.26), inset 0 0 16px rgba(255, 255, 255, 0.52);
+    background: radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.58), rgba(255, 236, 176, 0.24));
+    box-shadow: 0 12px 26px rgba(68, 42, 19, 0.18), inset 0 0 18px rgba(255, 255, 255, 0.34);
+    backdrop-filter: blur(2px);
     transform: translate(-50%, -50%);
     cursor: pointer;
     pointer-events: auto;
@@ -297,15 +298,15 @@ input {
 
 .scene-item-bubble:hover {
     transform: translate(-50%, -58%) scale(1.08);
-    box-shadow: 0 16px 34px rgba(68, 42, 19, 0.34), inset 0 0 18px rgba(255, 255, 255, 0.72);
+    box-shadow: 0 16px 34px rgba(68, 42, 19, 0.26), inset 0 0 18px rgba(255, 255, 255, 0.54);
     filter: saturate(1.08);
 }
 
 .scene-item-bubble img {
-    width: 30px;
-    height: 30px;
+    width: 100px;
+    height: 100px;
     object-fit: contain;
-    filter: drop-shadow(0 4px 5px rgba(76, 45, 18, 0.24));
+    filter: drop-shadow(0 6px 7px rgba(76, 45, 18, 0.28));
 }
 
 .scene-item-bubble span {

@@ -240,7 +240,7 @@ const rooms = {
 
 const sceneItemPlacements = {
     campus_gate: {
-        key: { left: 31, top: 71 }
+        key: { left: 31, top: 71, icon: "assets/items/scene_key.svg" }
     }
 };
 
@@ -1254,11 +1254,12 @@ function renderSceneItems() {
     layer.innerHTML = items.map((itemName) => {
         const meta = itemMeta[itemName] || { label: itemName, icon: "assets/items/scroll.png" };
         const placement = placements[itemName];
+        const icon = placement.icon || meta.icon;
         return `
             <button class="scene-item-bubble" type="button" data-item="${itemName}"
                 style="left: ${placement.left}%; top: ${placement.top}%"
                 aria-label="拾取 ${meta.label}" title="拾取 ${meta.label}">
-                <img src="${meta.icon}" alt="">
+                <img src="${icon}" alt="">
                 <span>${meta.label}</span>
             </button>`;
     }).join("");

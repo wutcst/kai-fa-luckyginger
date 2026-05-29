@@ -1,0 +1,18 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="key">
+  <defs>
+    <linearGradient id="keyGold" x1="18" y1="18" x2="78" y2="80" gradientUnits="userSpaceOnUse">
+      <stop offset="0" stop-color="#fff2a8"/>
+      <stop offset="0.45" stop-color="#e7b441"/>
+      <stop offset="1" stop-color="#9f661f"/>
+    </linearGradient>
+    <filter id="softShadow" x="-20%" y="-20%" width="140%" height="140%">
+      <feDropShadow dx="0" dy="4" stdDeviation="3" flood-color="#4c2c10" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+  <g filter="url(#softShadow)">
+    <circle cx="30" cy="39" r="18" fill="url(#keyGold)" stroke="#6f4219" stroke-width="4"/>
+    <circle cx="30" cy="39" r="8" fill="#fff8dc" stroke="#8c5b21" stroke-width="3"/>
+    <path d="M44 43h31c3.3 0 6 2.7 6 6v4h-9v8h-8v-8h-8v10h-8V53h-4c-2.8 0-5-2.2-5-5s2.2-5 5-5z" fill="url(#keyGold)" stroke="#6f4219" stroke-width="4" stroke-linejoin="round"/>
+    <path d="M19 30c4-5 12-8 20-3" fill="none" stroke="#fff7c6" stroke-width="4" stroke-linecap="round" opacity="0.72"/>
+  </g>
+</svg>

@@ -238,6 +238,12 @@ const rooms = {
     }
 };
 
+const sceneItemPlacements = {
+    campus_gate: {
+        key: { left: 31, top: 71 }
+    }
+};
+
 const GLOBAL_STEP_SIZE = 6;
 const GLOBAL_ANIMATION_SPEED = 500;
 
@@ -1232,8 +1238,34 @@ function renderRoom(entryPosition, options = {}) {
     if (entryPosition) {
         setPlayerPosition(entryPosition, { instant: options.instantPlayerPosition });
     }
+    renderSceneItems();
     updateHud();
     updateDirectionControls();
+}
+
+function renderSceneItems() {
+    const layer = $("scene-item-layer");
+    if (!layer) return;
+
+    const room = rooms[currentRoomId];
+    const placements = sceneItemPlacements[currentRoomId] || {};
+    const items = (room.items || []).filter((itemName) => placements[itemName]);
+
+    layer.innerHTML = items.map((itemName) => {
+        const meta = itemMeta[itemName] || { label: itemName, icon: "assets/items/scroll.png" };
+        const placement = placements[itemName];
+        return `
+            <button class="scene-item-bubble" type="button" data-item="${itemName}"
+                style="left: ${placement.left}%; top: ${placement.top}%"
+                aria-label="拾取 ${meta.label}" title="拾取 ${meta.label}">
+                <img src="${meta.icon}" alt="">
+                <span>${meta.label}</span>
+            </button>`;
+    }).join("");
+
+    layer.querySelectorAll(".scene-item-bubble").forEach((button) => {
+        button.addEventListener("click", () => pickSceneItem(button.dataset.item));
+    });
 }
 
 function getDirection(command) {
@@ -1247,7 +1279,7 @@ function getDirection(command) {
 function takeItem(itemName) {
     if (isMoving) {
         appendLog("请等走到位置后再拾取物品。", "error");
-        return;
+        return false;
     }
 
     const room = rooms[currentRoomId];
@@ -1255,7 +1287,7 @@ function takeItem(itemName) {
 
     if (!items.includes(itemName)) {
         appendLog(`这里没有 ${itemName}。`, "error");
-        return;
+        return false;
     }
 
     room.items = items.filter((item) => item !== itemName);
@@ -1263,6 +1295,14 @@ function takeItem(itemName) {
     gameState.completion.itemsCollected = Math.max(gameState.completion.itemsCollected, gameState.inventory.length);
     renderRoom();
     appendLog(`你拾取了 ${itemName}。`);
+    return true;
+}
+
+function pickSceneItem(itemName) {
+    const meta = itemMeta[itemName] || { label: itemName, icon: "assets/items/scroll.png" };
+    if (takeItem(itemName)) {
+        showContentModal("拾取成功", "", `你拾取了 ${meta.label}，已放入背包。`);
+    }
 }
 
 function useItem(itemName) {

@@ -241,6 +241,9 @@ const rooms = {
 const sceneItemPlacements = {
     campus_gate: {
         key: { left: 31, top: 71, icon: "assets/items/zuul_generated/key.png" }
+    },
+    main_hall: {
+        cookie: { left: 33, top: 55, icon: "assets/items/zuul_generated/cookie.png" }
     }
 };
 

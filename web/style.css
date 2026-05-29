@@ -278,8 +278,6 @@ input {
 
 .scene-item-bubble {
     position: absolute;
-    display: grid;
-    place-items: center;
     width: 72px;
     height: 72px;
     border: 1px solid rgba(255, 255, 255, 0.42);
@@ -303,10 +301,15 @@ input {
 }
 
 .scene-item-bubble img {
+    position: absolute;
+    left: 50%;
+    top: 50%;
     width: 100px;
     height: 100px;
     object-fit: contain;
     filter: drop-shadow(0 6px 7px rgba(76, 45, 18, 0.28));
+    transform: translate(-50%, -50%);
+    pointer-events: none;
 }
 
 .scene-item-bubble span {

@@ -244,6 +244,10 @@ const sceneItemPlacements = {
     },
     main_hall: {
         cookie: { left: 33, top: 55, icon: "assets/items/zuul_generated/cookie.png" }
+    },
+    forest_path: {
+        map: { left: 35, top: 38, icon: "assets/items/zuul_generated/map.png" },
+        box: { left: 87, top: 49, icon: "assets/items/zuul_generated/box.png" }
     }
 };
 

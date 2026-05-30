@@ -2343,9 +2343,11 @@ function buildSaveSummary(state) {
     const roomProgress = totalRooms ? roomCount / totalRooms : 0;
     const itemProgress = gameState.completion.totalItems ? itemCount / gameState.completion.totalItems : 0;
     const percent = Math.max(4, Math.min(100, Math.round((roomProgress * 0.55 + itemProgress * 0.45) * 100)));
-    const roomTitle = rooms[state.currentRoomId] ? rooms[state.currentRoomId].title : "未知房间";
+    const room = rooms[state.currentRoomId];
+    const roomTitle = room ? room.title : "未知房间";
     return {
         roomTitle,
+        roomImage: room ? room.image : "",
         roomCount,
         totalRooms,
         itemCount,
@@ -2410,15 +2412,27 @@ function showSaveSlotsModal(mode, highlightedId) {
         list.innerHTML = slots.map((slot, index) => {
             const summary = slot.summary || buildSaveSummary(slot.state || {});
             const active = slot.id === highlightedId ? " · 刚刚保存" : "";
+            const roomImage = summary.roomImage || (slot.state && rooms[slot.state.currentRoomId] ? rooms[slot.state.currentRoomId].image : "");
+            const actionText = mode === "save" ? "已保存" : "继续此存档";
             return `
                 <button class="save-slot" type="button" data-save-id="${slot.id}" ${mode === "save" ? "disabled" : ""}>
-                    <div class="save-slot-header">
-                        <span class="save-slot-title">存档 ${index + 1}${active}</span>
-                        <span class="save-slot-time">${formatSaveTime(slot.savedAt)}</span>
-                    </div>
-                    <p class="save-slot-summary">${summary.text}</p>
-                    <div class="save-slot-progress" aria-label="游戏进度 ${summary.percent}%">
-                        <span style="width: ${summary.percent}%"></span>
+                    <div class="save-slot-thumb" style="background-image: url('${roomImage}')"></div>
+                    <div class="save-slot-content">
+                        <div class="save-slot-header">
+                            <span class="save-slot-title">存档 ${index + 1}${active}</span>
+                            <span class="save-slot-time">${formatSaveTime(slot.savedAt)}</span>
+                        </div>
+                        <p class="save-slot-room">${summary.roomTitle}</p>
+                        <div class="save-slot-stats">
+                            <span>已探索 ${summary.roomCount}/${summary.totalRooms}</span>
+                            <span>已收集 ${summary.itemCount}/${summary.totalItems}</span>
+                        </div>
+                        <div class="save-slot-footer">
+                            <div class="save-slot-progress" aria-label="游戏进度 ${summary.percent}%">
+                                <span style="width: ${summary.percent}%"></span>
+                            </div>
+                            <span class="save-slot-action">${actionText}</span>
+                        </div>
                     </div>
                 </button>`;
         }).join("");

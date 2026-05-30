@@ -20,6 +20,24 @@ const itemMeta = {
     final_key: { label: "final_key", weight: 0.1, icon: "assets/items/silver_key_new.png", description: "从箱子里得到的最终钥匙，似乎能打开最终的重要的门。" }
 };
 
+const directionNames = {
+    north: "北",
+    south: "南",
+    east: "东",
+    west: "西"
+};
+
+const mapRoomNodes = {
+    campus_gate: { left: 50, top: 86 },
+    main_hall: { left: 50, top: 60 },
+    library: { left: 72, top: 48 },
+    lab: { left: 50, top: 30 },
+    forest_path: { left: 28, top: 62 },
+    locked_room: { left: 72, top: 30 },
+    unlocked_treasure_room: { left: 84, top: 18 },
+    teleport_room: { left: 28, top: 38 }
+};
+
 const playerFrames = {
     north: [
         "assets/characters/adventurer_frames_v2/player_up_0.png",
@@ -556,6 +574,16 @@ function bindFloatingPanels() {
             hideItemDetail();
         }
     });
+
+    $("map-dock-button").addEventListener("click", showCampusMap);
+    $("campus-map-close").addEventListener("click", () => {
+        $("campus-map-modal").classList.remove("open");
+    });
+    $("campus-map-modal").addEventListener("click", (e) => {
+        if (e.target === $("campus-map-modal")) {
+            $("campus-map-modal").classList.remove("open");
+        }
+    });
     
     // 房间状态关闭按钮
     $("room-status-close").addEventListener("click", () => {
@@ -672,6 +700,8 @@ function showItemDetail(itemName) {
         $("item-detail-description").textContent = "装满金币的宝箱，里面还有一把金钥匙。用金钥匙可以打开图书馆上锁的笔记本。";
     } else if (itemName === 'final_key') {
         $("item-detail-description").textContent = "从箱子里得到的最终钥匙，似乎能打开室外花园出口的大门。"
+    } else if (itemName === 'map') {
+        actionsHtml = '<button class="primary-action" id="item-detail-action-btn" type="button">查看校园地图</button>' + actionsHtml;
     }
 
     const actionsContainer = $("item-detail-actions");
@@ -740,6 +770,8 @@ function showItemDetail(itemName) {
                         }
                     });
                 }
+            } else if (itemName === 'map') {
+                showCampusMap();
             }
         });
     }
@@ -761,7 +793,11 @@ function renderInventory() {
         box.querySelectorAll(".item-pill").forEach(btn => {
             btn.addEventListener("click", () => {
                 const itemName = btn.getAttribute("data-item");
-                if (itemName) showItemDetail(itemName);
+                if (itemName === "map") {
+                    showCampusMap();
+                } else if (itemName) {
+                    showItemDetail(itemName);
+                }
             });
         });
     }
@@ -770,6 +806,40 @@ function renderInventory() {
     const totalWeight = playerInfo.totalWeight != null ? playerInfo.totalWeight : inventoryWeight();
     const maxWeight = playerInfo.maxWeight != null ? playerInfo.maxWeight : 10;
     $("weight-info").textContent = `负重 ${formatWeight(totalWeight)}/${formatWeight(maxWeight)}kg`;
+}
+
+function renderMapDock() {
+    const button = $("map-dock-button");
+    if (!button) return;
+    button.classList.toggle("visible", hasItem("map"));
+}
+
+function showCampusMap() {
+    const modal = $("campus-map-modal");
+    const room = rooms[currentRoomId] || rooms.campus_gate;
+    $("campus-map-current").textContent = `当前位置：${room.title}`;
+
+    const markers = $("campus-map-markers");
+    markers.innerHTML = Object.keys(mapRoomNodes).map((roomId) => {
+        const node = mapRoomNodes[roomId];
+        const mapRoom = rooms[roomId];
+        const isCurrent = roomId === currentRoomId;
+        const isVisited = gameState.visitedRooms.has(roomId);
+        const stateClass = isCurrent ? "current" : (isVisited ? "visited" : "unvisited");
+        return `
+            <button class="campus-map-marker ${stateClass}" type="button"
+                style="left: ${node.left}%; top: ${node.top}%"
+                title="${mapRoom ? mapRoom.title : roomId}">
+                <span>${mapRoom ? mapRoom.title : roomId}</span>
+            </button>`;
+    }).join("");
+
+    const exits = Object.keys(room.exits || {}).filter((dir) => room.exits[dir] && canMoveToDirection(dir));
+    $("campus-map-exits").innerHTML = exits.length
+        ? `<strong>可前往方向</strong>${exits.map((dir) => `<span>${directionNames[dir] || dir}</span>`).join("")}`
+        : "<strong>可前往方向</strong><span>暂无</span>";
+
+    modal.classList.add("open");
 }
 
 function renderQuickActions() {
@@ -865,13 +935,6 @@ function showRoomStatus() {
     const exitsContainer = $("room-status-exits");
     exitsContainer.innerHTML = "";
     
-    const directionNames = {
-        "north": "北",
-        "south": "南",
-        "east": "东",
-        "west": "西"
-    };
-    
     let hasExits = false;
     for (const dir in room.exits) {
         if (room.exits[dir]) {
@@ -924,6 +987,7 @@ function renderProgress() {
 
 function updateHud() {
     renderInventory();
+    renderMapDock();
     renderQuickActions();
     renderProgress();
 }

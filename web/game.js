@@ -248,6 +248,13 @@ const sceneItemPlacements = {
     forest_path: {
         map: { left: 35, top: 38, icon: "assets/items/zuul_generated/map.png" },
         box: { left: 87, top: 49, icon: "assets/items/zuul_generated/box.png" }
+    },
+    library: {
+        notebook: { left: 77, top: 66, icon: "assets/items/zuul_generated/notebook.png" }
+    },
+    lab: {
+        computer: { left: 8, top: 42, icon: "assets/items/zuul_generated/computer.png" },
+        cable: { left: 31, top: 71, icon: "assets/items/zuul_generated/cable.png" }
     }
 };
 

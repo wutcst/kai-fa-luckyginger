@@ -255,6 +255,9 @@ const sceneItemPlacements = {
     lab: {
         computer: { left: 8, top: 42, icon: "assets/items/zuul_generated/computer.png" },
         cable: { left: 31, top: 71, icon: "assets/items/zuul_generated/cable.png" }
+    },
+    unlocked_treasure_room: {
+        treasure: { left: 78, top: 46, icon: "assets/items/zuul_generated/treasure.png" }
     }
 };
 

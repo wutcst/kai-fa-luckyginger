@@ -281,6 +281,10 @@ const sceneItemPlacements = {
 
 const GLOBAL_STEP_SIZE = 6;
 const GLOBAL_ANIMATION_SPEED = 500;
+const KEYBOARD_ACCELERATION_DELAY = 420;
+const KEYBOARD_ACCELERATED_STEP_SIZE = 10;
+const KEYBOARD_ACCELERATED_MOVE_TIME = 170;
+const KEYBOARD_HOLD_REPEAT_TIME = 170;
 
 const PASSWORDS = {
     computer: '1235',
@@ -1358,8 +1362,8 @@ function getDirection(command) {
     return null;
 }
 
-function takeItem(itemName) {
-    if (isMoving) {
+function takeItem(itemName, options = {}) {
+    if (isMoving && !options.allowWhileMoving) {
         appendLog("请等走到位置后再拾取物品。", "error");
         return false;
     }
@@ -1382,7 +1386,7 @@ function takeItem(itemName) {
 
 function pickSceneItem(itemName) {
     const meta = itemMeta[itemName] || { label: itemName, icon: "assets/items/scroll.png" };
-    if (takeItem(itemName)) {
+    if (takeItem(itemName, { allowWhileMoving: true })) {
         showContentModal("拾取成功", "", `你拾取了 ${meta.label}，已放入背包。`);
     }
 }
@@ -1531,13 +1535,13 @@ async function handleCommand(command) {
 }
 
 // WASD小步移动 - 每次只移动一小段，走到出口才进入下一房间
-async function movePlayerStep(direction) {
+async function movePlayerStep(direction, options = {}) {
     if (!direction || isMoving) return { moved: false, roomChanged: false };
 
     const room = rooms[currentRoomId];
     const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
 
-    const nextPosition = calculateNextStep(currentPlayerPosition, direction, roomConfig);
+    const nextPosition = calculateNextStep(currentPlayerPosition, direction, roomConfig, options.stepSize);
     if (!nextPosition) return { moved: false, roomChanged: false };
 
     if (currentRoomId === 'forest_path' && direction === 'west') {
@@ -1558,9 +1562,10 @@ async function movePlayerStep(direction) {
 
     isMoving = true;
     startPlayerStep(direction);
+    $("player-token").style.setProperty("--player-move-duration", `${options.moveTime || 300}ms`);
     setPlayerPosition(nextPosition);
 
-    await wait(300);
+    await wait(options.moveTime || 300);
     stopPlayerStep(direction);
     isMoving = false;
 
@@ -1629,8 +1634,8 @@ function snapToCrossPath(position, roomConfig, direction) {
     }
 }
 
-function calculateNextStep(current, direction, roomConfig) {
-    const stepSize = GLOBAL_STEP_SIZE;
+function calculateNextStep(current, direction, roomConfig, customStepSize) {
+    const stepSize = customStepSize || GLOBAL_STEP_SIZE;
     const channels = roomConfig.channels || ['vertical', 'horizontal'];
     const hasVertical = channels.includes('vertical');
     const hasHorizontal = channels.includes('horizontal');
@@ -1671,6 +1676,17 @@ function calculateNextStep(current, direction, roomConfig) {
     }
 
     return { left: newLeft, top: newTop };
+}
+
+function getKeyboardMoveOptions() {
+    const heldTime = Date.now() - keyHoldState.startTime;
+    if (keyHoldState.isHolding && heldTime >= KEYBOARD_ACCELERATION_DELAY) {
+        return {
+            stepSize: KEYBOARD_ACCELERATED_STEP_SIZE,
+            moveTime: KEYBOARD_ACCELERATED_MOVE_TIME
+        };
+    }
+    return {};
 }
 
 async function enterNextRoom(direction, nextRoomId, path) {
@@ -2076,7 +2092,7 @@ document.addEventListener("keydown", (e) => {
                 // 退出查看模式
                 exitInspectMode();
                 
-                movePlayerStep(action.dir).then(result => {
+                movePlayerStep(action.dir, getKeyboardMoveOptions()).then(result => {
                     if (result.roomChanged) {
                         sendGameCommand(action.cmd).then(response => {
                             if (response && response.message) {
@@ -2086,7 +2102,7 @@ document.addEventListener("keydown", (e) => {
                     }
                 });
             }
-        }, 400);
+        }, KEYBOARD_HOLD_REPEAT_TIME);
     }
 });
 

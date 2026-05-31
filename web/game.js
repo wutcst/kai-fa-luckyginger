@@ -20,6 +20,24 @@ const itemMeta = {
     final_key: { label: "final_key", weight: 0.1, icon: "assets/items/silver_key_new.png", description: "从箱子里得到的最终钥匙，似乎能打开最终的重要的门。" }
 };
 
+const directionNames = {
+    north: "北",
+    south: "南",
+    east: "东",
+    west: "西"
+};
+
+const mapRoomNodes = {
+    campus_gate: { left: 50, top: 92 },
+    main_hall: { left: 50, top: 61 },
+    library: { left: 85, top: 75 },
+    lab: { left: 45, top: 22 },
+    forest_path: { left: 17, top: 74 },
+    locked_room: { left: 86, top: 43 },
+    unlocked_treasure_room: { left: 68, top: 16 },
+    teleport_room: { left: 17, top: 35 }
+};
+
 const playerFrames = {
     north: [
         "assets/characters/adventurer_frames_v2/player_up_0.png",
@@ -255,11 +273,18 @@ const sceneItemPlacements = {
     lab: {
         computer: { left: 8, top: 42, icon: "assets/items/zuul_generated/computer.png" },
         cable: { left: 31, top: 71, icon: "assets/items/zuul_generated/cable.png" }
+    },
+    unlocked_treasure_room: {
+        treasure: { left: 78, top: 46, icon: "assets/items/zuul_generated/treasure.png" }
     }
 };
 
 const GLOBAL_STEP_SIZE = 6;
 const GLOBAL_ANIMATION_SPEED = 500;
+const KEYBOARD_ACCELERATION_DELAY = 320;
+const KEYBOARD_ACCELERATED_STEP_SIZE = 12;
+const KEYBOARD_ACCELERATED_MOVE_TIME = 150;
+const KEYBOARD_HOLD_REPEAT_TIME = 170;
 
 const PASSWORDS = {
     computer: '1235',
@@ -553,6 +578,16 @@ function bindFloatingPanels() {
             hideItemDetail();
         }
     });
+
+    $("map-dock-button").addEventListener("click", showCampusMap);
+    $("campus-map-close").addEventListener("click", () => {
+        $("campus-map-modal").classList.remove("open");
+    });
+    $("campus-map-modal").addEventListener("click", (e) => {
+        if (e.target === $("campus-map-modal")) {
+            $("campus-map-modal").classList.remove("open");
+        }
+    });
     
     // 房间状态关闭按钮
     $("room-status-close").addEventListener("click", () => {
@@ -669,6 +704,8 @@ function showItemDetail(itemName) {
         $("item-detail-description").textContent = "装满金币的宝箱，里面还有一把金钥匙。用金钥匙可以打开图书馆上锁的笔记本。";
     } else if (itemName === 'final_key') {
         $("item-detail-description").textContent = "从箱子里得到的最终钥匙，似乎能打开室外花园出口的大门。"
+    } else if (itemName === 'map') {
+        actionsHtml = '<button class="primary-action" id="item-detail-action-btn" type="button">查看校园地图</button>' + actionsHtml;
     }
 
     const actionsContainer = $("item-detail-actions");
@@ -737,6 +774,8 @@ function showItemDetail(itemName) {
                         }
                     });
                 }
+            } else if (itemName === 'map') {
+                showCampusMap();
             }
         });
     }
@@ -758,7 +797,11 @@ function renderInventory() {
         box.querySelectorAll(".item-pill").forEach(btn => {
             btn.addEventListener("click", () => {
                 const itemName = btn.getAttribute("data-item");
-                if (itemName) showItemDetail(itemName);
+                if (itemName === "map") {
+                    showCampusMap();
+                } else if (itemName) {
+                    showItemDetail(itemName);
+                }
             });
         });
     }
@@ -767,6 +810,40 @@ function renderInventory() {
     const totalWeight = playerInfo.totalWeight != null ? playerInfo.totalWeight : inventoryWeight();
     const maxWeight = playerInfo.maxWeight != null ? playerInfo.maxWeight : 10;
     $("weight-info").textContent = `负重 ${formatWeight(totalWeight)}/${formatWeight(maxWeight)}kg`;
+}
+
+function renderMapDock() {
+    const button = $("map-dock-button");
+    if (!button) return;
+    button.classList.toggle("visible", hasItem("map"));
+}
+
+function showCampusMap() {
+    const modal = $("campus-map-modal");
+    const room = rooms[currentRoomId] || rooms.campus_gate;
+    $("campus-map-current").textContent = `当前位置：${room.title}`;
+
+    const markers = $("campus-map-markers");
+    markers.innerHTML = Object.keys(mapRoomNodes).map((roomId) => {
+        const node = mapRoomNodes[roomId];
+        const mapRoom = rooms[roomId];
+        const isCurrent = roomId === currentRoomId;
+        const isVisited = gameState.visitedRooms.has(roomId);
+        const stateClass = isCurrent ? "current" : (isVisited ? "visited" : "unvisited");
+        return `
+            <button class="campus-map-marker ${stateClass}" type="button"
+                style="left: ${node.left}%; top: ${node.top}%"
+                title="${mapRoom ? mapRoom.title : roomId}">
+                <span>${mapRoom ? mapRoom.title : roomId}</span>
+            </button>`;
+    }).join("");
+
+    const exits = Object.keys(room.exits || {}).filter((dir) => room.exits[dir] && canMoveToDirection(dir));
+    $("campus-map-exits").innerHTML = exits.length
+        ? `<strong>可前往方向</strong>${exits.map((dir) => `<span>${directionNames[dir] || dir}</span>`).join("")}`
+        : "<strong>可前往方向</strong><span>暂无</span>";
+
+    modal.classList.add("open");
 }
 
 function renderQuickActions() {
@@ -862,13 +939,6 @@ function showRoomStatus() {
     const exitsContainer = $("room-status-exits");
     exitsContainer.innerHTML = "";
     
-    const directionNames = {
-        "north": "北",
-        "south": "南",
-        "east": "东",
-        "west": "西"
-    };
-    
     let hasExits = false;
     for (const dir in room.exits) {
         if (room.exits[dir]) {
@@ -921,6 +991,7 @@ function renderProgress() {
 
 function updateHud() {
     renderInventory();
+    renderMapDock();
     renderQuickActions();
     renderProgress();
 }
@@ -1291,8 +1362,8 @@ function getDirection(command) {
     return null;
 }
 
-function takeItem(itemName) {
-    if (isMoving) {
+function takeItem(itemName, options = {}) {
+    if (isMoving && !options.allowWhileMoving) {
         appendLog("请等走到位置后再拾取物品。", "error");
         return false;
     }
@@ -1315,7 +1386,7 @@ function takeItem(itemName) {
 
 function pickSceneItem(itemName) {
     const meta = itemMeta[itemName] || { label: itemName, icon: "assets/items/scroll.png" };
-    if (takeItem(itemName)) {
+    if (takeItem(itemName, { allowWhileMoving: true })) {
         showContentModal("拾取成功", "", `你拾取了 ${meta.label}，已放入背包。`);
     }
 }
@@ -1464,13 +1535,13 @@ async function handleCommand(command) {
 }
 
 // WASD小步移动 - 每次只移动一小段，走到出口才进入下一房间
-async function movePlayerStep(direction) {
+async function movePlayerStep(direction, options = {}) {
     if (!direction || isMoving) return { moved: false, roomChanged: false };
 
     const room = rooms[currentRoomId];
     const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
 
-    const nextPosition = calculateNextStep(currentPlayerPosition, direction, roomConfig);
+    const nextPosition = calculateNextStep(currentPlayerPosition, direction, roomConfig, options.stepSize);
     if (!nextPosition) return { moved: false, roomChanged: false };
 
     if (currentRoomId === 'forest_path' && direction === 'west') {
@@ -1491,9 +1562,10 @@ async function movePlayerStep(direction) {
 
     isMoving = true;
     startPlayerStep(direction);
+    $("player-token").style.setProperty("--player-move-duration", `${options.moveTime || 300}ms`);
     setPlayerPosition(nextPosition);
 
-    await wait(300);
+    await wait(options.moveTime || 300);
     stopPlayerStep(direction);
     isMoving = false;
 
@@ -1562,8 +1634,8 @@ function snapToCrossPath(position, roomConfig, direction) {
     }
 }
 
-function calculateNextStep(current, direction, roomConfig) {
-    const stepSize = GLOBAL_STEP_SIZE;
+function calculateNextStep(current, direction, roomConfig, customStepSize) {
+    const stepSize = customStepSize || GLOBAL_STEP_SIZE;
     const channels = roomConfig.channels || ['vertical', 'horizontal'];
     const hasVertical = channels.includes('vertical');
     const hasHorizontal = channels.includes('horizontal');
@@ -1604,6 +1676,17 @@ function calculateNextStep(current, direction, roomConfig) {
     }
 
     return { left: newLeft, top: newTop };
+}
+
+function getKeyboardMoveOptions() {
+    const heldTime = Date.now() - keyHoldState.startTime;
+    if (keyHoldState.isHolding && heldTime >= KEYBOARD_ACCELERATION_DELAY) {
+        return {
+            stepSize: KEYBOARD_ACCELERATED_STEP_SIZE,
+            moveTime: KEYBOARD_ACCELERATED_MOVE_TIME
+        };
+    }
+    return {};
 }
 
 async function enterNextRoom(direction, nextRoomId, path) {
@@ -2009,7 +2092,7 @@ document.addEventListener("keydown", (e) => {
                 // 退出查看模式
                 exitInspectMode();
                 
-                movePlayerStep(action.dir).then(result => {
+                movePlayerStep(action.dir, getKeyboardMoveOptions()).then(result => {
                     if (result.roomChanged) {
                         sendGameCommand(action.cmd).then(response => {
                             if (response && response.message) {
@@ -2019,7 +2102,7 @@ document.addEventListener("keydown", (e) => {
                     }
                 });
             }
-        }, 400);
+        }, KEYBOARD_HOLD_REPEAT_TIME);
     }
 });
 
@@ -2340,9 +2423,11 @@ function buildSaveSummary(state) {
     const roomProgress = totalRooms ? roomCount / totalRooms : 0;
     const itemProgress = gameState.completion.totalItems ? itemCount / gameState.completion.totalItems : 0;
     const percent = Math.max(4, Math.min(100, Math.round((roomProgress * 0.55 + itemProgress * 0.45) * 100)));
-    const roomTitle = rooms[state.currentRoomId] ? rooms[state.currentRoomId].title : "未知房间";
+    const room = rooms[state.currentRoomId];
+    const roomTitle = room ? room.title : "未知房间";
     return {
         roomTitle,
+        roomImage: room ? room.image : "",
         roomCount,
         totalRooms,
         itemCount,
@@ -2407,15 +2492,27 @@ function showSaveSlotsModal(mode, highlightedId) {
         list.innerHTML = slots.map((slot, index) => {
             const summary = slot.summary || buildSaveSummary(slot.state || {});
             const active = slot.id === highlightedId ? " · 刚刚保存" : "";
+            const roomImage = summary.roomImage || (slot.state && rooms[slot.state.currentRoomId] ? rooms[slot.state.currentRoomId].image : "");
+            const actionText = mode === "save" ? "已保存" : "继续此存档";
             return `
                 <button class="save-slot" type="button" data-save-id="${slot.id}" ${mode === "save" ? "disabled" : ""}>
-                    <div class="save-slot-header">
-                        <span class="save-slot-title">存档 ${index + 1}${active}</span>
-                        <span class="save-slot-time">${formatSaveTime(slot.savedAt)}</span>
-                    </div>
-                    <p class="save-slot-summary">${summary.text}</p>
-                    <div class="save-slot-progress" aria-label="游戏进度 ${summary.percent}%">
-                        <span style="width: ${summary.percent}%"></span>
+                    <div class="save-slot-thumb" style="background-image: url('${roomImage}')"></div>
+                    <div class="save-slot-content">
+                        <div class="save-slot-header">
+                            <span class="save-slot-title">存档 ${index + 1}${active}</span>
+                            <span class="save-slot-time">${formatSaveTime(slot.savedAt)}</span>
+                        </div>
+                        <p class="save-slot-room">${summary.roomTitle}</p>
+                        <div class="save-slot-stats">
+                            <span>已探索 ${summary.roomCount}/${summary.totalRooms}</span>
+                            <span>已收集 ${summary.itemCount}/${summary.totalItems}</span>
+                        </div>
+                        <div class="save-slot-footer">
+                            <div class="save-slot-progress" aria-label="游戏进度 ${summary.percent}%">
+                                <span style="width: ${summary.percent}%"></span>
+                            </div>
+                            <span class="save-slot-action">${actionText}</span>
+                        </div>
                     </div>
                 </button>`;
         }).join("");

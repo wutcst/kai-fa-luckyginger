@@ -28,14 +28,14 @@ const directionNames = {
 };
 
 const mapRoomNodes = {
-    campus_gate: { left: 50, top: 86 },
-    main_hall: { left: 50, top: 60 },
-    library: { left: 72, top: 48 },
-    lab: { left: 50, top: 30 },
-    forest_path: { left: 28, top: 62 },
-    locked_room: { left: 72, top: 30 },
-    unlocked_treasure_room: { left: 84, top: 18 },
-    teleport_room: { left: 28, top: 38 }
+    campus_gate: { left: 50, top: 92 },
+    main_hall: { left: 50, top: 61 },
+    library: { left: 85, top: 75 },
+    lab: { left: 45, top: 22 },
+    forest_path: { left: 17, top: 74 },
+    locked_room: { left: 86, top: 43 },
+    unlocked_treasure_room: { left: 68, top: 16 },
+    teleport_room: { left: 17, top: 35 }
 };
 
 const playerFrames = {

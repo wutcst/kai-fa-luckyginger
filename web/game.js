@@ -1128,6 +1128,8 @@ async function startGameFromMenu(mode) {
         currentPlayerPosition = { left: gateConfig.center.x, top: gateConfig.center.y };
         renderRoom({ left: gateConfig.center.x, top: gateConfig.center.y }, { instantPlayerPosition: true });
         appendLog("新游戏已开始！");
+        // 新游戏开始后自动显示玩法说明
+        showGameplayOnNewGame();
     } else if (mode === "load") {
         enterGameFromAuth(pendingAuthData);
         await loadSavedGame();
@@ -2544,5 +2546,100 @@ function showSaveSlotsModal(mode, highlightedId) {
 window.addEventListener('beforeunload', () => {
     if (currentUsername && currentRoomId) {
         saveFullState('zuul_auto_' + currentUsername);
+    }
+});
+
+// 玩法说明内容
+const gameplayContent = `
+<h4>🎮 游戏简介</h4>
+<p>《World of Zuul》是一款基于文本的冒险游戏。你扮演一名探险者，在一个由多个房间组成的迷宫中探索。游戏的目标是探索所有房间，收集物品，并发现隐藏的秘密。</p>
+
+<h4>🖱️ 移动控制</h4>
+<ul>
+    <li><strong>方向按钮</strong>：点击右下角四个方向键，一键移动到下一房间</li>
+    <li><strong>WASD/方向键</strong>：键盘控制，小步移动，走到出口才进入下一房间</li>
+    <li><strong>查看按钮(⊙)</strong>：点击中间按钮展开背包并查看日志</li>
+</ul>
+
+<h4>📋 可用命令</h4>
+<ul>
+    <li><strong>go &lt;方向&gt;</strong> - 向指定方向移动（north/south/east/west）</li>
+    <li><strong>look</strong> - 查看当前房间详细信息</li>
+    <li><strong>items</strong> - 查看房间和背包中的物品</li>
+    <li><strong>take &lt;物品名&gt;</strong> - 拾取物品</li>
+    <li><strong>drop &lt;物品名&gt;</strong> - 丢弃物品</li>
+    <li><strong>eat cookie</strong> - 吃掉魔法饼干，增加5kg负重</li>
+    <li><strong>back</strong> - 返回上一个房间</li>
+    <li><strong>save</strong> - 保存游戏</li>
+    <li><strong>help</strong> - 显示所有命令</li>
+</ul>
+
+<h4>🎯 游戏目标</h4>
+<ul>
+    <li>探索所有房间（共8个）</li>
+    <li>收集所有物品（共9个）</li>
+    <li>找到并吃掉魔法饼干增加负重</li>
+    <li>找到最终钥匙打开出口</li>
+</ul>
+
+<h4>💡 小提示</h4>
+<ul>
+    <li>初始负重限制为10kg，合理规划携带物品</li>
+    <li>传送房间会随机传送到其他位置</li>
+    <li>遇到谜题时仔细观察房间中的物品</li>
+    <li>使用back命令可以返回上一个房间</li>
+</ul>
+`;
+
+// 是否已经显示过玩法说明
+let hasShownGameplay = false;
+
+// 显示玩法说明
+function showGameplayModal() {
+    const modal = $("gameplay-modal");
+    const content = $("gameplay-content");
+    content.innerHTML = gameplayContent;
+    modal.classList.add("open");
+}
+
+// 隐藏玩法说明
+function hideGameplayModal() {
+    const modal = $("gameplay-modal");
+    modal.classList.remove("open");
+}
+
+// 在开始新游戏后自动显示玩法说明
+function showGameplayOnNewGame() {
+    if (!hasShownGameplay) {
+        hasShownGameplay = true;
+        setTimeout(() => {
+            showGameplayModal();
+        }, 500);
+    }
+}
+
+// 菜单页面的游戏玩法按钮
+$("gameplay-btn").addEventListener("click", () => {
+    showGameplayModal();
+});
+
+// 游戏中的帮助按钮
+$("help-btn").addEventListener("click", () => {
+    showGameplayModal();
+});
+
+// 玩法说明关闭按钮
+$("gameplay-close").addEventListener("click", () => {
+    hideGameplayModal();
+});
+
+$("gameplay-confirm").addEventListener("click", () => {
+    hideGameplayModal();
+});
+
+// 点击模态框外部关闭
+$("gameplay-modal").addEventListener("click", (event) => {
+    if (event.target === $("gameplay-modal")) {
+        hideGameplayModal();
     }
 });

@@ -726,6 +726,86 @@ input {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+.gameplay-card {
+    max-width: 680px;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.gameplay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.gameplay-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.close-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--ink);
+}
+
+.gameplay-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.gameplay-content h4 {
+    margin: 16px 0 8px;
+    font-size: 1rem;
+    color: var(--accent);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 4px;
+}
+
+.gameplay-content h4:first-child {
+    margin-top: 0;
+}
+
+.gameplay-content p {
+    margin: 8px 0;
+    line-height: 1.6;
+    color: var(--ink);
+}
+
+.gameplay-content ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.gameplay-content li {
+    margin: 6px 0;
+    line-height: 1.5;
+}
+
+.gameplay-content strong {
+    color: var(--accent-dark);
+}
+
 .modal-card h3 {
     margin: 0 0 10px;
     font-size: 1.2rem;

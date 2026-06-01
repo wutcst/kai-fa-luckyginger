@@ -82,16 +82,23 @@
                 </div>
             </header>
 
+            <div class="scene-item-layer" id="scene-item-layer" aria-label="房间可拾取物品"></div>
             <div class="player-token" id="player-token" aria-label="玩家角色"></div>
 
             <aside class="inventory-dock" id="inventory-dock">
-                <button class="dock-tab" type="button">背包</button>
                 <div class="dock-panel">
                     <h3>背包</h3>
                     <div class="inventory-list" id="inventory-list">暂无物品</div>
                     <div class="weight-line" id="weight-info">负重 0/10kg</div>
                 </div>
+                <button class="dock-tab" type="button" aria-label="打开背包" title="背包">
+                    <span aria-hidden="true">🎒</span>
+                </button>
             </aside>
+
+            <button class="map-dock-button" id="map-dock-button" type="button" aria-label="查看校园地图" title="校园地图">
+                <span aria-hidden="true">⌖</span>
+            </button>
 
             <nav class="floating-tools" aria-label="游戏信息">
                 <button class="round-tool active" data-panel="room-floating" type="button">房间</button>
@@ -197,6 +204,41 @@
             <p id="content-text"></p>
             <div class="modal-actions">
                 <button class="secondary-action" id="content-close" type="button">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="campus-map-modal">
+        <div class="modal-card campus-map-card">
+            <div class="campus-map-header">
+                <div>
+                    <h3>校园地图</h3>
+                    <p id="campus-map-current">当前位置</p>
+                </div>
+                <button class="secondary-action" id="campus-map-close" type="button">关闭</button>
+            </div>
+            <div class="campus-map-stage">
+                <img id="campus-map-image" src="assets/maps/campus_overview.png" alt="校园地图">
+                <div class="campus-map-markers" id="campus-map-markers"></div>
+            </div>
+            <div class="campus-map-meta">
+                <div class="campus-map-legend">
+                    <span><i class="legend-current"></i>当前房间</span>
+                    <span><i class="legend-visited"></i>已访问</span>
+                    <span><i class="legend-unvisited"></i>未访问</span>
+                </div>
+                <div class="campus-map-exits" id="campus-map-exits"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="save-slots-modal">
+        <div class="modal-card save-slots-card">
+            <h3 id="save-slots-title">存档</h3>
+            <p class="save-slots-hint" id="save-slots-hint"></p>
+            <div class="save-slots-list" id="save-slots-list"></div>
+            <div class="modal-actions">
+                <button class="secondary-action" id="save-slots-close" type="button">关闭</button>
             </div>
         </div>
     </div>

@@ -842,6 +842,7 @@ input {
 }
 
 .save-slot {
+    position: relative;
     width: 100%;
     display: grid;
     grid-template-columns: 96px minmax(0, 1fr);
@@ -854,6 +855,11 @@ input {
     background: rgba(255, 251, 239, 0.9);
     text-align: left;
     box-shadow: 0 6px 16px rgba(78, 45, 20, 0.12);
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+}
+.save-slot:hover {
+    box-shadow: 0 6px 20px rgba(78, 45, 20, 0.22);
 }
 
 .save-slot--empty {
@@ -923,7 +929,7 @@ input {
 
 .save-slot-footer {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 10px;
     align-items: center;
 }
@@ -947,6 +953,24 @@ input {
     font-size: 0.82rem;
     font-weight: 900;
     white-space: nowrap;
+}
+
+.save-slot-delete {
+    border: 1px solid rgba(180, 80, 60, 0.3);
+    border-radius: 4px;
+    background: transparent;
+    color: rgba(180, 80, 60, 0.7);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 2px 8px;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.save-slot-delete:hover {
+    background: rgba(200, 60, 40, 0.12);
+    color: #c0392b;
+    border-color: rgba(200, 60, 40, 0.5);
 }
 
 .campus-map-card {

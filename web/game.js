@@ -1557,11 +1557,12 @@ async function movePlayerStep(direction, options = {}) {
     const nextRoomId = room.exits[direction];
     const path = room.paths && room.paths[direction];
 
-    if (nextRoomId && path && isAtExit(currentPlayerPosition, path.exit)) {
+    if (nextRoomId && path && (isAtExit(currentPlayerPosition, path.exit) || hasCrossedExit(currentPlayerPosition, nextPosition, path.exit, direction))) {
         await enterNextRoom(direction, nextRoomId, path);
         return { moved: true, roomChanged: true };
     }
 
+    const positionBeforeMove = { ...currentPlayerPosition };
     isMoving = true;
     startPlayerStep(direction);
     $("player-token").style.setProperty("--player-move-duration", `${options.moveTime || 300}ms`);
@@ -1571,7 +1572,7 @@ async function movePlayerStep(direction, options = {}) {
     stopPlayerStep(direction);
     isMoving = false;
 
-    if (nextRoomId && path && isAtExit(nextPosition, path.exit)) {
+    if (nextRoomId && path && (isAtExit(nextPosition, path.exit) || hasCrossedExit(positionBeforeMove, nextPosition, path.exit, direction))) {
         await enterNextRoom(direction, nextRoomId, path);
         return { moved: true, roomChanged: true };
     }
@@ -1582,9 +1583,24 @@ async function movePlayerStep(direction, options = {}) {
 // 检查是否到达出口位置
 function isAtExit(position, exit) {
     if (!exit) return false;
-    const threshold = 6; // 允许的误差范围，稍微增大避免太敏感
+    const threshold = 8;
     return Math.abs(position.left - exit.left) < threshold && 
            Math.abs(position.top - exit.top) < threshold;
+}
+
+// 检查从from到to的移动是否穿过了出口位置
+function hasCrossedExit(from, to, exit, direction) {
+    if (!exit) return false;
+    const crossThreshold = 10;
+    const aligned = Math.abs(from.left - exit.left) < crossThreshold && 
+                    Math.abs(from.top - exit.top) < crossThreshold;
+    if (!aligned) return false;
+
+    if (direction === 'north') return from.top >= exit.top && to.top <= exit.top;
+    if (direction === 'south') return from.top <= exit.top && to.top >= exit.top;
+    if (direction === 'west') return from.left >= exit.left && to.left <= exit.left;
+    if (direction === 'east') return from.left <= exit.left && to.left >= exit.left;
+    return false;
 }
 
 // 检查位置是否在十字通道上

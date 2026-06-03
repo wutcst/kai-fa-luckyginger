@@ -1131,7 +1131,9 @@ async function startGameFromMenu(mode) {
         // 新游戏开始后自动显示玩法说明
         showGameplayOnNewGame();
     } else if (mode === "load") {
-        enterGameFromAuth(pendingAuthData);
+        sessionId = pendingAuthData.sessionId || null;
+        currentUsername = pendingAuthData.username || $("login-username").value.trim() || $("register-username").value.trim();
+        showView("game");
         await loadSavedGame();
     } else {
         sessionId = pendingAuthData.sessionId || null;
@@ -1260,9 +1262,11 @@ async function loadSavedGame() {
                     lastBackendStatus = response.gameStatus;
                 }
             }
-            const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
-            currentPlayerPosition = { left: roomConfig.center.x, top: roomConfig.center.y };
-            renderRoom({ left: roomConfig.center.x, top: roomConfig.center.y }, { instantPlayerPosition: true });
+            if (!loaded) {
+                const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+                currentPlayerPosition = { left: roomConfig.center.x, top: roomConfig.center.y };
+            }
+            renderRoom({ left: currentPlayerPosition.left, top: currentPlayerPosition.top }, { instantPlayerPosition: true });
             renderInventory();
             appendLog("存档已读取！");
         }
@@ -1383,6 +1387,9 @@ function takeItem(itemName, options = {}) {
     gameState.completion.itemsCollected = Math.max(gameState.completion.itemsCollected, gameState.inventory.length);
     renderRoom();
     appendLog(`你拾取了 ${itemName}。`);
+    if (currentUsername) {
+        saveFullState('zuul_auto_' + currentUsername);
+    }
     return true;
 }
 
@@ -1418,6 +1425,9 @@ function useItem(itemName) {
     updateLockedTreasuryExit();
     renderRoom();
     appendLog("钥匙转动后，宝库北侧的门打开了。现在可以向北进入。");
+    if (currentUsername) {
+        saveFullState('zuul_auto_' + currentUsername);
+    }
 }
 
 function applyFrontEndCommand(command, options = {}) {
@@ -1440,6 +1450,9 @@ function applyFrontEndCommand(command, options = {}) {
             gameState.inventory = gameState.inventory.filter((i) => i !== "cookie");
             rooms.main_hall.items = (rooms.main_hall.items || []).filter((i) => i !== "cookie");
             renderRoom();
+            if (currentUsername) {
+                saveFullState('zuul_auto_' + currentUsername);
+            }
         }
         return;
     }
@@ -1775,6 +1788,9 @@ async function enterNextRoom(direction, nextRoomId, path) {
     appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
     isMoving = false;
     updateDirectionControls();
+    if (currentUsername) {
+        saveFullState('zuul_auto_' + currentUsername);
+    }
 }
 
 function calculateStepsToCenter(entryPos, targetX, targetY) {

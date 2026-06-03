@@ -2513,7 +2513,7 @@ function showSaveSlotsModal(mode, highlightedId) {
             const roomImage = summary.roomImage || (slot.state && rooms[slot.state.currentRoomId] ? rooms[slot.state.currentRoomId].image : "");
             const actionText = mode === "save" ? "已保存" : "继续此存档";
             return `
-                <button class="save-slot" type="button" data-save-id="${slot.id}" ${mode === "save" ? "disabled" : ""}>
+                <div class="save-slot" data-save-id="${slot.id}">
                     <div class="save-slot-thumb" style="background-image: url('${roomImage}')"></div>
                     <div class="save-slot-content">
                         <div class="save-slot-header">
@@ -2530,15 +2530,17 @@ function showSaveSlotsModal(mode, highlightedId) {
                                 <span style="width: ${summary.percent}%"></span>
                             </div>
                             <span class="save-slot-action">${actionText}</span>
+                            <button class="save-slot-delete" type="button" data-delete-id="${slot.id}" title="删除此存档">删除</button>
                         </div>
                     </div>
-                </button>`;
+                </div>`;
         }).join("");
     }
 
     if (mode === "load") {
         list.querySelectorAll(".save-slot[data-save-id]").forEach((button) => {
-            button.addEventListener("click", () => {
+            button.addEventListener("click", (e) => {
+                if (e.target.closest(".save-slot-delete")) return;
                 const slot = getManualSaveSlots().find(item => item.id === button.dataset.saveId);
                 if (!slot) return;
                 if (!slot.state.gameRunId) {
@@ -2555,6 +2557,19 @@ function showSaveSlotsModal(mode, highlightedId) {
             });
         });
     }
+
+    list.querySelectorAll(".save-slot-delete").forEach((delBtn) => {
+        delBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const id = delBtn.dataset.deleteId;
+            const slots = getManualSaveSlots().filter(s => s.id !== id);
+            setManualSaveSlots(slots);
+            delBtn.closest(".save-slot").remove();
+            if (!getManualSaveSlots().length) {
+                list.innerHTML = '<div class="save-slot save-slot--empty">暂无可读取的存档</div>';
+            }
+        });
+    });
 
     modal.classList.add("open");
 }

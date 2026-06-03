@@ -291,6 +291,18 @@ const PASSWORDS = {
     box: '1768'
 };
 
+const ITEM_HOME_ROOM = {
+    key: 'campus_gate',
+    cookie: 'main_hall',
+    box: 'forest_path',
+    map: 'forest_path',
+    notebook: 'library',
+    computer: 'lab',
+    cable: 'lab',
+    treasure: 'unlocked_treasure_room',
+    final_key: 'forest_path'
+};
+
 const ROOM_CONFIGS = {
     campus_gate: {
         center: { x: 50, y: 76 },
@@ -1045,15 +1057,11 @@ function syncFromBackendStatus(status, options = {}) {
             gameState.visitedRooms.add(currentRoomId);
         }
         visualRoom.description = roomInfo.longDescription || roomInfo.shortDescription || visualRoom.description;
-        if (visualRoomId !== 'locked_room' && visualRoomId !== 'unlocked_treasure_room') {
-            visualRoom.items = itemNames(roomInfo.items);
-        }
     }
 
     const playerInfo = status.player || {};
     const backendInventory = itemNames(playerInfo.inventory);
-    const frontendOnlyItems = gameState.inventory.filter(item => item === 'final_key' || item === 'treasure');
-    gameState.inventory = [...new Set([...backendInventory, ...frontendOnlyItems])];
+    gameState.inventory = [...new Set([...gameState.inventory, ...backendInventory])];
 
     gameState.visitedRooms.add(currentRoomId);
     updateLockedTreasuryExit();
@@ -1439,6 +1447,26 @@ function applyFrontEndCommand(command, options = {}) {
         return;
     }
 
+    if (normalized.startsWith("drop ")) {
+        const dropName = normalized.split(" ").slice(1).join(" ");
+        if (gameState.inventory.includes(dropName)) {
+            gameState.inventory = gameState.inventory.filter(i => i !== dropName);
+            const homeRoomId = ITEM_HOME_ROOM[dropName] || currentRoomId;
+            const homeRoom = rooms[homeRoomId];
+            if (homeRoom && !(homeRoom.items || []).includes(dropName)) {
+                homeRoom.items = [...(homeRoom.items || []), dropName];
+            }
+            renderRoom();
+            appendLog(`你丢弃了 ${dropName}。`);
+            if (currentUsername) {
+                saveFullState('zuul_auto_' + currentUsername);
+            }
+        } else {
+            appendLog(`你的背包里没有 ${dropName}。`, "error");
+        }
+        return;
+    }
+
     if (normalized.startsWith("use ")) {
         useItem(normalized.split(" ").slice(1).join(" "));
         return;
@@ -1528,21 +1556,25 @@ async function handleCommand(command) {
         appendLog("后端命令暂时不可用，已执行前端交互。", "error");
     }
 
-    if (response && response.success === false) {
+    const isItemCommand = normalized.startsWith("take") || normalized.startsWith("get") || 
+                           normalized.startsWith("drop") || normalized.startsWith("use") || 
+                           normalized.startsWith("eat");
+
+    if (response && response.success === false && !isItemCommand) {
         appendApiMessage(response);
         return;
     }
 
-    appendApiMessage(response);
+    if (response && response.success === false && isItemCommand) {
+        // 物品命令：后端失败也执行前端逻辑（前端状态可能和后端不同步）
+    } else {
+        appendApiMessage(response);
+    }
     applyFrontEndCommand(normalized, { echoLook: !response || !response.message });
 
     const isSpecialCommand = 
         (currentRoomId === 'unlocked_treasure_room' && normalized.startsWith('take')) ||
         (currentRoomId === 'locked_room' && normalized.startsWith('use'));
-
-    const isItemCommand = normalized.startsWith("take") || normalized.startsWith("get") || 
-                           normalized.startsWith("drop") || normalized.startsWith("use") || 
-                           normalized.startsWith("eat");
 
     if (!isItemCommand && !isSpecialCommand && normalized !== "look" && normalized !== "status" && normalized !== "items") {
         await refreshGameStatus();

@@ -413,6 +413,7 @@ let currentUsername = null;
 let pendingAuthData = null;
 let lastBackendStatus = null;
 let currentPlayerPosition = { left: 50, top: 50 };
+let roomHistory = [];
 let currentGameRunId = createGameRunId();
 
 function createGameRunId() {
@@ -1189,6 +1190,7 @@ function resetFrontendState(username) {
     gameState.hasFinalKey = false;
     gameState.gameWon = false;
     lastBackendStatus = null;
+    roomHistory = [];
     rooms.campus_gate.items = ["key"];
     rooms.main_hall.items = ["cookie"];
     rooms.forest_path.items = ["box", "map"];
@@ -1508,7 +1510,7 @@ function applyFrontEndCommand(command, options = {}) {
     }
 
     if (normalized === "back") {
-        appendLog("返回上一房间将在后续步骤接入完整历史记录。");
+        appendLog("返回上一房间请使用 back 命令。");
         return;
     }
 
@@ -1525,6 +1527,32 @@ async function handleCommand(command) {
     const normalized = normalizeCommand(command);
     const direction = getDirection(normalized);
     let response = null;
+
+    // 返回上一房间
+    if (normalized === "back") {
+        if (roomHistory.length === 0) {
+            appendLog("没有可以返回的房间。", "error");
+        } else {
+            const prevRoomId = roomHistory.pop();
+            isMoving = true;
+            setPlayerVisible(false);
+            await wait(180);
+            currentRoomId = prevRoomId;
+            gameState.visitedRooms.add(currentRoomId);
+            gameState.completion.roomsExplored = gameState.visitedRooms.size;
+            const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+            currentPlayerPosition = { left: roomConfig.center.x, top: roomConfig.center.y };
+            renderRoom({ left: roomConfig.center.x, top: roomConfig.center.y }, { instantPlayerPosition: true });
+            setPlayerVisible(true);
+            appendLog(`你返回了 ${rooms[currentRoomId].title}。`);
+            isMoving = false;
+            updateDirectionControls();
+            if (currentUsername) {
+                saveFullState('zuul_auto_' + currentUsername);
+            }
+        }
+        return;
+    }
 
     // 特殊处理：从 locked_room 向北移动，直接进入 unlocked_treasure_room
     if (direction === 'north' && currentRoomId === 'locked_room' && gameState.treasureUnlocked) {
@@ -1757,6 +1785,7 @@ async function enterNextRoom(direction, nextRoomId, path) {
     setPlayerVisible(false);
     await wait(180);
     
+    roomHistory.push(currentRoomId);
     currentRoomId = nextRoomId;
     gameState.visitedRooms.add(currentRoomId);
     gameState.completion.roomsExplored = gameState.visitedRooms.size;
@@ -1913,6 +1942,7 @@ async function showTeleportDialog() {
                 }
 
                 const targetConfig = ROOM_CONFIGS[targetRoomId] || ROOM_CONFIGS.main_hall;
+                roomHistory.push(currentRoomId);
                 isMoving = true;
                 setPlayerVisible(false);
                 await wait(180);
@@ -2396,6 +2426,7 @@ function buildFullState() {
         currentPlayerPosition: { ...currentPlayerPosition },
         inventory: [...gameState.inventory],
         visitedRooms: [...gameState.visitedRooms],
+        roomHistory: [...roomHistory],
         treasureUnlocked: gameState.treasureUnlocked,
         notebookUnlocked: gameState.notebookUnlocked,
         notebookOpened: gameState.notebookOpened,
@@ -2436,6 +2467,7 @@ function applyFullState(state) {
     currentPlayerPosition = state.currentPlayerPosition || { left: 50, top: 50 };
     gameState.inventory = state.inventory || [];
     gameState.visitedRooms = new Set(state.visitedRooms || ['campus_gate']);
+    roomHistory = state.roomHistory || [];
     gameState.treasureUnlocked = !!state.treasureUnlocked;
     gameState.notebookUnlocked = !!state.notebookUnlocked;
     gameState.notebookOpened = !!state.notebookOpened;

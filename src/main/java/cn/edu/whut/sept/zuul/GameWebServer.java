@@ -358,7 +358,6 @@ public class GameWebServer {
                     out.println(JsonUtil.toJson(response));
                 }
             } else if (normalizedPath.equals("/api/logout") && normalizedMethod.equals("POST")) {
-                // 退出登录
                 Map<String, String> request = JsonUtil.parseSimpleJson(requestBody);
                 String sessionId = request != null ? request.get("sessionId") : null;
                 
@@ -369,6 +368,19 @@ public class GameWebServer {
                     out.println(JsonUtil.toJson(error));
                 } else {
                     Map<String, Object> response = gameController.logout(sessionId);
+                    out.println(JsonUtil.toJson(response));
+                }
+            } else if (normalizedPath.equals("/api/newgame") && normalizedMethod.equals("POST")) {
+                Map<String, String> request = JsonUtil.parseSimpleJson(requestBody);
+                String sessionId = request != null ? request.get("sessionId") : null;
+                
+                if (sessionId == null || sessionId.isEmpty()) {
+                    Map<String, Object> error = new HashMap<>();
+                    error.put("success", false);
+                    error.put("message", "缺少会话ID");
+                    out.println(JsonUtil.toJson(error));
+                } else {
+                    Map<String, Object> response = gameController.newGame(sessionId);
                     out.println(JsonUtil.toJson(response));
                 }
             } else {

@@ -206,25 +206,10 @@ public class GameController {
             GameSession session = new GameSession(username, userId);
             sessions.put(sessionId, session);
             
-            // 尝试自动加载保存的游戏进度
-            GameStateManager stateManager = new GameStateManager(session.game);
-            boolean loaded = stateManager.loadGameState();
-            
-            if (loaded) {
-                response.put("success", true);
-                response.put("message", "登录成功！已恢复上次的游戏进度");
-                response.put("sessionId", sessionId);
-                response.put("username", username);
-                response.put("gameLoaded", true);
-                // 返回当前游戏状态
-                response.put("gameStatus", getGameStatus(sessionId));
-            } else {
-                response.put("success", true);
-                response.put("message", "登录成功！开始新游戏");
-                response.put("sessionId", sessionId);
-                response.put("username", username);
-                response.put("gameLoaded", false);
-            }
+            response.put("success", true);
+            response.put("message", "登录成功！");
+            response.put("sessionId", sessionId);
+            response.put("username", username);
         } else {
             response.put("success", false);
             response.put("message", "用户名或密码错误");
@@ -375,19 +360,6 @@ public class GameController {
             } else {
                 game.addRoomToHistory(currentRoom);
                 player.setCurrentRoom(nextRoom);
-                
-                // 检查传输房间
-                if (nextRoom instanceof TransporterRoom) {
-                    TransporterRoom transporter = (TransporterRoom) nextRoom;
-                    Room randomRoom = transporter.getRandomRoom();
-                    if (randomRoom != null) {
-                        output.append("你踏入了一个神秘的传输房间...\n");
-                        output.append("突然，你被传送到另一个位置！\n");
-                        // 传输房间已经被记录，现在记录目标房间
-                        player.setCurrentRoom(randomRoom);
-                    }
-                }
-                
                 output.append(player.getCurrentRoom().getLongDescription());
             }
         } else if (commandWord.equals("look")) {
@@ -557,6 +529,22 @@ public class GameController {
                           .append(item.getUseEffect());
                 }
             }
+        } else if (commandWord.equals("teleport")) {
+            Room currentRoom = player.getCurrentRoom();
+            if (currentRoom instanceof TransporterRoom) {
+                TransporterRoom transporter = (TransporterRoom) currentRoom;
+                Room randomRoom = transporter.getRandomRoom();
+                if (randomRoom != null && randomRoom != currentRoom) {
+                    game.addRoomToHistory(currentRoom);
+                    player.setCurrentRoom(randomRoom);
+                    output.append("你被随机传送到了一个新的位置！\n");
+                    output.append(player.getCurrentRoom().getLongDescription());
+                } else {
+                    output.append("传送失败，你仍然在原地。");
+                }
+            } else {
+                output.append("你不在传送房间，无法使用传送功能。");
+            }
         } else if (commandWord.equals("help")) {
             output.append("你可以使用以下命令:\n");
             output.append("  go <方向>  - 向指定方向移动 (north, south, east, west)\n");
@@ -710,6 +698,25 @@ public class GameController {
         return response;
     }
     
+    public Map<String, Object> newGame(String sessionId) {
+        Map<String, Object> response = new HashMap<>();
+        
+        GameSession session = getSession(sessionId);
+        if (session == null) {
+            response.put("success", false);
+            response.put("message", "会话无效，请重新登录");
+            return response;
+        }
+        
+        GameSession newSession = new GameSession(session.username, session.userId);
+        sessions.put(sessionId, newSession);
+        
+        response.put("success", true);
+        response.put("message", "新游戏已开始！");
+        response.put("gameStatus", getGameStatus(sessionId));
+        return response;
+    }
+    
     /**
      * 加载游戏状态
      */
@@ -774,6 +781,7 @@ public class GameController {
         Map<String, Object> roomInfo = new HashMap<>();
         roomInfo.put("shortDescription", currentRoom.getShortDescription());
         roomInfo.put("longDescription", currentRoom.getLongDescription());
+        roomInfo.put("roomId", session.game.getRoomId(currentRoom));
         
         // 房间出口
         Map<String, Boolean> exits = new HashMap<>();
@@ -794,6 +802,9 @@ public class GameController {
             itemInfo.put("name", item.getName());
             itemInfo.put("description", item.getDescription());
             itemInfo.put("weight", item.getWeight());
+            itemInfo.put("itemType", item.getItemType());
+            itemInfo.put("useEffect", item.getUseEffect());
+            itemInfo.put("usable", item.isUsable());
             roomItems.add(itemInfo);
         }
         System.out.println("DEBUG: 返回的物品数组大小: " + roomItems.size());
@@ -814,6 +825,9 @@ public class GameController {
             itemInfo.put("name", item.getName());
             itemInfo.put("description", item.getDescription());
             itemInfo.put("weight", item.getWeight());
+            itemInfo.put("itemType", item.getItemType());
+            itemInfo.put("useEffect", item.getUseEffect());
+            itemInfo.put("usable", item.isUsable());
             inventory.add(itemInfo);
         }
         playerInfo.put("inventory", inventory);
@@ -832,6 +846,13 @@ public class GameController {
         completion.put("cookieEaten", completionInfo.isCookieEaten());
         completion.put("atStartRoom", completionInfo.isAtStartRoom());
         status.put("completion", completion);
+        
+        boolean treasureUnlocked = false;
+        Room lockedRoom = session.game.getAllRoomsMap().get("locked_room");
+        if (lockedRoom instanceof LockedRoom) {
+            treasureUnlocked = ((LockedRoom) lockedRoom).isUnlocked();
+        }
+        status.put("treasureUnlocked", treasureUnlocked);
         
         // 已访问的房间列表
         List<String> visitedRoomsList = new ArrayList<>(player.getRoomsVisited());

@@ -1,21 +1,43 @@
+/**
+ * Help命令执行器。
+ * 显示游戏帮助信息。
+ * 
+ * @author 扩展功能实现
+ * @version 2.0
+ */
 package cn.edu.whut.sept.zuul;
 
-public class HelpCommand extends Command
+public class HelpCommand implements CommandExecutor
 {
-    private CommandWords commandWords;
-
-    public HelpCommand(CommandWords words)
+    /**
+     * 执行help命令，显示游戏帮助信息。
+     * 
+     * @param command 命令对象
+     * @param game 游戏对象
+     * @return 总是返回false（help命令不会退出游戏）
+     */
+    @Override
+    public boolean execute(Command command, Game game)
     {
-        commandWords = words;
-    }
-
-    public boolean execute(Game game)
-    {
-        System.out.println("You are lost. You are alone. You wander");
-        System.out.println("around at the university.");
+        System.out.println("你迷路了。你独自一人。");
+        System.out.println("你在大学里四处游荡。");
         System.out.println();
-        System.out.println("Your command words are:");
-        commandWords.showAll();
+        System.out.println("你可以使用的命令:");
+        game.getParser().showCommands();
+        System.out.println();
+        System.out.println("常用命令说明:");
+        System.out.println("  go <方向>     - 向指定方向移动（north/south/east/west）");
+        System.out.println("  look          - 查看当前房间的详细信息");
+        System.out.println("  take <物品>   - 拾取房间中的物品");
+        System.out.println("  drop <物品>   - 丢弃背包中的物品");
+        System.out.println("  items         - 查看背包中的所有物品");
+        System.out.println("  use <物品>    - 使用背包中的物品（如：use key 解锁房间，use map 查看地图）");
+        System.out.println("  status        - 查看游戏进度和通关状态");
+        System.out.println("  back          - 返回到上一个房间");
+        System.out.println("  eat cookie    - 吃掉魔法饼干（增加5kg负重）");
+        System.out.println("  help          - 显示此帮助信息");
+        System.out.println("  quit          - 退出游戏");
         return false;
     }
 }
+

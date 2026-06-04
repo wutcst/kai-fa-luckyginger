@@ -14,6 +14,7 @@ package cn.edu.whut.sept.zuul;
 
 import java.sql.*;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -207,11 +208,20 @@ public class DatabaseManager {
             "  rooms_visited TEXT," +
             "  items_collected_list TEXT," +
             "  cookie_eaten BOOLEAN DEFAULT FALSE," +
+            "  treasure_unlocked BOOLEAN DEFAULT FALSE," +
             "  saved_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP," +
             "  FOREIGN KEY (user_id) REFERENCES users(user_id) ON DELETE CASCADE," +
             "  UNIQUE KEY unique_user_state (user_id)" +
             ") ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci";
         stmt.executeUpdate(createPlayerStatesTable);
+        
+        try {
+            stmt.executeUpdate("ALTER TABLE player_states ADD COLUMN treasure_unlocked BOOLEAN DEFAULT FALSE");
+        } catch (SQLException e) {
+            if (e.getErrorCode() != 1060) {
+                System.err.println("添加treasure_unlocked列时出错: " + e.getMessage());
+            }
+        }
         
         stmt.close();
     }
@@ -421,24 +431,25 @@ public class DatabaseManager {
      */
     public boolean savePlayerState(int userId, String currentRoom, double maxWeight, 
                                    List<String> inventory, List<String> roomsVisited, 
-                                   List<String> itemsCollected, boolean cookieEaten) {
+                                   List<String> itemsCollected, boolean cookieEaten,
+                                   boolean treasureUnlocked) {
         try {
-            // 检查连接是否有效
             if (connection == null || connection.isClosed()) {
                 System.err.println("数据库连接不可用，无法保存玩家状态");
                 return false;
             }
             
             String sql = "INSERT INTO player_states " +
-                        "(user_id, current_room, max_weight, inventory, rooms_visited, items_collected_list, cookie_eaten) " +
-                        "VALUES (?, ?, ?, ?, ?, ?, ?) " +
+                        "(user_id, current_room, max_weight, inventory, rooms_visited, items_collected_list, cookie_eaten, treasure_unlocked) " +
+                        "VALUES (?, ?, ?, ?, ?, ?, ?, ?) " +
                         "ON DUPLICATE KEY UPDATE " +
                         "current_room = VALUES(current_room), " +
                         "max_weight = VALUES(max_weight), " +
                         "inventory = VALUES(inventory), " +
                         "rooms_visited = VALUES(rooms_visited), " +
                         "items_collected_list = VALUES(items_collected_list), " +
-                        "cookie_eaten = VALUES(cookie_eaten)";
+                        "cookie_eaten = VALUES(cookie_eaten), " +
+                        "treasure_unlocked = VALUES(treasure_unlocked)";
             
             PreparedStatement pstmt = connection.prepareStatement(sql);
             pstmt.setInt(1, userId);
@@ -448,6 +459,7 @@ public class DatabaseManager {
             pstmt.setString(5, String.join(",", roomsVisited));
             pstmt.setString(6, String.join(",", itemsCollected));
             pstmt.setBoolean(7, cookieEaten);
+            pstmt.setBoolean(8, treasureUnlocked);
             
             int result = pstmt.executeUpdate();
             pstmt.close();
@@ -480,18 +492,24 @@ public class DatabaseManager {
                 state.put("maxWeight", rs.getDouble("max_weight"));
                 
                 String inventoryStr = rs.getString("inventory");
-                state.put("inventory", inventoryStr != null && !inventoryStr.isEmpty() 
-                          ? List.of(inventoryStr.split(",")) : new ArrayList<>());
+                state.put("inventory", inventoryStr != null && !inventoryStr.isEmpty()
+                          ? Arrays.asList(inventoryStr.split(",")) : new ArrayList<>());
                 
                 String roomsVisitedStr = rs.getString("rooms_visited");
-                state.put("roomsVisited", roomsVisitedStr != null && !roomsVisitedStr.isEmpty() 
-                         ? List.of(roomsVisitedStr.split(",")) : new ArrayList<>());
+                state.put("roomsVisited", roomsVisitedStr != null && !roomsVisitedStr.isEmpty()
+                         ? Arrays.asList(roomsVisitedStr.split(",")) : new ArrayList<>());
                 
                 String itemsCollectedStr = rs.getString("items_collected_list");
-                state.put("itemsCollected", itemsCollectedStr != null && !itemsCollectedStr.isEmpty() 
-                         ? List.of(itemsCollectedStr.split(",")) : new ArrayList<>());
+                state.put("itemsCollected", itemsCollectedStr != null && !itemsCollectedStr.isEmpty()
+                         ? Arrays.asList(itemsCollectedStr.split(",")) : new ArrayList<>());
                 
                 state.put("cookieEaten", rs.getBoolean("cookie_eaten"));
+                
+                try {
+                    state.put("treasureUnlocked", rs.getBoolean("treasure_unlocked"));
+                } catch (SQLException e) {
+                    state.put("treasureUnlocked", false);
+                }
                 
                 rs.close();
                 pstmt.close();

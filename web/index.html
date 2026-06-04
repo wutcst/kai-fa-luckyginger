@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>World of Zuul</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <main class="app-shell">
+        <section class="auth-view view active" id="auth-view">
+            <div class="auth-panel">
+                <p class="eyebrow">World of Zuul</p>
+                <h1>校园冒险</h1>
+                <p class="muted">登录或注册后进入游戏，探索房间、拾取物品并解锁隐藏区域。</p>
+
+                <div class="auth-tabs" role="tablist">
+                    <button class="tab active" id="login-tab" type="button">登录</button>
+                    <button class="tab" id="register-tab" type="button">注册</button>
+                </div>
+
+                <form class="auth-form active" id="login-form">
+                    <label>
+                        用户名
+                        <input id="login-username" type="text" autocomplete="username" placeholder="请输入用户名">
+                    </label>
+                    <label>
+                        密码
+                        <input id="login-password" type="password" autocomplete="current-password" placeholder="请输入密码">
+                    </label>
+                    <button class="primary-action" id="login-btn" type="submit">进入游戏</button>
+                    <p class="form-message" id="login-message"></p>
+                </form>
+
+                <form class="auth-form" id="register-form">
+                    <label>
+                        用户名
+                        <input id="register-username" type="text" autocomplete="username" placeholder="创建用户名">
+                    </label>
+                    <label>
+                        密码
+                        <input id="register-password" type="password" autocomplete="new-password" placeholder="创建密码">
+                    </label>
+                    <button class="primary-action" id="register-btn" type="submit">注册并进入</button>
+                    <p class="form-message" id="register-message"></p>
+                </form>
+            </div>
+        </section>
+
+        <section class="menu-view view" id="menu-view">
+            <div class="menu-panel">
+                <p class="eyebrow">World of Zuul</p>
+                <h1>冒险准备</h1>
+                <p class="muted" id="menu-welcome">请选择进入游戏的方式。</p>
+
+                <div class="menu-actions">
+                    <button class="primary-action menu-action" id="start-game-btn" type="button">开始新游戏</button>
+                    <button class="menu-action secondary-action" id="load-game-btn" type="button">读取存档</button>
+                    <button class="menu-action secondary-action" id="continue-game-btn" type="button">进入当前进度</button>
+                </div>
+
+                <p class="form-message" id="menu-message"></p>
+            </div>
+        </section>
+
+        <section class="game-view view" id="game-view">
+            <img class="scene-bg" id="scene-bg" src="assets/rooms/campus_gate.png" alt="当前房间背景">
+
+            <header class="game-titlebar">
+                <div>
+                    <p class="eyebrow">当前位置</p>
+                    <h2 id="room-name">校园入口</h2>
+                </div>
+                <div class="title-actions">
+                    <button class="hud-button" id="save-game-btn" type="button">保存</button>
+                    <button class="hud-button" id="game-menu-btn" type="button">菜单</button>
+                    <div class="game-menu-popover" id="game-menu-popover">
+                        <button type="button" id="menu-back-btn">返回菜单</button>
+                        <button type="button" id="menu-load-btn">读取存档</button>
+                        <button type="button" id="logout-btn">退出登录</button>
+                    </div>
+                </div>
+            </header>
+
+            <div class="scene-item-layer" id="scene-item-layer" aria-label="房间可拾取物品"></div>
+            <div class="player-token" id="player-token" aria-label="玩家角色"></div>
+
+            <aside class="inventory-dock" id="inventory-dock">
+                <div class="dock-panel">
+                    <h3>背包</h3>
+                    <div class="inventory-list" id="inventory-list">暂无物品</div>
+                    <div class="weight-line" id="weight-info">负重 0/10kg</div>
+                </div>
+                <button class="dock-tab" type="button" aria-label="打开背包" title="背包">
+                    <span aria-hidden="true">🎒</span>
+                </button>
+            </aside>
+
+            <button class="map-dock-button" id="map-dock-button" type="button" aria-label="查看校园地图" title="校园地图">
+                <span aria-hidden="true">⌖</span>
+            </button>
+
+            <nav class="floating-tools" aria-label="游戏信息">
+                <button class="round-tool active" data-panel="room-floating" type="button">房间</button>
+                <button class="round-tool" data-panel="command-floating" type="button">命令</button>
+                <button class="round-tool" data-panel="log-floating" type="button">日志</button>
+            </nav>
+
+            <section class="floating-panel room-floating active" id="room-floating">
+                <h3>房间信息</h3>
+                <p id="room-description">正在加载房间信息。</p>
+                <div class="progress-line" id="room-progress">房间 0/7，物品 0/9</div>
+            </section>
+
+            <section class="floating-panel command-floating" id="command-floating">
+                <h3>交互命令</h3>
+                <div class="quick-actions" id="quick-actions"></div>
+                <div class="command-row">
+                    <input id="command-input" type="text" placeholder="take key / use key / eat cookie">
+                    <button class="primary-action small" id="submit-btn" type="button">执行</button>
+                </div>
+            </section>
+
+            <section class="floating-panel log-floating" id="log-floating">
+                <h3>游戏日志</h3>
+                <div class="log-panel" id="output-area" aria-live="polite"></div>
+            </section>
+
+            <nav class="direction-pad" aria-label="方向控制">
+                <button data-command="go north" id="go-north" type="button" title="向北">↑</button>
+                <button data-command="go west" id="go-west" type="button" title="向西">←</button>
+                <button data-command="look" id="look-room" type="button" title="查看">⊙</button>
+                <button data-command="go east" id="go-east" type="button" title="向东">→</button>
+                <button data-command="go south" id="go-south" type="button" title="向南">↓</button>
+            </nav>
+        </section>
+    </main>
+
+    <div class="modal-overlay" id="teleport-modal">
+        <div class="modal-card">
+            <h3>传送房间</h3>
+            <p>你进入了神秘的传送房间！是否要进行随机传送？</p>
+            <div class="modal-actions">
+                <button class="primary-action" id="teleport-confirm" type="button">确定传送</button>
+                <button class="secondary-action" id="teleport-cancel" type="button">留在这里</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="item-detail-modal">
+        <div class="modal-card item-detail-card">
+            <div class="item-detail-header">
+                <img class="item-detail-icon" id="item-detail-icon" src="" alt="物品图标">
+                <h3 id="item-detail-title">物品名称</h3>
+            </div>
+            <p class="item-detail-weight" id="item-detail-weight">重量：0.1kg</p>
+            <p class="item-detail-description" id="item-detail-description">物品描述</p>
+            <img class="item-map-preview" id="item-map-preview" src="" alt="物品地图" style="display: none;">
+            <div class="modal-actions" id="item-detail-actions">
+                <button class="secondary-action" id="item-detail-close" type="button">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="room-status-modal">
+        <div class="modal-card">
+            <h3>房间状态</h3>
+            <p class="room-status-location" id="room-status-location">当前位置</p>
+            <p class="room-status-exits-title">可前往的方向：</p>
+            <div class="room-status-exits" id="room-status-exits"></div>
+            <div class="modal-actions">
+                <button class="secondary-action" id="room-status-close" type="button">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="room-items-modal">
+        <div class="modal-card">
+            <h3>房间物品</h3>
+            <p class="room-items-list" id="room-items-list"></p>
+            <div class="modal-actions">
+                <button class="secondary-action" id="room-items-close" type="button">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="password-modal">
+        <div class="modal-card puzzle-modal-content">
+            <h3>输入密码</h3>
+            <p>请输入4位数字密码：</p>
+            <input type="text" id="password-input" maxlength="4" placeholder="****" autocomplete="off">
+            <p class="password-error" id="password-error"></p>
+            <div class="modal-actions">
+                <button class="primary-action" id="password-confirm" type="button">确认</button>
+                <button class="secondary-action" id="password-cancel" type="button">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="content-modal">
+        <div class="modal-card puzzle-modal-content puzzle-modal-content--wide">
+            <h3>内容</h3>
+            <img class="puzzle-image" id="content-image" src="" alt="谜题图片" style="display: none;">
+            <p id="content-text"></p>
+            <div class="modal-actions">
+                <button class="secondary-action" id="content-close" type="button">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="campus-map-modal">
+        <div class="modal-card campus-map-card">
+            <div class="campus-map-header">
+                <div>
+                    <h3>校园地图</h3>
+                    <p id="campus-map-current">当前位置</p>
+                </div>
+                <button class="secondary-action" id="campus-map-close" type="button">关闭</button>
+            </div>
+            <div class="campus-map-stage">
+                <img id="campus-map-image" src="assets/maps/campus_overview.png" alt="校园地图">
+                <div class="campus-map-markers" id="campus-map-markers"></div>
+            </div>
+            <div class="campus-map-meta">
+                <div class="campus-map-legend">
+                    <span><i class="legend-current"></i>当前房间</span>
+                    <span><i class="legend-visited"></i>已访问</span>
+                    <span><i class="legend-unvisited"></i>未访问</span>
+                </div>
+                <div class="campus-map-exits" id="campus-map-exits"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="save-slots-modal">
+        <div class="modal-card save-slots-card">
+            <h3 id="save-slots-title">存档</h3>
+            <p class="save-slots-hint" id="save-slots-hint"></p>
+            <div class="save-slots-list" id="save-slots-list"></div>
+            <div class="modal-actions">
+                <button class="secondary-action" id="save-slots-close" type="button">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="exit-modal">
+        <div class="modal-card puzzle-modal-content">
+            <h3>出口</h3>
+            <p id="exit-description"></p>
+            <div class="modal-actions">
+                <button class="primary-action" id="exit-open" type="button">开门</button>
+                <button class="secondary-action" id="exit-back" type="button">返回</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="win-modal">
+        <div class="modal-card win-modal-content">
+            <h3>🎉 恭喜通关！</h3>
+            <p>你成功使用最终钥匙打开了出口大门，校园冒险圆满结束啦！</p>
+            <div class="modal-actions">
+                <button class="primary-action" id="win-close" type="button">太棒了</button>
+            </div>
+        </div>
+    </div>
+
+    <script src="game.js"></script>
+</body>
+</html>

@@ -282,13 +282,25 @@ const sceneItemPlacements = {
 const GLOBAL_STEP_SIZE = 6;
 const GLOBAL_ANIMATION_SPEED = 500;
 const KEYBOARD_ACCELERATION_DELAY = 320;
-const KEYBOARD_ACCELERATED_STEP_SIZE = 12;
+const KEYBOARD_ACCELERATED_STEP_SIZE = 9;
 const KEYBOARD_ACCELERATED_MOVE_TIME = 150;
 const KEYBOARD_HOLD_REPEAT_TIME = 170;
 
 const PASSWORDS = {
     computer: '1235',
     box: '1768'
+};
+
+const ITEM_HOME_ROOM = {
+    key: 'campus_gate',
+    cookie: 'main_hall',
+    box: 'forest_path',
+    map: 'forest_path',
+    notebook: 'library',
+    computer: 'lab',
+    cable: 'lab',
+    treasure: 'unlocked_treasure_room',
+    final_key: 'forest_path'
 };
 
 const ROOM_CONFIGS = {
@@ -401,6 +413,7 @@ let currentUsername = null;
 let pendingAuthData = null;
 let lastBackendStatus = null;
 let currentPlayerPosition = { left: 50, top: 50 };
+let roomHistory = [];
 let currentGameRunId = createGameRunId();
 
 function createGameRunId() {
@@ -1045,15 +1058,11 @@ function syncFromBackendStatus(status, options = {}) {
             gameState.visitedRooms.add(currentRoomId);
         }
         visualRoom.description = roomInfo.longDescription || roomInfo.shortDescription || visualRoom.description;
-        if (visualRoomId !== 'locked_room' && visualRoomId !== 'unlocked_treasure_room') {
-            visualRoom.items = itemNames(roomInfo.items);
-        }
     }
 
     const playerInfo = status.player || {};
     const backendInventory = itemNames(playerInfo.inventory);
-    const frontendOnlyItems = gameState.inventory.filter(item => item === 'final_key' || item === 'treasure');
-    gameState.inventory = [...new Set([...backendInventory, ...frontendOnlyItems])];
+    gameState.inventory = [...new Set([...gameState.inventory, ...backendInventory])];
 
     gameState.visitedRooms.add(currentRoomId);
     updateLockedTreasuryExit();
@@ -1128,8 +1137,12 @@ async function startGameFromMenu(mode) {
         currentPlayerPosition = { left: gateConfig.center.x, top: gateConfig.center.y };
         renderRoom({ left: gateConfig.center.x, top: gateConfig.center.y }, { instantPlayerPosition: true });
         appendLog("新游戏已开始！");
+        // 新游戏开始后自动显示玩法说明
+        showGameplayOnNewGame();
     } else if (mode === "load") {
-        enterGameFromAuth(pendingAuthData);
+        sessionId = pendingAuthData.sessionId || null;
+        currentUsername = pendingAuthData.username || $("login-username").value.trim() || $("register-username").value.trim();
+        showView("game");
         await loadSavedGame();
     } else {
         sessionId = pendingAuthData.sessionId || null;
@@ -1177,6 +1190,7 @@ function resetFrontendState(username) {
     gameState.hasFinalKey = false;
     gameState.gameWon = false;
     lastBackendStatus = null;
+    roomHistory = [];
     rooms.campus_gate.items = ["key"];
     rooms.main_hall.items = ["cookie"];
     rooms.forest_path.items = ["box", "map"];
@@ -1258,9 +1272,11 @@ async function loadSavedGame() {
                     lastBackendStatus = response.gameStatus;
                 }
             }
-            const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
-            currentPlayerPosition = { left: roomConfig.center.x, top: roomConfig.center.y };
-            renderRoom({ left: roomConfig.center.x, top: roomConfig.center.y }, { instantPlayerPosition: true });
+            if (!loaded) {
+                const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+                currentPlayerPosition = { left: roomConfig.center.x, top: roomConfig.center.y };
+            }
+            renderRoom({ left: currentPlayerPosition.left, top: currentPlayerPosition.top }, { instantPlayerPosition: true });
             renderInventory();
             appendLog("存档已读取！");
         }
@@ -1381,6 +1397,9 @@ function takeItem(itemName, options = {}) {
     gameState.completion.itemsCollected = Math.max(gameState.completion.itemsCollected, gameState.inventory.length);
     renderRoom();
     appendLog(`你拾取了 ${itemName}。`);
+    if (currentUsername) {
+        saveFullState('zuul_auto_' + currentUsername);
+    }
     return true;
 }
 
@@ -1416,6 +1435,9 @@ function useItem(itemName) {
     updateLockedTreasuryExit();
     renderRoom();
     appendLog("钥匙转动后，宝库北侧的门打开了。现在可以向北进入。");
+    if (currentUsername) {
+        saveFullState('zuul_auto_' + currentUsername);
+    }
 }
 
 function applyFrontEndCommand(command, options = {}) {
@@ -1424,6 +1446,26 @@ function applyFrontEndCommand(command, options = {}) {
 
     if (normalized.startsWith("take ") || normalized.startsWith("get ")) {
         takeItem(normalized.split(" ").slice(1).join(" "));
+        return;
+    }
+
+    if (normalized.startsWith("drop ")) {
+        const dropName = normalized.split(" ").slice(1).join(" ");
+        if (gameState.inventory.includes(dropName)) {
+            gameState.inventory = gameState.inventory.filter(i => i !== dropName);
+            const homeRoomId = ITEM_HOME_ROOM[dropName] || currentRoomId;
+            const homeRoom = rooms[homeRoomId];
+            if (homeRoom && !(homeRoom.items || []).includes(dropName)) {
+                homeRoom.items = [...(homeRoom.items || []), dropName];
+            }
+            renderRoom();
+            appendLog(`你丢弃了 ${dropName}。`);
+            if (currentUsername) {
+                saveFullState('zuul_auto_' + currentUsername);
+            }
+        } else {
+            appendLog(`你的背包里没有 ${dropName}。`, "error");
+        }
         return;
     }
 
@@ -1438,6 +1480,9 @@ function applyFrontEndCommand(command, options = {}) {
             gameState.inventory = gameState.inventory.filter((i) => i !== "cookie");
             rooms.main_hall.items = (rooms.main_hall.items || []).filter((i) => i !== "cookie");
             renderRoom();
+            if (currentUsername) {
+                saveFullState('zuul_auto_' + currentUsername);
+            }
         }
         return;
     }
@@ -1465,7 +1510,7 @@ function applyFrontEndCommand(command, options = {}) {
     }
 
     if (normalized === "back") {
-        appendLog("返回上一房间将在后续步骤接入完整历史记录。");
+        appendLog("返回上一房间请使用 back 命令。");
         return;
     }
 
@@ -1482,6 +1527,32 @@ async function handleCommand(command) {
     const normalized = normalizeCommand(command);
     const direction = getDirection(normalized);
     let response = null;
+
+    // 返回上一房间
+    if (normalized === "back") {
+        if (roomHistory.length === 0) {
+            appendLog("没有可以返回的房间。", "error");
+        } else {
+            const prevRoomId = roomHistory.pop();
+            isMoving = true;
+            setPlayerVisible(false);
+            await wait(180);
+            currentRoomId = prevRoomId;
+            gameState.visitedRooms.add(currentRoomId);
+            gameState.completion.roomsExplored = gameState.visitedRooms.size;
+            const roomConfig = ROOM_CONFIGS[currentRoomId] || ROOM_CONFIGS.main_hall;
+            currentPlayerPosition = { left: roomConfig.center.x, top: roomConfig.center.y };
+            renderRoom({ left: roomConfig.center.x, top: roomConfig.center.y }, { instantPlayerPosition: true });
+            setPlayerVisible(true);
+            appendLog(`你返回了 ${rooms[currentRoomId].title}。`);
+            isMoving = false;
+            updateDirectionControls();
+            if (currentUsername) {
+                saveFullState('zuul_auto_' + currentUsername);
+            }
+        }
+        return;
+    }
 
     // 特殊处理：从 locked_room 向北移动，直接进入 unlocked_treasure_room
     if (direction === 'north' && currentRoomId === 'locked_room' && gameState.treasureUnlocked) {
@@ -1513,21 +1584,25 @@ async function handleCommand(command) {
         appendLog("后端命令暂时不可用，已执行前端交互。", "error");
     }
 
-    if (response && response.success === false) {
+    const isItemCommand = normalized.startsWith("take") || normalized.startsWith("get") || 
+                           normalized.startsWith("drop") || normalized.startsWith("use") || 
+                           normalized.startsWith("eat");
+
+    if (response && response.success === false && !isItemCommand) {
         appendApiMessage(response);
         return;
     }
 
-    appendApiMessage(response);
+    if (response && response.success === false && isItemCommand) {
+        // 物品命令：后端失败也执行前端逻辑（前端状态可能和后端不同步）
+    } else {
+        appendApiMessage(response);
+    }
     applyFrontEndCommand(normalized, { echoLook: !response || !response.message });
 
     const isSpecialCommand = 
         (currentRoomId === 'unlocked_treasure_room' && normalized.startsWith('take')) ||
         (currentRoomId === 'locked_room' && normalized.startsWith('use'));
-
-    const isItemCommand = normalized.startsWith("take") || normalized.startsWith("get") || 
-                           normalized.startsWith("drop") || normalized.startsWith("use") || 
-                           normalized.startsWith("eat");
 
     if (!isItemCommand && !isSpecialCommand && normalized !== "look" && normalized !== "status" && normalized !== "items") {
         await refreshGameStatus();
@@ -1555,11 +1630,12 @@ async function movePlayerStep(direction, options = {}) {
     const nextRoomId = room.exits[direction];
     const path = room.paths && room.paths[direction];
 
-    if (nextRoomId && path && isAtExit(currentPlayerPosition, path.exit)) {
+    if (nextRoomId && path && (isAtExit(currentPlayerPosition, path.exit) || hasCrossedExit(currentPlayerPosition, nextPosition, path.exit, direction))) {
         await enterNextRoom(direction, nextRoomId, path);
         return { moved: true, roomChanged: true };
     }
 
+    const positionBeforeMove = { ...currentPlayerPosition };
     isMoving = true;
     startPlayerStep(direction);
     $("player-token").style.setProperty("--player-move-duration", `${options.moveTime || 300}ms`);
@@ -1569,7 +1645,7 @@ async function movePlayerStep(direction, options = {}) {
     stopPlayerStep(direction);
     isMoving = false;
 
-    if (nextRoomId && path && isAtExit(nextPosition, path.exit)) {
+    if (nextRoomId && path && (isAtExit(nextPosition, path.exit) || hasCrossedExit(positionBeforeMove, nextPosition, path.exit, direction))) {
         await enterNextRoom(direction, nextRoomId, path);
         return { moved: true, roomChanged: true };
     }
@@ -1580,9 +1656,24 @@ async function movePlayerStep(direction, options = {}) {
 // 检查是否到达出口位置
 function isAtExit(position, exit) {
     if (!exit) return false;
-    const threshold = 6; // 允许的误差范围，稍微增大避免太敏感
+    const threshold = 8;
     return Math.abs(position.left - exit.left) < threshold && 
            Math.abs(position.top - exit.top) < threshold;
+}
+
+// 检查从from到to的移动是否穿过了出口位置
+function hasCrossedExit(from, to, exit, direction) {
+    if (!exit) return false;
+    const crossThreshold = 10;
+    const aligned = Math.abs(from.left - exit.left) < crossThreshold && 
+                    Math.abs(from.top - exit.top) < crossThreshold;
+    if (!aligned) return false;
+
+    if (direction === 'north') return from.top >= exit.top && to.top <= exit.top;
+    if (direction === 'south') return from.top <= exit.top && to.top >= exit.top;
+    if (direction === 'west') return from.left >= exit.left && to.left <= exit.left;
+    if (direction === 'east') return from.left <= exit.left && to.left >= exit.left;
+    return false;
 }
 
 // 检查位置是否在十字通道上
@@ -1694,6 +1785,7 @@ async function enterNextRoom(direction, nextRoomId, path) {
     setPlayerVisible(false);
     await wait(180);
     
+    roomHistory.push(currentRoomId);
     currentRoomId = nextRoomId;
     gameState.visitedRooms.add(currentRoomId);
     gameState.completion.roomsExplored = gameState.visitedRooms.size;
@@ -1757,6 +1849,9 @@ async function enterNextRoom(direction, nextRoomId, path) {
     appendLog(`你来到了 ${rooms[currentRoomId].title}。`);
     isMoving = false;
     updateDirectionControls();
+    if (currentUsername) {
+        saveFullState('zuul_auto_' + currentUsername);
+    }
 }
 
 function calculateStepsToCenter(entryPos, targetX, targetY) {
@@ -1847,6 +1942,7 @@ async function showTeleportDialog() {
                 }
 
                 const targetConfig = ROOM_CONFIGS[targetRoomId] || ROOM_CONFIGS.main_hall;
+                roomHistory.push(currentRoomId);
                 isMoving = true;
                 setPlayerVisible(false);
                 await wait(180);
@@ -2330,6 +2426,7 @@ function buildFullState() {
         currentPlayerPosition: { ...currentPlayerPosition },
         inventory: [...gameState.inventory],
         visitedRooms: [...gameState.visitedRooms],
+        roomHistory: [...roomHistory],
         treasureUnlocked: gameState.treasureUnlocked,
         notebookUnlocked: gameState.notebookUnlocked,
         notebookOpened: gameState.notebookOpened,
@@ -2370,6 +2467,7 @@ function applyFullState(state) {
     currentPlayerPosition = state.currentPlayerPosition || { left: 50, top: 50 };
     gameState.inventory = state.inventory || [];
     gameState.visitedRooms = new Set(state.visitedRooms || ['campus_gate']);
+    roomHistory = state.roomHistory || [];
     gameState.treasureUnlocked = !!state.treasureUnlocked;
     gameState.notebookUnlocked = !!state.notebookUnlocked;
     gameState.notebookOpened = !!state.notebookOpened;
@@ -2495,7 +2593,7 @@ function showSaveSlotsModal(mode, highlightedId) {
             const roomImage = summary.roomImage || (slot.state && rooms[slot.state.currentRoomId] ? rooms[slot.state.currentRoomId].image : "");
             const actionText = mode === "save" ? "已保存" : "继续此存档";
             return `
-                <button class="save-slot" type="button" data-save-id="${slot.id}" ${mode === "save" ? "disabled" : ""}>
+                <div class="save-slot" data-save-id="${slot.id}">
                     <div class="save-slot-thumb" style="background-image: url('${roomImage}')"></div>
                     <div class="save-slot-content">
                         <div class="save-slot-header">
@@ -2512,15 +2610,17 @@ function showSaveSlotsModal(mode, highlightedId) {
                                 <span style="width: ${summary.percent}%"></span>
                             </div>
                             <span class="save-slot-action">${actionText}</span>
+                            <button class="save-slot-delete" type="button" data-delete-id="${slot.id}" title="删除此存档">删除</button>
                         </div>
                     </div>
-                </button>`;
+                </div>`;
         }).join("");
     }
 
     if (mode === "load") {
         list.querySelectorAll(".save-slot[data-save-id]").forEach((button) => {
-            button.addEventListener("click", () => {
+            button.addEventListener("click", (e) => {
+                if (e.target.closest(".save-slot-delete")) return;
                 const slot = getManualSaveSlots().find(item => item.id === button.dataset.saveId);
                 if (!slot) return;
                 if (!slot.state.gameRunId) {
@@ -2538,11 +2638,119 @@ function showSaveSlotsModal(mode, highlightedId) {
         });
     }
 
+    list.querySelectorAll(".save-slot-delete").forEach((delBtn) => {
+        delBtn.addEventListener("click", (e) => {
+            e.stopPropagation();
+            const id = delBtn.dataset.deleteId;
+            const slots = getManualSaveSlots().filter(s => s.id !== id);
+            setManualSaveSlots(slots);
+            delBtn.closest(".save-slot").remove();
+            if (!getManualSaveSlots().length) {
+                list.innerHTML = '<div class="save-slot save-slot--empty">暂无可读取的存档</div>';
+            }
+        });
+    });
+
     modal.classList.add("open");
 }
 
 window.addEventListener('beforeunload', () => {
     if (currentUsername && currentRoomId) {
         saveFullState('zuul_auto_' + currentUsername);
+    }
+});
+
+// 玩法说明内容
+const gameplayContent = `
+<h4>🎮 游戏简介</h4>
+<p>《World of Zuul》是一款基于文本的冒险游戏。你扮演一名探险者，在一个由多个房间组成的迷宫中探索。游戏的目标是探索所有房间，收集物品，并发现隐藏的秘密。</p>
+
+<h4>🖱️ 移动控制</h4>
+<ul>
+    <li><strong>方向按钮</strong>：点击右下角四个方向键，一键移动到下一房间</li>
+    <li><strong>WASD/方向键</strong>：键盘控制，小步移动，走到出口才进入下一房间</li>
+    <li><strong>查看按钮(⊙)</strong>：点击中间按钮展开背包并查看日志</li>
+</ul>
+
+<h4>📋 可用命令</h4>
+<ul>
+    <li><strong>go &lt;方向&gt;</strong> - 向指定方向移动（north/south/east/west）</li>
+    <li><strong>look</strong> - 查看当前房间详细信息</li>
+    <li><strong>items</strong> - 查看房间和背包中的物品</li>
+    <li><strong>take &lt;物品名&gt;</strong> - 拾取物品</li>
+    <li><strong>drop &lt;物品名&gt;</strong> - 丢弃物品</li>
+    <li><strong>eat cookie</strong> - 吃掉魔法饼干，增加5kg负重</li>
+    <li><strong>back</strong> - 返回上一个房间</li>
+    <li><strong>save</strong> - 保存游戏</li>
+    <li><strong>help</strong> - 显示所有命令</li>
+</ul>
+
+<h4>🎯 游戏目标</h4>
+<ul>
+    <li>探索所有房间（共8个）</li>
+    <li>收集所有物品（共9个）</li>
+    <li>找到并吃掉魔法饼干增加负重</li>
+    <li>找到最终钥匙打开出口</li>
+</ul>
+
+<h4>💡 小提示</h4>
+<ul>
+    <li>初始负重限制为10kg，合理规划携带物品</li>
+    <li>传送房间会随机传送到其他位置</li>
+    <li>遇到谜题时仔细观察房间中的物品</li>
+    <li>使用back命令可以返回上一个房间</li>
+</ul>
+`;
+
+// 是否已经显示过玩法说明
+let hasShownGameplay = false;
+
+// 显示玩法说明
+function showGameplayModal() {
+    const modal = $("gameplay-modal");
+    const content = $("gameplay-content");
+    content.innerHTML = gameplayContent;
+    modal.classList.add("open");
+}
+
+// 隐藏玩法说明
+function hideGameplayModal() {
+    const modal = $("gameplay-modal");
+    modal.classList.remove("open");
+}
+
+// 在开始新游戏后自动显示玩法说明
+function showGameplayOnNewGame() {
+    if (!hasShownGameplay) {
+        hasShownGameplay = true;
+        setTimeout(() => {
+            showGameplayModal();
+        }, 500);
+    }
+}
+
+// 菜单页面的游戏玩法按钮
+$("gameplay-btn").addEventListener("click", () => {
+    showGameplayModal();
+});
+
+// 游戏中的帮助按钮
+$("help-btn").addEventListener("click", () => {
+    showGameplayModal();
+});
+
+// 玩法说明关闭按钮
+$("gameplay-close").addEventListener("click", () => {
+    hideGameplayModal();
+});
+
+$("gameplay-confirm").addEventListener("click", () => {
+    hideGameplayModal();
+});
+
+// 点击模态框外部关闭
+$("gameplay-modal").addEventListener("click", (event) => {
+    if (event.target === $("gameplay-modal")) {
+        hideGameplayModal();
     }
 });

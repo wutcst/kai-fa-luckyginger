@@ -1,398 +1,215 @@
-/**
- * Player类的单元测试用例。
- * 测试玩家的物品管理、负重检查等功能。
- * 
- * @author 扩展功能实现
- * @version 1.0
- */
 package cn.edu.whut.sept.zuul;
 
+import java.util.HashSet;
+import java.util.Set;
+
 /**
- * Player类的单元测试。
+ * Tests for Player location, inventory, carrying weight, and progress state.
  */
 public class PlayerTest
 {
-    /**
-     * 运行所有Player类的测试用例。
-     * 
-     * @return 测试通过返回true，失败返回false
-     */
     public static boolean runAllTests()
     {
-        System.out.println("========================================");
-        System.out.println("Player类单元测试");
-        System.out.println("========================================\n");
-        
         int passed = 0;
         int failed = 0;
-        
-        // 测试用例1: 玩家创建和初始化
-        if (testPlayerCreation()) {
-            System.out.println("✅ 测试1: 玩家创建和初始化 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试1: 玩家创建和初始化 - 失败");
-            failed++;
-        }
-        
-        // 测试用例2: 物品拾取（正常情况）
-        if (testTakeItemSuccess()) {
-            System.out.println("✅ 测试2: 物品拾取（正常情况） - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试2: 物品拾取（正常情况） - 失败");
-            failed++;
-        }
-        
-        // 测试用例3: 物品拾取（超过负重）
-        if (testTakeItemExceedsWeight()) {
-            System.out.println("✅ 测试3: 物品拾取（超过负重） - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试3: 物品拾取（超过负重） - 失败");
-            failed++;
-        }
-        
-        // 测试用例4: 物品丢弃
-        if (testDropItem()) {
-            System.out.println("✅ 测试4: 物品丢弃 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试4: 物品丢弃 - 失败");
-            failed++;
-        }
-        
-        // 测试用例5: 魔法饼干功能
-        if (testEatCookie()) {
-            System.out.println("✅ 测试5: 魔法饼干功能 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试5: 魔法饼干功能 - 失败");
-            failed++;
-        }
-        
-        // 测试用例6: 负重计算
-        if (testTotalWeight()) {
-            System.out.println("✅ 测试6: 负重计算 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试6: 负重计算 - 失败");
-            failed++;
-        }
-        
-        // 测试用例7: 房间访问记录
-        if (testRoomVisited()) {
-            System.out.println("✅ 测试7: 房间访问记录 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试7: 房间访问记录 - 失败");
-            failed++;
-        }
-        
-        // 测试用例8: 物品收集记录
-        if (testItemsCollected()) {
-            System.out.println("✅ 测试8: 物品收集记录 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试8: 物品收集记录 - 失败");
-            failed++;
-        }
-        
-        System.out.println("\n========================================");
-        System.out.println("测试结果: " + passed + " 通过, " + failed + " 失败");
-        System.out.println("========================================\n");
-        
+
+        if (testPlayerCreation()) passed++; else failed++;
+        if (testCurrentRoomChangeRecordsVisit()) passed++; else failed++;
+        if (testTakeItemAddsToInventory()) passed++; else failed++;
+        if (testTakeItemRejectsNull()) passed++; else failed++;
+        if (testTakeItemRejectsOverweightItem()) passed++; else failed++;
+        if (testDropItemRemovesFromInventory()) passed++; else failed++;
+        if (testInventoryLookupIsCaseInsensitive()) passed++; else failed++;
+        if (testDropAllItemsClearsInventory()) passed++; else failed++;
+        if (testIncreaseMaxWeightAndCanCarry()) passed++; else failed++;
+        if (testCookieStateAndEatCookie()) passed++; else failed++;
+        if (testProgressSetsAreDefensiveCopies()) passed++; else failed++;
+
+        printSummary("PlayerTest", passed, failed);
         return failed == 0;
     }
-    
-    /**
-     * 测试用例1: 玩家创建和初始化。
-     */
+
     private static boolean testPlayerCreation()
     {
-        try {
-            Player player = new Player("TestPlayer", 10.0);
-            
-            if (!player.getName().equals("TestPlayer")) {
-                System.out.println("  错误: 玩家名称不匹配");
-                return false;
-            }
-            
-            if (Math.abs(player.getMaxWeight() - 10.0) > 0.001) {
-                System.out.println("  错误: 最大负重不匹配");
-                return false;
-            }
-            
-            if (Math.abs(player.getTotalWeight() - 0.0) > 0.001) {
-                System.out.println("  错误: 初始总重量应该为0");
-                return false;
-            }
-            
-            if (player.getInventory().size() != 0) {
-                System.out.println("  错误: 初始物品清单应该为空");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+        Player player = new Player("Alice", 5.0);
+
+        return assertEquals("Alice", player.getName(), "玩家姓名不正确")
+                && assertDoubleEquals(5.0, player.getMaxWeight(), 0.0001, "玩家最大负重不正确")
+                && assertDoubleEquals(0.0, player.getTotalWeight(), 0.0001, "新玩家总负重应为 0")
+                && assertFalse(player.isCookieEaten(), "新玩家不应已吃掉饼干");
     }
-    
-    /**
-     * 测试用例2: 物品拾取（正常情况）。
-     */
-    private static boolean testTakeItemSuccess()
+
+    private static boolean testCurrentRoomChangeRecordsVisit()
     {
-        try {
-            Player player = new Player("TestPlayer", 10.0);
-            Item item = new Item("test", "测试物品", 5.0);
-            
-            boolean success = player.takeItem(item);
-            if (!success) {
-                System.out.println("  错误: 物品拾取应该成功");
-                return false;
-            }
-            
-            if (player.getInventory().size() != 1) {
-                System.out.println("  错误: 物品清单大小不正确");
-                return false;
-            }
-            
-            if (Math.abs(player.getTotalWeight() - 5.0) > 0.001) {
-                System.out.println("  错误: 总重量不正确");
-                return false;
-            }
-            
-            if (!player.getItemsCollected().contains("test")) {
-                System.out.println("  错误: 物品收集记录不正确");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+        Player player = new Player("Bob", 10.0);
+        Room start = new Room("起点");
+        Room lab = new Room("实验室");
+
+        player.setCurrentRoom(start);
+        player.setCurrentRoom(lab);
+
+        return assertSame(lab, player.getCurrentRoom(), "玩家当前位置应切换到实验室")
+                && assertTrue(player.getRoomsVisited().contains("起点"), "访问记录应包含起点")
+                && assertTrue(player.getRoomsVisited().contains("实验室"), "访问记录应包含实验室");
     }
-    
-    /**
-     * 测试用例3: 物品拾取（超过负重）。
-     */
-    private static boolean testTakeItemExceedsWeight()
+
+    private static boolean testTakeItemAddsToInventory()
     {
-        try {
-            Player player = new Player("TestPlayer", 10.0);
-            player.takeItem(new Item("item1", "物品1", 6.0));
-            
-            Item heavyItem = new Item("heavy", "重物", 5.0);
-            if (player.canCarry(heavyItem)) {
-                System.out.println("  错误: 应该无法携带超重物品");
-                return false;
-            }
-            
-            // 尝试拾取应该失败
-            int beforeSize = player.getInventory().size();
-            boolean success = player.takeItem(heavyItem);
-            if (success) {
-                System.out.println("  错误: 超重物品不应该被拾取");
-                return false;
-            }
-            
-            if (player.getInventory().size() != beforeSize) {
-                System.out.println("  错误: 物品清单大小不应该改变");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+        Player player = new Player("Carol", 10.0);
+        Item key = new Item("Key", "旧钥匙", 0.1);
+
+        boolean taken = player.takeItem(key);
+
+        return assertTrue(taken, "轻量物品应该能拾取")
+                && assertTrue(player.hasItem("key"), "背包应包含拾取的物品")
+                && assertSame(key, player.getItem("KEY"), "按名称获取物品应返回同一对象")
+                && assertTrue(player.getItemsCollected().contains("key"), "收集记录应包含物品名的小写形式");
     }
-    
-    /**
-     * 测试用例4: 物品丢弃。
-     */
-    private static boolean testDropItem()
+
+    private static boolean testTakeItemRejectsNull()
     {
-        try {
-            Player player = new Player("TestPlayer", 10.0);
-            Item item = new Item("test", "测试物品", 2.0);
-            player.takeItem(item);
-            
-            Item dropped = player.dropItem("test");
-            if (dropped == null) {
-                System.out.println("  错误: 丢弃物品返回null");
-                return false;
-            }
-            
-            if (!dropped.getName().equals("test")) {
-                System.out.println("  错误: 丢弃的物品名称不匹配");
-                return false;
-            }
-            
-            if (player.getInventory().size() != 0) {
-                System.out.println("  错误: 物品清单应该为空");
-                return false;
-            }
-            
-            if (Math.abs(player.getTotalWeight() - 0.0) > 0.001) {
-                System.out.println("  错误: 总重量应该为0");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+        Player player = new Player("Dan", 10.0);
+
+        return assertFalse(player.takeItem(null), "拾取 null 应失败")
+                && assertEquals(0, player.getInventory().size(), "拾取 null 后背包应为空");
     }
-    
-    /**
-     * 测试用例5: 魔法饼干功能。
-     */
-    private static boolean testEatCookie()
+
+    private static boolean testTakeItemRejectsOverweightItem()
     {
-        try {
-            Player player = new Player("TestPlayer", 10.0);
-            Item cookie = new Item("cookie", "魔法饼干", 0.1);
-            player.takeItem(cookie);
-            
-            if (Math.abs(player.getMaxWeight() - 10.0) > 0.001) {
-                System.out.println("  错误: 初始最大负重不正确");
-                return false;
-            }
-            
-            if (player.isCookieEaten()) {
-                System.out.println("  错误: 初始状态不应该已吃饼干");
-                return false;
-            }
-            
-            // 吃掉饼干并增加负重
-            player.eatCookie();
-            player.increaseMaxWeight(5.0);
-            
-            if (!player.isCookieEaten()) {
-                System.out.println("  错误: 应该标记为已吃饼干");
-                return false;
-            }
-            
-            if (Math.abs(player.getMaxWeight() - 15.0) > 0.001) {
-                System.out.println("  错误: 最大负重应该增加5kg");
-                return false;
-            }
-            
-            if (player.hasItem("cookie")) {
-                System.out.println("  错误: 饼干应该从物品清单中移除");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+        Player player = new Player("Eve", 1.0);
+        Item anvil = new Item("anvil", "很重的铁砧", 2.0);
+
+        return assertFalse(player.takeItem(anvil), "超过负重的物品不应被拾取")
+                && assertFalse(player.hasItem("anvil"), "超重物品不应进入背包")
+                && assertDoubleEquals(0.0, player.getTotalWeight(), 0.0001, "失败拾取不应增加负重");
     }
-    
-    /**
-     * 测试用例6: 负重计算。
-     */
-    private static boolean testTotalWeight()
+
+    private static boolean testDropItemRemovesFromInventory()
     {
-        try {
-            Player player = new Player("TestPlayer", 10.0);
-            player.takeItem(new Item("item1", "物品1", 2.0));
-            player.takeItem(new Item("item2", "物品2", 3.0));
-            player.takeItem(new Item("item3", "物品3", 1.5));
-            
-            double totalWeight = player.getTotalWeight();
-            double expected = 6.5;
-            
-            if (Math.abs(totalWeight - expected) > 0.001) {
-                System.out.println("  错误: 总重量计算不正确。期望: " + expected + 
-                                 ", 实际: " + totalWeight);
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+        Player player = new Player("Frank", 10.0);
+        Item map = new Item("map", "地图", 0.2);
+        player.takeItem(map);
+
+        Item dropped = player.dropItem("MAP");
+
+        return assertSame(map, dropped, "dropItem 应返回被丢弃的物品")
+                && assertFalse(player.hasItem("map"), "丢弃后背包不应再包含该物品")
+                && assertNull(player.dropItem("map"), "重复丢弃不存在物品应返回 null");
     }
-    
-    /**
-     * 测试用例7: 房间访问记录。
-     */
-    private static boolean testRoomVisited()
+
+    private static boolean testInventoryLookupIsCaseInsensitive()
     {
-        try {
-            Player player = new Player("TestPlayer", 10.0);
-            Room room1 = new Room("房间1");
-            Room room2 = new Room("房间2");
-            
-            player.setCurrentRoom(room1);
-            if (player.getRoomsVisited().size() != 1) {
-                System.out.println("  错误: 房间访问记录不正确");
-                return false;
-            }
-            
-            player.setCurrentRoom(room2);
-            if (player.getRoomsVisited().size() != 2) {
-                System.out.println("  错误: 房间访问记录应该增加");
-                return false;
-            }
-            
-            // 再次访问同一个房间不应该重复记录
-            player.setCurrentRoom(room1);
-            // Set会自动去重，所以大小应该还是2
-            if (player.getRoomsVisited().size() != 2) {
-                System.out.println("  错误: 重复访问的房间不应该重复记录");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+        Player player = new Player("Grace", 10.0);
+        Item cable = new Item("Cable", "数据线", 0.1);
+        player.takeItem(cable);
+
+        return assertTrue(player.hasItem("cable"), "小写名称应识别物品")
+                && assertTrue(player.hasItem("CABLE"), "大写名称应识别物品")
+                && assertSame(cable, player.getItem("CaBlE"), "混合大小写名称应返回物品");
     }
-    
-    /**
-     * 测试用例8: 物品收集记录。
-     */
-    private static boolean testItemsCollected()
+
+    private static boolean testDropAllItemsClearsInventory()
     {
-        try {
-            Player player = new Player("TestPlayer", 10.0);
-            player.takeItem(new Item("item1", "物品1", 1.0));
-            player.takeItem(new Item("item2", "物品2", 2.0));
-            
-            if (player.getItemsCollected().size() != 2) {
-                System.out.println("  错误: 物品收集记录不正确");
-                return false;
-            }
-            
-            if (!player.getItemsCollected().contains("item1") ||
-                !player.getItemsCollected().contains("item2")) {
-                System.out.println("  错误: 物品收集记录缺少物品");
-                return false;
-            }
-            
-            // 丢弃物品不应该从收集记录中移除
-            player.dropItem("item1");
-            if (player.getItemsCollected().size() != 2) {
-                System.out.println("  错误: 丢弃物品不应该从收集记录中移除");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
+        Player player = new Player("Helen", 10.0);
+        player.takeItem(new Item("key", "钥匙", 0.1));
+        player.takeItem(new Item("map", "地图", 0.2));
+
+        int droppedCount = player.dropAllItems().size();
+
+        return assertEquals(2, droppedCount, "dropAllItems 应返回所有被丢弃物品")
+                && assertEquals(0, player.getInventory().size(), "dropAllItems 后背包应为空");
+    }
+
+    private static boolean testIncreaseMaxWeightAndCanCarry()
+    {
+        Player player = new Player("Ivan", 1.0);
+
+        boolean beforeIncrease = player.canCarry(2.0);
+        player.increaseMaxWeight(2.0);
+
+        return assertFalse(beforeIncrease, "增加负重前不应能携带 2kg")
+                && assertDoubleEquals(3.0, player.getMaxWeight(), 0.0001, "最大负重应增加")
+                && assertTrue(player.canCarry(2.0), "增加负重后应能携带 2kg");
+    }
+
+    private static boolean testCookieStateAndEatCookie()
+    {
+        Player player = new Player("Jane", 10.0);
+        player.takeItem(new Item("cookie", "魔法饼干", 0.1));
+
+        player.eatCookie();
+
+        return assertTrue(player.isCookieEaten(), "eatCookie 后应标记饼干已吃")
+                && assertFalse(player.hasItem("cookie"), "eatCookie 应从背包移除 cookie");
+    }
+
+    private static boolean testProgressSetsAreDefensiveCopies()
+    {
+        Player player = new Player("Kate", 10.0);
+        Set<String> rooms = new HashSet<>();
+        rooms.add("起点");
+        player.setRoomsVisited(rooms);
+
+        Set<String> items = new HashSet<>();
+        items.add("key");
+        player.setItemsCollected(items);
+
+        rooms.add("外部修改");
+        items.add("external");
+        Set<String> returnedRooms = player.getRoomsVisited();
+        Set<String> returnedItems = player.getItemsCollected();
+        returnedRooms.add("再次外部修改");
+        returnedItems.add("again");
+
+        return assertFalse(player.getRoomsVisited().contains("外部修改"), "设置后修改原集合不应影响玩家房间记录")
+                && assertFalse(player.getItemsCollected().contains("external"), "设置后修改原集合不应影响玩家物品记录")
+                && assertFalse(player.getRoomsVisited().contains("再次外部修改"), "修改返回集合不应影响玩家房间记录")
+                && assertFalse(player.getItemsCollected().contains("again"), "修改返回集合不应影响玩家物品记录");
+    }
+
+    private static void printSummary(String testName, int passed, int failed)
+    {
+        System.out.println(testName + ": " + passed + " passed, " + failed + " failed.");
+    }
+
+    private static boolean assertTrue(boolean condition, String message)
+    {
+        if (!condition) {
+            System.out.println("失败: " + message);
         }
+        return condition;
+    }
+
+    private static boolean assertFalse(boolean condition, String message)
+    {
+        return assertTrue(!condition, message);
+    }
+
+    private static boolean assertNull(Object actual, String message)
+    {
+        return assertTrue(actual == null, message);
+    }
+
+    private static boolean assertSame(Object expected, Object actual, String message)
+    {
+        return assertTrue(expected == actual, message + "，期望同一对象");
+    }
+
+    private static boolean assertEquals(Object expected, Object actual, String message)
+    {
+        boolean matches = expected == null ? actual == null : expected.equals(actual);
+        if (!matches) {
+            System.out.println("失败: " + message + "，期望: " + expected + "，实际: " + actual);
+        }
+        return matches;
+    }
+
+    private static boolean assertDoubleEquals(double expected, double actual, double delta, String message)
+    {
+        boolean matches = Math.abs(expected - actual) <= delta;
+        if (!matches) {
+            System.out.println("失败: " + message + "，期望: " + expected + "，实际: " + actual);
+        }
+        return matches;
     }
 }
-

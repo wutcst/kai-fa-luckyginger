@@ -21,8 +21,9 @@ import java.util.List;
 import java.util.Map;
 
 public class GameController {
-    // 多玩家会话管理：使用sessionId作为键
+    /** 多玩家会话管理：使用sessionId作为键 */
     private Map<String, GameSession> sessions;
+    /** 数据库管理器实例 */
     private DatabaseManager dbManager;
     
     /**
@@ -34,15 +35,41 @@ public class GameController {
     }
     
     /**
-     * 游戏会话类
+     * 游戏会话内部类
+     * 
+     * <p>封装每个游戏会话的状态，包括：
+     * <ul>
+     *   <li>游戏实例</li>
+     *   <li>玩家对象</li>
+     *   <li>命令解析器</li>
+     *   <li>用户信息</li>
+     * </ul>
      */
     private static class GameSession {
+        /** 游戏实例 */
         Game game;
+        /** 玩家对象 */
         Player player;
+        /** 命令解析器 */
         Parser parser;
+        /** 用户名 */
         String username;
+        /** 用户ID，可能为null（游客模式） */
         Integer userId;
         
+        /**
+         * 创建新的游戏会话
+         * 
+         * <p>初始化流程：
+         * <ol>
+         *   <li>创建新的游戏实例</li>
+         *   <li>获取游戏的玩家对象并设置用户信息</li>
+         *   <li>如果用户已登录，创建游戏记录</li>
+         * </ol>
+         * 
+         * @param username 用户名
+         * @param userId 用户ID，可能为null（游客）
+         */
         GameSession(String username, Integer userId) {
             this.username = username;
             this.userId = userId;
@@ -219,7 +246,12 @@ public class GameController {
     }
     
     /**
-     * 获取游戏会话
+     * 根据会话ID获取游戏会话对象
+     * 
+     * <p>如果会话不存在返回null。
+     * 
+     * @param sessionId 会话ID
+     * @return 游戏会话对象，或null
      */
     private GameSession getSession(String sessionId) {
         return sessions.get(sessionId);
@@ -672,7 +704,19 @@ public class GameController {
     }
     
     /**
-     * 保存游戏状态
+     * 保存游戏状态到数据库
+     * 
+     * <p>保存内容包括：玩家位置、背包物品、最大负重、访问过的房间等。
+     * 只有登录用户才能保存游戏状态。
+     * 
+     * <p>返回的响应Map包含：
+     * <ul>
+     *   <li><code>success</code>: 是否保存成功</li>
+     *   <li><code>message</code>: 操作消息</li>
+     * </ul>
+     * 
+     * @param sessionId 会话ID
+     * @return 包含操作结果的Map
      */
     public Map<String, Object> saveGame(String sessionId) {
         Map<String, Object> response = new HashMap<>();
@@ -698,6 +742,21 @@ public class GameController {
         return response;
     }
     
+    /**
+     * 开始新游戏
+     * 
+     * <p>为指定会话创建全新的游戏实例，重置所有游戏状态。
+     * 
+     * <p>返回的响应Map包含：
+     * <ul>
+     *   <li><code>success</code>: 是否成功</li>
+     *   <li><code>message</code>: 操作消息</li>
+     *   <li><code>gameStatus</code>: 新游戏的初始状态</li>
+     * </ul>
+     * 
+     * @param sessionId 会话ID
+     * @return 包含操作结果的Map
+     */
     public Map<String, Object> newGame(String sessionId) {
         Map<String, Object> response = new HashMap<>();
         
@@ -718,7 +777,20 @@ public class GameController {
     }
     
     /**
-     * 加载游戏状态
+     * 从数据库加载游戏状态
+     * 
+     * <p>恢复玩家位置、背包物品、最大负重、访问过的房间等状态。
+     * 只有登录用户才能加载游戏状态。
+     * 
+     * <p>返回的响应Map包含：
+     * <ul>
+     *   <li><code>success</code>: 是否加载成功</li>
+     *   <li><code>message</code>: 操作消息</li>
+     *   <li><code>gameStatus</code>: 加载后的游戏状态（仅成功时返回）</li>
+     * </ul>
+     * 
+     * @param sessionId 会话ID
+     * @return 包含操作结果的Map
      */
     public Map<String, Object> loadGame(String sessionId) {
         Map<String, Object> response = new HashMap<>();
@@ -760,7 +832,15 @@ public class GameController {
     }
     
     /**
-     * 获取游戏状态
+     * 获取完整的游戏状态
+     * 
+     * <p>返回的状态Map包含以下内容：
+     * <ul>
+     *   <li><code>currentRoom</code>: 当前房间信息（描述、出口、物品等）</li>
+     *   <li><code>player</code>: 玩家信息（名称、背包、最大负重、已访问房间等）</li>
+     *   <li><code>completion</code>: 通关进度信息</li>
+     *   <li><code>treasureUnlocked</code>: 宝藏房间是否已解锁</li>
+     * </ul>
      * 
      * @param sessionId 会话ID
      * @return 包含游戏状态的Map
@@ -862,7 +942,13 @@ public class GameController {
     }
     
     /**
-     * 获取游戏记录
+     * 获取当前用户的最新游戏记录
+     * 
+     * <p>游戏记录包括：完成状态、探索房间数、收集物品数、是否吃了魔法饼干等。
+     * 只有登录用户才能查看游戏记录。
+     * 
+     * @param sessionId 会话ID
+     * @return 包含游戏记录的Map
      */
     public Map<String, Object> getGameRecord(String sessionId) {
         Map<String, Object> response = new HashMap<>();
@@ -893,7 +979,13 @@ public class GameController {
     }
     
     /**
-     * 获取所有游戏记录
+     * 获取当前用户的所有游戏记录
+     * 
+     * <p>返回该用户所有历史游戏记录的列表。
+     * 只有登录用户才能查看游戏记录。
+     * 
+     * @param sessionId 会话ID
+     * @return 包含所有游戏记录的Map
      */
     public Map<String, Object> getAllGameRecords(String sessionId) {
         Map<String, Object> response = new HashMap<>();
@@ -918,7 +1010,12 @@ public class GameController {
     }
     
     /**
-     * 退出登录（清除会话）
+     * 退出登录并清除会话
+     * 
+     * <p>退出前会自动更新游戏记录（如果已登录），然后清除该会话。
+     * 
+     * @param sessionId 会话ID
+     * @return 包含操作结果的Map
      */
     public Map<String, Object> logout(String sessionId) {
         Map<String, Object> response = new HashMap<>();

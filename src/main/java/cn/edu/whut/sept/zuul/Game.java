@@ -39,7 +39,7 @@ public class Game
         parser = new Parser();
         roomHistory = new Stack<>();
         initializeCommands();
-        
+
         // 创建玩家，初始最大负重为10kg
         player = new Player("Player", 10.0);
         player.setCurrentRoom(startingRoom);
@@ -47,6 +47,9 @@ public class Game
 
     /**
      * 初始化命令执行器映射表。
+     * <p>
+     * 该方法注册所有支持的游戏命令及其对应的执行器。
+     * 使用命令模式，使系统更易扩展新命令。
      */
     private void initializeCommands()
     {
@@ -70,7 +73,7 @@ public class Game
      * 所有房间的映射表，用于传输房间功能。
      */
     private HashMap<String, Room> allRoomsMap;
-    
+
     /**
      * 创建所有房间对象并连接其出口用以构建迷宫.
      * 同时为房间添加物品和魔法饼干，并创建传输房间。
@@ -129,7 +132,7 @@ public class Game
 
         startingRoom = campus_gate;
     }
-    
+
     /**
      * 起始房间，用于back命令判断是否到达起点。
      */
@@ -169,7 +172,7 @@ public class Game
     /**
      * 执行用户输入的游戏指令。
      * 使用命令模式处理命令，使系统更易扩展。
-     * 
+     *
      * @param command 待处理的游戏指令，由解析器从用户输入内容生成.
      * @return 如果执行的是游戏结束指令，则返回true，否则返回false.
      */
@@ -185,9 +188,9 @@ public class Game
             System.out.println("我不知道你在说什么...");
             return false;
         }
-        
+
         CommandExecutor executor = commandExecutors.get(commandWord);
-        
+
         if (executor != null) {
             return executor.execute(command, this);
         } else {
@@ -198,7 +201,7 @@ public class Game
 
     /**
      * 获取玩家对象。
-     * 
+     *
      * @return 玩家对象
      */
     public Player getPlayer()
@@ -208,7 +211,7 @@ public class Game
 
     /**
      * 获取解析器对象。
-     * 
+     *
      * @return 解析器对象
      */
     public Parser getParser()
@@ -218,7 +221,7 @@ public class Game
 
     /**
      * 将房间添加到历史记录中（用于back命令）。
-     * 
+     *
      * @param room 要添加的房间
      */
     public void addRoomToHistory(Room room)
@@ -228,7 +231,7 @@ public class Game
 
     /**
      * 获取上一个房间（用于back命令）。
-     * 
+     *
      * @return 上一个房间对象，如果没有历史记录则返回null
      */
     public Room getPreviousRoom()
@@ -238,10 +241,10 @@ public class Game
         }
         return roomHistory.pop();
     }
-    
+
     /**
      * 根据房间名称获取房间对象。
-     * 
+     *
      * @param roomName 房间名称（简短描述）
      * @return 房间对象，如果不存在则返回null
      */
@@ -257,10 +260,10 @@ public class Game
         }
         return null;
     }
-    
+
     /**
      * 在所有房间中查找指定名称的物品。
-     * 
+     *
      * @param itemName 物品名称
      * @return 物品对象，如果不存在则返回null
      */
@@ -276,10 +279,10 @@ public class Game
         }
         return null;
     }
-    
+
     /**
      * 查找物品所在的房间。
-     * 
+     *
      * @param itemName 物品名称
      * @return 房间对象，如果物品不存在则返回null
      */
@@ -294,16 +297,25 @@ public class Game
         }
         return null;
     }
-    
+
     /**
      * 获取起始房间（公开方法）。
-     * 
+     *
      * @return 起始房间对象
      */
     public Room getStartingRoom() {
         return startingRoom;
     }
 
+    /**
+     * 根据房间对象获取房间的唯一标识符。
+     *
+     * <p>该方法通过遍历 allRoomsMap 找到与给定房间对象匹配的房间ID。
+     * 用于在保存游戏状态时标识玩家当前所在的房间。
+     *
+     * @param room 房间对象
+     * @return 房间的唯一标识符（字符串），如果未找到则返回null
+     */
     public String getRoomId(Room room) {
         if (allRoomsMap == null) return null;
         for (Map.Entry<String, Room> entry : allRoomsMap.entrySet()) {
@@ -314,6 +326,14 @@ public class Game
         return null;
     }
 
+    /**
+     * 获取所有房间的映射表。
+     *
+     * <p>返回房间ID到房间对象的映射，用于游戏状态管理和地图功能。
+     * 映射表在 createRooms() 方法中被初始化。
+     *
+     * @return 包含所有房间的HashMap，键为房间ID，值为Room对象
+     */
     public HashMap<String, Room> getAllRoomsMap() {
         return allRoomsMap;
     }

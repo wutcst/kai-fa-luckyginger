@@ -1,218 +1,164 @@
-/**
- * TakeCommand类的单元测试用例。
- * 测试take命令的执行逻辑。
- * 
- * @author 扩展功能实现
- * @version 1.0
- */
 package cn.edu.whut.sept.zuul;
 
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
 /**
- * TakeCommand类的单元测试。
+ * Tests for TakeCommand item pickup behavior.
  */
 public class TakeCommandTest
 {
-    /**
-     * 运行所有TakeCommand类的测试用例。
-     * 
-     * @return 测试通过返回true，失败返回false
-     */
     public static boolean runAllTests()
     {
-        System.out.println("========================================");
-        System.out.println("TakeCommand类单元测试");
-        System.out.println("========================================\n");
-        
         int passed = 0;
         int failed = 0;
-        
-        // 测试用例1: 成功拾取物品
-        if (testTakeItemSuccess()) {
-            System.out.println("✅ 测试1: 成功拾取物品 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试1: 成功拾取物品 - 失败");
-            failed++;
-        }
-        
-        // 测试用例2: 拾取不存在的物品
-        if (testTakeNonExistentItem()) {
-            System.out.println("✅ 测试2: 拾取不存在的物品 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试2: 拾取不存在的物品 - 失败");
-            failed++;
-        }
-        
-        // 测试用例3: 拾取超重物品
-        if (testTakeOverweightItem()) {
-            System.out.println("✅ 测试3: 拾取超重物品 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试3: 拾取超重物品 - 失败");
-            failed++;
-        }
-        
-        // 测试用例4: 缺少物品名称参数
-        if (testMissingItemName()) {
-            System.out.println("✅ 测试4: 缺少物品名称参数 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试4: 缺少物品名称参数 - 失败");
-            failed++;
-        }
-        
-        System.out.println("\n========================================");
-        System.out.println("测试结果: " + passed + " 通过, " + failed + " 失败");
-        System.out.println("========================================\n");
-        
+
+        if (testTakeExistingItemMovesItToInventory()) passed++; else failed++;
+        if (testTakeIsCaseInsensitiveThroughRoomLookup()) passed++; else failed++;
+        if (testTakeMissingItemDoesNotChangeInventory()) passed++; else failed++;
+        if (testTakeOverweightItemLeavesItemInRoom()) passed++; else failed++;
+        if (testTakeWithoutItemNameDoesNothing()) passed++; else failed++;
+        if (testTakeCommandAlwaysReturnsFalse()) passed++; else failed++;
+
+        printSummary("TakeCommandTest", passed, failed);
         return failed == 0;
     }
-    
-    /**
-     * 测试用例1: 成功拾取物品。
-     */
-    private static boolean testTakeItemSuccess()
+
+    private static boolean testTakeExistingItemMovesItToInventory()
     {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        Room room = player.getCurrentRoom();
+        Item key = new Item("test_key", "测试钥匙", 0.1, "KEY", "开门");
+        room.addItem(key);
+
+        executeSilently(new TakeCommand(), new Command("take", "test_key"), game);
+
+        return assertNull(room.getItem("test_key"), "拾取后物品应从房间移除")
+                && assertTrue(player.hasItem("test_key"), "拾取后物品应进入玩家背包")
+                && assertSame(key, player.getItem("test_key"), "背包中的物品应是原对象");
+    }
+
+    private static boolean testTakeIsCaseInsensitiveThroughRoomLookup()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        Room room = player.getCurrentRoom();
+        Item map = new Item("Test_Map", "测试地图", 0.2, "MAP", "查看地图");
+        room.addItem(map);
+
+        executeSilently(new TakeCommand(), new Command("take", "test_map"), game);
+
+        return assertNull(room.getItem("TEST_MAP"), "大小写不同也应从房间移除物品")
+                && assertSame(map, player.getItem("TEST_MAP"), "大小写不同也应拾取到背包");
+    }
+
+    private static boolean testTakeMissingItemDoesNotChangeInventory()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        int initialInventorySize = player.getInventory().size();
+
+        executeSilently(new TakeCommand(), new Command("take", "missing_item"), game);
+
+        return assertEquals(initialInventorySize, player.getInventory().size(), "拾取不存在物品不应改变背包")
+                && assertFalse(player.hasItem("missing_item"), "不存在物品不应进入背包");
+    }
+
+    private static boolean testTakeOverweightItemLeavesItemInRoom()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        Room room = player.getCurrentRoom();
+        player.setMaxWeight(1.0);
+        Item heavy = new Item("heavy_box", "很重的箱子", 2.0);
+        room.addItem(heavy);
+
+        executeSilently(new TakeCommand(), new Command("take", "heavy_box"), game);
+
+        return assertSame(heavy, room.getItem("heavy_box"), "超重物品应留在房间")
+                && assertFalse(player.hasItem("heavy_box"), "超重物品不应进入背包")
+                && assertDoubleEquals(0.0, player.getTotalWeight(), 0.0001, "超重拾取失败不应增加负重");
+    }
+
+    private static boolean testTakeWithoutItemNameDoesNothing()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        Room room = player.getCurrentRoom();
+        Item item = new Item("coin", "硬币", 0.1);
+        room.addItem(item);
+        int initialInventorySize = player.getInventory().size();
+
+        executeSilently(new TakeCommand(), new Command("take", null), game);
+
+        return assertSame(item, room.getItem("coin"), "缺少物品名时房间物品不应变化")
+                && assertEquals(initialInventorySize, player.getInventory().size(), "缺少物品名时背包不应变化");
+    }
+
+    private static boolean testTakeCommandAlwaysReturnsFalse()
+    {
+        Game game = new Game();
+        boolean result = executeSilently(new TakeCommand(), new Command("take", "missing_item"), game);
+
+        return assertFalse(result, "take 命令不应结束游戏");
+    }
+
+    private static boolean executeSilently(TakeCommand takeCommand, Command command, Game game)
+    {
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(output));
         try {
-            Game game = new Game();
-            Player player = game.getPlayer();
-            Room currentRoom = player.getCurrentRoom();
-            
-            // 添加物品到房间
-            Item item = new Item("key", "一把钥匙", 1.0);
-            currentRoom.addItem(item);
-            
-            // 执行take命令
-            TakeCommand takeCommand = new TakeCommand();
-            Command command = new Command("take", "key");
-            
-            takeCommand.execute(command, game);
-            
-            // 验证物品已从房间移除
-            if (currentRoom.getItem("key") != null) {
-                System.out.println("  错误: 物品应该从房间中移除");
-                return false;
-            }
-            
-            // 验证物品已添加到玩家背包
-            if (!player.hasItem("key")) {
-                System.out.println("  错误: 物品应该添加到玩家背包");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            e.printStackTrace();
-            return false;
+            return takeCommand.execute(command, game);
+        } finally {
+            System.setOut(originalOut);
         }
     }
-    
-    /**
-     * 测试用例2: 拾取不存在的物品。
-     */
-    private static boolean testTakeNonExistentItem()
+
+    private static void printSummary(String testName, int passed, int failed)
     {
-        try {
-            Game game = new Game();
-            Player player = game.getPlayer();
-            Room currentRoom = player.getCurrentRoom();
-            
-            int initialInventorySize = player.getInventory().size();
-            
-            // 尝试拾取不存在的物品
-            TakeCommand takeCommand = new TakeCommand();
-            Command command = new Command("take", "nonexistent");
-            
-            takeCommand.execute(command, game);
-            
-            // 验证玩家背包没有变化
-            if (player.getInventory().size() != initialInventorySize) {
-                System.out.println("  错误: 背包大小不应该改变");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+        System.out.println(testName + ": " + passed + " passed, " + failed + " failed.");
     }
-    
-    /**
-     * 测试用例3: 拾取超重物品。
-     */
-    private static boolean testTakeOverweightItem()
+
+    private static boolean assertTrue(boolean condition, String message)
     {
-        try {
-            Game game = new Game();
-            Player player = game.getPlayer();
-            Room currentRoom = player.getCurrentRoom();
-            
-            // 玩家初始最大负重为10kg，先拾取9kg的物品
-            Item item1 = new Item("heavy1", "重物1", 9.0);
-            currentRoom.addItem(item1);
-            player.takeItem(item1);
-            
-            // 尝试拾取另一个超过剩余负重的物品
-            Item item2 = new Item("heavy2", "重物2", 2.0);
-            currentRoom.addItem(item2);
-            
-            int initialInventorySize = player.getInventory().size();
-            
-            TakeCommand takeCommand = new TakeCommand();
-            Command command = new Command("take", "heavy2");
-            
-            takeCommand.execute(command, game);
-            
-            // 验证物品仍然在房间中
-            if (currentRoom.getItem("heavy2") == null) {
-                System.out.println("  错误: 超重物品不应该从房间中移除");
-                return false;
-            }
-            
-            // 验证物品没有添加到玩家背包
-            if (player.getInventory().size() != initialInventorySize) {
-                System.out.println("  错误: 超重物品不应该添加到背包");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            e.printStackTrace();
-            return false;
+        if (!condition) {
+            System.out.println("失败: " + message);
         }
+        return condition;
     }
-    
-    /**
-     * 测试用例4: 缺少物品名称参数。
-     */
-    private static boolean testMissingItemName()
+
+    private static boolean assertFalse(boolean condition, String message)
     {
-        try {
-            Game game = new Game();
-            Player player = game.getPlayer();
-            int initialInventorySize = player.getInventory().size();
-            
-            // 执行不带参数的take命令
-            TakeCommand takeCommand = new TakeCommand();
-            Command command = new Command("take", null);
-            
-            takeCommand.execute(command, game);
-            
-            // 验证玩家背包没有变化
-            if (player.getInventory().size() != initialInventorySize) {
-                System.out.println("  错误: 缺少参数不应该改变背包");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
+        return assertTrue(!condition, message);
+    }
+
+    private static boolean assertNull(Object actual, String message)
+    {
+        return assertTrue(actual == null, message);
+    }
+
+    private static boolean assertSame(Object expected, Object actual, String message)
+    {
+        return assertTrue(expected == actual, message + "，期望同一对象");
+    }
+
+    private static boolean assertEquals(Object expected, Object actual, String message)
+    {
+        boolean matches = expected == null ? actual == null : expected.equals(actual);
+        if (!matches) {
+            System.out.println("失败: " + message + "，期望: " + expected + "，实际: " + actual);
         }
+        return matches;
+    }
+
+    private static boolean assertDoubleEquals(double expected, double actual, double delta, String message)
+    {
+        boolean matches = Math.abs(expected - actual) <= delta;
+        if (!matches) {
+            System.out.println("失败: " + message + "，期望: " + expected + "，实际: " + actual);
+        }
+        return matches;
     }
 }
-

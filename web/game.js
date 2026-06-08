@@ -2135,9 +2135,64 @@ $("command-input").addEventListener("keydown", (event) => {
     }
 });
 
+const modalCloseControls = {
+    "teleport-modal": "teleport-cancel",
+    "item-detail-modal": "item-detail-close",
+    "room-status-modal": "room-status-close",
+    "room-items-modal": "room-items-close",
+    "password-modal": "password-cancel",
+    "content-modal": "content-close",
+    "campus-map-modal": "campus-map-close",
+    "save-slots-modal": "save-slots-close",
+    "exit-modal": "exit-back",
+    "win-modal": "win-close",
+    "gameplay-modal": "gameplay-close"
+};
+
+function getOpenModal() {
+    return document.querySelector(".modal-overlay.open");
+}
+
+function isTextEntryTarget(target) {
+    if (!target) return false;
+    const tagName = target.tagName;
+    return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || target.isContentEditable;
+}
+
+function stopKeyboardMovement() {
+    keyHoldState.isHolding = false;
+    keyHoldState.key = null;
+    if (keyHoldState.holdTimer) {
+        clearInterval(keyHoldState.holdTimer);
+        keyHoldState.holdTimer = null;
+    }
+}
+
+function closeOpenModal() {
+    const modal = getOpenModal();
+    if (!modal) return false;
+
+    const closeControlId = modalCloseControls[modal.id];
+    const closeControl = closeControlId ? $(closeControlId) : null;
+    if (closeControl) {
+        closeControl.click();
+    } else {
+        modal.classList.remove("open");
+    }
+    return true;
+}
+
 // WASD键盘方向控制
 document.addEventListener("keydown", (e) => {
-    if (document.activeElement === $("command-input")) return;
+    if (e.key === "Escape" && closeOpenModal()) {
+        e.preventDefault();
+        stopKeyboardMovement();
+        return;
+    }
+    if (isTextEntryTarget(e.target) || getOpenModal()) {
+        stopKeyboardMovement();
+        return;
+    }
     if (!sessionId) return;
     
     const keyMap = {
@@ -2184,7 +2239,7 @@ document.addEventListener("keydown", (e) => {
         });
         
         keyHoldState.holdTimer = setInterval(() => {
-            if (keyHoldState.isHolding && !isMoving) {
+            if (keyHoldState.isHolding && !isMoving && !getOpenModal()) {
                 // 退出查看模式
                 exitInspectMode();
                 
@@ -2212,13 +2267,7 @@ document.addEventListener("keyup", (e) => {
     };
     
     if (keyMap[e.key] && keyHoldState.key === e.key) {
-        keyHoldState.isHolding = false;
-        keyHoldState.key = null;
-        
-        if (keyHoldState.holdTimer) {
-            clearInterval(keyHoldState.holdTimer);
-            keyHoldState.holdTimer = null;
-        }
+        stopKeyboardMovement();
     }
 });
 

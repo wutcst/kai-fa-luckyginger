@@ -6,7 +6,11 @@ const views = {
     game: $("game-view")
 };
 
-const API_BASE = "";
+const API_BASE = String(
+    window.ZUUL_CONFIG && window.ZUUL_CONFIG.apiBaseUrl
+        ? window.ZUUL_CONFIG.apiBaseUrl
+        : ""
+).replace(/\/+$/, "");
 
 const itemMeta = {
     key: { label: "key", weight: 0.1, icon: "assets/items/gold_key.png", description: "一把生锈的旧钥匙，可以打开上锁的房间。" },

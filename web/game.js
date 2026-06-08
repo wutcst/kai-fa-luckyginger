@@ -6,7 +6,11 @@ const views = {
     game: $("game-view")
 };
 
-const API_BASE = "";
+const API_BASE = String(
+    window.ZUUL_CONFIG && window.ZUUL_CONFIG.apiBaseUrl
+        ? window.ZUUL_CONFIG.apiBaseUrl
+        : ""
+).replace(/\/+$/, "");
 
 const itemMeta = {
     key: { label: "key", weight: 0.1, icon: "assets/items/gold_key.png", description: "一把生锈的旧钥匙，可以打开上锁的房间。" },
@@ -650,6 +654,20 @@ function itemNames(items) {
     return items.map(normalizeItemName).filter(Boolean);
 }
 
+function itemLabel(name) {
+    const meta = itemMeta[name];
+    return meta && meta.label ? meta.label : name;
+}
+
+function sortItemNames(items) {
+    return [...items].sort((left, right) => {
+        return itemLabel(left).localeCompare(itemLabel(right), "zh-CN", {
+            sensitivity: "base",
+            numeric: true
+        });
+    });
+}
+
 function formatWeight(value) {
     const number = Number(value || 0);
     return Number.isInteger(number) ? String(number) : number.toFixed(1);
@@ -802,10 +820,13 @@ function hideItemDetail() {
 
 function renderInventory() {
     const box = $("inventory-list");
-    if (!gameState.inventory.length) {
+    const sortedInventory = sortItemNames(gameState.inventory);
+    $("inventory-count").textContent = `${sortedInventory.length} 件`;
+
+    if (!sortedInventory.length) {
         box.textContent = "暂无物品";
     } else {
-        box.innerHTML = gameState.inventory.map(itemPill).join("");
+        box.innerHTML = sortedInventory.map(itemPill).join("");
         // 添加点击事件
         box.querySelectorAll(".item-pill").forEach(btn => {
             btn.addEventListener("click", () => {
@@ -822,7 +843,30 @@ function renderInventory() {
     const playerInfo = lastBackendStatus && lastBackendStatus.player ? lastBackendStatus.player : {};
     const totalWeight = playerInfo.totalWeight != null ? playerInfo.totalWeight : inventoryWeight();
     const maxWeight = playerInfo.maxWeight != null ? playerInfo.maxWeight : 10;
+    const safeMaxWeight = Math.max(0, Number(maxWeight) || 0);
+    const safeTotalWeight = Math.max(0, Number(totalWeight) || 0);
+    const remainingWeight = Math.max(0, safeMaxWeight - safeTotalWeight);
+    const loadRatio = safeMaxWeight > 0 ? safeTotalWeight / safeMaxWeight : 0;
+    const loadPercent = Math.min(100, Math.round(loadRatio * 100));
+    const meter = $("weight-meter");
+    const meterFill = $("weight-meter-fill");
+    const weightHint = $("weight-hint");
+
     $("weight-info").textContent = `负重 ${formatWeight(totalWeight)}/${formatWeight(maxWeight)}kg`;
+    meter.setAttribute("aria-valuemax", String(safeMaxWeight));
+    meter.setAttribute("aria-valuenow", String(Math.min(safeTotalWeight, safeMaxWeight)));
+    meter.setAttribute("aria-valuetext", `${formatWeight(safeTotalWeight)}kg / ${formatWeight(safeMaxWeight)}kg`);
+    meter.classList.toggle("weight-meter--warning", loadRatio >= 0.8 && loadRatio < 1);
+    meter.classList.toggle("weight-meter--full", loadRatio >= 1);
+    meterFill.style.width = `${loadPercent}%`;
+
+    if (loadRatio >= 1) {
+        weightHint.textContent = "背包已达到负重上限";
+    } else if (loadRatio >= 0.8) {
+        weightHint.textContent = `接近上限，剩余 ${formatWeight(remainingWeight)}kg`;
+    } else {
+        weightHint.textContent = `剩余容量 ${formatWeight(remainingWeight)}kg`;
+    }
 }
 
 function renderMapDock() {
@@ -973,12 +1017,14 @@ function showRoomStatus() {
 function showRoomItems() {
     const room = rooms[currentRoomId];
     const itemsList = $("room-items-list");
-    
-    if (!room.items || room.items.length === 0) {
+    const sortedItems = sortItemNames(room.items || []);
+    $("room-items-count").textContent = `${sortedItems.length} 件`;
+
+    if (sortedItems.length === 0) {
         itemsList.innerHTML = '<div class="room-items-empty">这个房间里没有物品了</div>';
     } else {
         let html = '<div class="room-items-grid">';
-        room.items.forEach((itemName) => {
+        sortedItems.forEach((itemName) => {
             const meta = itemMeta[itemName] || { label: itemName, weight: 0, icon: "assets/items/scroll.png" };
             html += `
                 <div class="room-item-card">
@@ -2135,9 +2181,64 @@ $("command-input").addEventListener("keydown", (event) => {
     }
 });
 
+const modalCloseControls = {
+    "teleport-modal": "teleport-cancel",
+    "item-detail-modal": "item-detail-close",
+    "room-status-modal": "room-status-close",
+    "room-items-modal": "room-items-close",
+    "password-modal": "password-cancel",
+    "content-modal": "content-close",
+    "campus-map-modal": "campus-map-close",
+    "save-slots-modal": "save-slots-close",
+    "exit-modal": "exit-back",
+    "win-modal": "win-close",
+    "gameplay-modal": "gameplay-close"
+};
+
+function getOpenModal() {
+    return document.querySelector(".modal-overlay.open");
+}
+
+function isTextEntryTarget(target) {
+    if (!target) return false;
+    const tagName = target.tagName;
+    return tagName === "INPUT" || tagName === "TEXTAREA" || tagName === "SELECT" || target.isContentEditable;
+}
+
+function stopKeyboardMovement() {
+    keyHoldState.isHolding = false;
+    keyHoldState.key = null;
+    if (keyHoldState.holdTimer) {
+        clearInterval(keyHoldState.holdTimer);
+        keyHoldState.holdTimer = null;
+    }
+}
+
+function closeOpenModal() {
+    const modal = getOpenModal();
+    if (!modal) return false;
+
+    const closeControlId = modalCloseControls[modal.id];
+    const closeControl = closeControlId ? $(closeControlId) : null;
+    if (closeControl) {
+        closeControl.click();
+    } else {
+        modal.classList.remove("open");
+    }
+    return true;
+}
+
 // WASD键盘方向控制
 document.addEventListener("keydown", (e) => {
-    if (document.activeElement === $("command-input")) return;
+    if (e.key === "Escape" && closeOpenModal()) {
+        e.preventDefault();
+        stopKeyboardMovement();
+        return;
+    }
+    if (isTextEntryTarget(e.target) || getOpenModal()) {
+        stopKeyboardMovement();
+        return;
+    }
     if (!sessionId) return;
     
     const keyMap = {
@@ -2184,7 +2285,7 @@ document.addEventListener("keydown", (e) => {
         });
         
         keyHoldState.holdTimer = setInterval(() => {
-            if (keyHoldState.isHolding && !isMoving) {
+            if (keyHoldState.isHolding && !isMoving && !getOpenModal()) {
                 // 退出查看模式
                 exitInspectMode();
                 
@@ -2212,13 +2313,7 @@ document.addEventListener("keyup", (e) => {
     };
     
     if (keyMap[e.key] && keyHoldState.key === e.key) {
-        keyHoldState.isHolding = false;
-        keyHoldState.key = null;
-        
-        if (keyHoldState.holdTimer) {
-            clearInterval(keyHoldState.holdTimer);
-            keyHoldState.holdTimer = null;
-        }
+        stopKeyboardMovement();
     }
 });
 

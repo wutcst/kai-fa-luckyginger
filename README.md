@@ -168,6 +168,14 @@ http://localhost:8080
 
 如果 `8080` 端口被占用，程序会自动切换到可用端口，并在终端输出实际访问地址。
 
+### Render 部署
+
+前后端 Render 部署及 TiDB Cloud 环境变量配置见：
+
+```text
+RENDER_DEPLOYMENT.md
+```
+
 ---
 
 ## 🎛️ 常用命令

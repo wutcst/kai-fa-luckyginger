@@ -20,12 +20,22 @@ import java.util.List;
 import java.util.Map;
 
 public class DatabaseManager {
-    private static final String DB_URL = "jdbc:mysql://localhost:3306/zuul_game?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
-    private static final String DB_USER = "root";
-    private static final String DB_PASSWORD = "root";
+    private static final String LOCAL_DB_URL = "jdbc:mysql://localhost:3306/zuul_game?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
+    private static final String LOCAL_SERVER_URL = "jdbc:mysql://localhost:3306?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8";
+    private static final String DB_URL = env("DB_JDBC_URL", LOCAL_DB_URL);
+    private static final String DB_SERVER_URL = env("DB_SERVER_JDBC_URL", LOCAL_SERVER_URL);
+    private static final String DB_USER = env("DB_USER", "root");
+    private static final String DB_PASSWORD = env("DB_PASSWORD", "root");
+    private static final boolean CREATE_DATABASE = Boolean.parseBoolean(
+        env("DB_CREATE_DATABASE", System.getenv("DB_JDBC_URL") == null ? "true" : "false"));
     
     private static DatabaseManager instance;
     private Connection connection;
+
+    private static String env(String name, String fallback) {
+        String value = System.getenv(name);
+        return value == null || value.trim().isEmpty() ? fallback : value.trim();
+    }
     
     /**
      * 获取数据库管理器单例
@@ -58,20 +68,22 @@ public class DatabaseManager {
             Class.forName("com.mysql.cj.jdbc.Driver");
             System.out.println("✅ MySQL驱动加载成功");
             
-            // 先连接到MySQL服务器（不指定数据库）
-            System.out.println("步骤2: 连接MySQL服务器...");
-            Connection serverConnection = DriverManager.getConnection(
-                "jdbc:mysql://localhost:3306?useSSL=false&serverTimezone=UTC&characterEncoding=UTF-8",
-                DB_USER, DB_PASSWORD);
-            System.out.println("✅ MySQL服务器连接成功");
-            
-            // 创建数据库（如果不存在）
-            System.out.println("步骤3: 检查/创建数据库 'zuul_game'...");
-            Statement stmt = serverConnection.createStatement();
-            stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS zuul_game CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
-            stmt.close();
-            serverConnection.close();
-            System.out.println("✅ 数据库 'zuul_game' 已就绪");
+            if (CREATE_DATABASE) {
+                // 本地开发默认创建数据库；托管数据库通常应关闭该选项。
+                System.out.println("步骤2: 连接MySQL服务器...");
+                Connection serverConnection = DriverManager.getConnection(
+                    DB_SERVER_URL, DB_USER, DB_PASSWORD);
+                System.out.println("✅ MySQL服务器连接成功");
+
+                System.out.println("步骤3: 检查/创建数据库 'zuul_game'...");
+                Statement stmt = serverConnection.createStatement();
+                stmt.executeUpdate("CREATE DATABASE IF NOT EXISTS zuul_game CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci");
+                stmt.close();
+                serverConnection.close();
+                System.out.println("✅ 数据库 'zuul_game' 已就绪");
+            } else {
+                System.out.println("步骤2-3: 使用已配置的托管数据库");
+            }
             
             // 连接到zuul_game数据库
             System.out.println("步骤4: 连接到数据库 'zuul_game'...");

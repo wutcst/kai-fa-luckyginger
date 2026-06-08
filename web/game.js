@@ -822,7 +822,30 @@ function renderInventory() {
     const playerInfo = lastBackendStatus && lastBackendStatus.player ? lastBackendStatus.player : {};
     const totalWeight = playerInfo.totalWeight != null ? playerInfo.totalWeight : inventoryWeight();
     const maxWeight = playerInfo.maxWeight != null ? playerInfo.maxWeight : 10;
+    const safeMaxWeight = Math.max(0, Number(maxWeight) || 0);
+    const safeTotalWeight = Math.max(0, Number(totalWeight) || 0);
+    const remainingWeight = Math.max(0, safeMaxWeight - safeTotalWeight);
+    const loadRatio = safeMaxWeight > 0 ? safeTotalWeight / safeMaxWeight : 0;
+    const loadPercent = Math.min(100, Math.round(loadRatio * 100));
+    const meter = $("weight-meter");
+    const meterFill = $("weight-meter-fill");
+    const weightHint = $("weight-hint");
+
     $("weight-info").textContent = `负重 ${formatWeight(totalWeight)}/${formatWeight(maxWeight)}kg`;
+    meter.setAttribute("aria-valuemax", String(safeMaxWeight));
+    meter.setAttribute("aria-valuenow", String(Math.min(safeTotalWeight, safeMaxWeight)));
+    meter.setAttribute("aria-valuetext", `${formatWeight(safeTotalWeight)}kg / ${formatWeight(safeMaxWeight)}kg`);
+    meter.classList.toggle("weight-meter--warning", loadRatio >= 0.8 && loadRatio < 1);
+    meter.classList.toggle("weight-meter--full", loadRatio >= 1);
+    meterFill.style.width = `${loadPercent}%`;
+
+    if (loadRatio >= 1) {
+        weightHint.textContent = "背包已达到负重上限";
+    } else if (loadRatio >= 0.8) {
+        weightHint.textContent = `接近上限，剩余 ${formatWeight(remainingWeight)}kg`;
+    } else {
+        weightHint.textContent = `剩余容量 ${formatWeight(remainingWeight)}kg`;
+    }
 }
 
 function renderMapDock() {

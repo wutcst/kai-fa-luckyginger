@@ -1,0 +1,25 @@
+services:
+  - type: web
+    name: zuul-api
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_JDBC_URL
+        sync: false
+      - key: DB_USER
+        sync: false
+      - key: DB_PASSWORD
+        sync: false
+      - key: DB_CREATE_DATABASE
+        value: "false"
+
+  - type: web
+    name: zuul-web
+    runtime: static
+    buildCommand: printf 'window.ZUUL_CONFIG = { apiBaseUrl: "%s" };\n' "$API_BASE_URL" > web/config.js
+    staticPublishPath: ./web
+    envVars:
+      - key: API_BASE_URL
+        sync: false

@@ -50,9 +50,10 @@ public class GameWebServer {
         
         // 尝试从默认端口开始查找可用端口并直接创建 ServerSocket
         ServerSocket serverSocket = null;
-        int port = DEFAULT_PORT;
+        int port = resolvePort();
+        int portAttempts = System.getenv("PORT") == null ? MAX_PORT_ATTEMPTS : 1;
         
-        for (int attempt = 0; attempt < MAX_PORT_ATTEMPTS; attempt++) {
+        for (int attempt = 0; attempt < portAttempts; attempt++) {
             try {
                 serverSocket = new ServerSocket(port);
                 // 成功创建，跳出循环
@@ -60,8 +61,8 @@ public class GameWebServer {
             } catch (IOException e) {
                 // 端口被占用，尝试下一个端口
                 port++;
-                if (attempt == MAX_PORT_ATTEMPTS - 1) {
-                    System.err.println("错误: 无法找到可用端口（已尝试 " + MAX_PORT_ATTEMPTS + " 个端口，从 " + DEFAULT_PORT + " 到 " + port + "）");
+                if (attempt == portAttempts - 1) {
+                    System.err.println("错误: 无法监听端口 " + port);
                     return;
                 }
             }
@@ -75,7 +76,7 @@ public class GameWebServer {
         actualPort = port;
         
         // 如果使用的不是默认端口，提示用户
-        if (port != DEFAULT_PORT) {
+        if (System.getenv("PORT") == null && port != DEFAULT_PORT) {
             System.out.println("提示: 端口 " + DEFAULT_PORT + " 已被占用，自动切换到端口 " + port);
         }
         
@@ -112,6 +113,23 @@ public class GameWebServer {
      */
     public int getPort() {
         return actualPort;
+    }
+
+    private int resolvePort() {
+        String configuredPort = System.getenv("PORT");
+        if (configuredPort == null || configuredPort.trim().isEmpty()) {
+            return DEFAULT_PORT;
+        }
+
+        try {
+            int port = Integer.parseInt(configuredPort.trim());
+            if (port < 1 || port > 65535) {
+                throw new IllegalArgumentException("PORT must be between 1 and 65535");
+            }
+            return port;
+        } catch (NumberFormatException e) {
+            throw new IllegalArgumentException("PORT must be a valid integer", e);
+        }
     }
     
     /**
@@ -252,7 +270,13 @@ public class GameWebServer {
         System.out.println("  normalizedMethod.equals(\"GET\"): " + normalizedMethod.equals("GET"));
         
         try {
-            if (normalizedPath.equals("/api/register") && normalizedMethod.equals("POST")) {
+            if (normalizedPath.equals("/api/health") && normalizedMethod.equals("GET")) {
+                Map<String, Object> response = new HashMap<>();
+                response.put("success", true);
+                response.put("status", "ok");
+                response.put("service", "zuul-api");
+                out.println(JsonUtil.toJson(response));
+            } else if (normalizedPath.equals("/api/register") && normalizedMethod.equals("POST")) {
                 // 注册新用户
                 Map<String, String> request = JsonUtil.parseSimpleJson(requestBody);
                 String username = request != null ? request.get("username") : null;

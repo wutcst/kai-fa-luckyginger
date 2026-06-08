@@ -467,6 +467,30 @@ input {
     backdrop-filter: blur(10px);
 }
 
+.inventory-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.inventory-heading h3 {
+    margin: 0;
+}
+
+.item-count-badge {
+    flex: 0 0 auto;
+    padding: 4px 8px;
+    border: 1px solid rgba(180, 123, 68, 0.26);
+    border-radius: 999px;
+    color: var(--accent-dark);
+    background: rgba(255, 245, 225, 0.88);
+    font-size: 12px;
+    font-weight: 800;
+    line-height: 1;
+}
+
 .inventory-list {
     display: flex;
     flex-wrap: wrap;

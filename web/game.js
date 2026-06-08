@@ -650,6 +650,20 @@ function itemNames(items) {
     return items.map(normalizeItemName).filter(Boolean);
 }
 
+function itemLabel(name) {
+    const meta = itemMeta[name];
+    return meta && meta.label ? meta.label : name;
+}
+
+function sortItemNames(items) {
+    return [...items].sort((left, right) => {
+        return itemLabel(left).localeCompare(itemLabel(right), "zh-CN", {
+            sensitivity: "base",
+            numeric: true
+        });
+    });
+}
+
 function formatWeight(value) {
     const number = Number(value || 0);
     return Number.isInteger(number) ? String(number) : number.toFixed(1);
@@ -802,10 +816,13 @@ function hideItemDetail() {
 
 function renderInventory() {
     const box = $("inventory-list");
-    if (!gameState.inventory.length) {
+    const sortedInventory = sortItemNames(gameState.inventory);
+    $("inventory-count").textContent = `${sortedInventory.length} 件`;
+
+    if (!sortedInventory.length) {
         box.textContent = "暂无物品";
     } else {
-        box.innerHTML = gameState.inventory.map(itemPill).join("");
+        box.innerHTML = sortedInventory.map(itemPill).join("");
         // 添加点击事件
         box.querySelectorAll(".item-pill").forEach(btn => {
             btn.addEventListener("click", () => {
@@ -996,12 +1013,14 @@ function showRoomStatus() {
 function showRoomItems() {
     const room = rooms[currentRoomId];
     const itemsList = $("room-items-list");
-    
-    if (!room.items || room.items.length === 0) {
+    const sortedItems = sortItemNames(room.items || []);
+    $("room-items-count").textContent = `${sortedItems.length} 件`;
+
+    if (sortedItems.length === 0) {
         itemsList.innerHTML = '<div class="room-items-empty">这个房间里没有物品了</div>';
     } else {
         let html = '<div class="room-items-grid">';
-        room.items.forEach((itemName) => {
+        sortedItems.forEach((itemName) => {
             const meta = itemMeta[itemName] || { label: itemName, weight: 0, icon: "assets/items/scroll.png" };
             html += `
                 <div class="room-item-card">

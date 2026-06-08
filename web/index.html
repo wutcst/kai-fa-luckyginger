@@ -89,7 +89,10 @@
 
             <aside class="inventory-dock" id="inventory-dock">
                 <div class="dock-panel">
-                    <h3>背包</h3>
+                    <div class="inventory-heading">
+                        <h3>背包</h3>
+                        <span class="item-count-badge" id="inventory-count">0 件</span>
+                    </div>
                     <div class="inventory-list" id="inventory-list">暂无物品</div>
                     <div class="weight-line" id="weight-info">负重 0/10kg</div>
                     <div class="weight-meter" id="weight-meter" role="progressbar" aria-label="背包负重" aria-valuemin="0" aria-valuemax="10" aria-valuenow="0">
@@ -182,7 +185,10 @@
 
     <div class="modal-overlay" id="room-items-modal">
         <div class="modal-card">
-            <h3>房间物品</h3>
+            <div class="inventory-heading">
+                <h3>房间物品</h3>
+                <span class="item-count-badge" id="room-items-count">0 件</span>
+            </div>
             <p class="room-items-list" id="room-items-list"></p>
             <div class="modal-actions">
                 <button class="secondary-action" id="room-items-close" type="button">关闭</button>

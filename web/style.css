@@ -726,6 +726,86 @@ input {
     box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
 }
 
+.gameplay-card {
+    max-width: 680px;
+    max-height: 85vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    text-align: left;
+}
+
+.gameplay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.gameplay-header h3 {
+    margin: 0;
+    font-size: 1.3rem;
+}
+
+.close-btn {
+    width: 32px;
+    height: 32px;
+    border: none;
+    border-radius: 50%;
+    background: rgba(0, 0, 0, 0.1);
+    color: var(--muted);
+    font-size: 1.4rem;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.close-btn:hover {
+    background: rgba(0, 0, 0, 0.2);
+    color: var(--ink);
+}
+
+.gameplay-content {
+    flex: 1;
+    overflow-y: auto;
+    padding-right: 8px;
+}
+
+.gameplay-content h4 {
+    margin: 16px 0 8px;
+    font-size: 1rem;
+    color: var(--accent);
+    border-bottom: 1px solid var(--line);
+    padding-bottom: 4px;
+}
+
+.gameplay-content h4:first-child {
+    margin-top: 0;
+}
+
+.gameplay-content p {
+    margin: 8px 0;
+    line-height: 1.6;
+    color: var(--ink);
+}
+
+.gameplay-content ul {
+    margin: 8px 0;
+    padding-left: 20px;
+}
+
+.gameplay-content li {
+    margin: 6px 0;
+    line-height: 1.5;
+}
+
+.gameplay-content strong {
+    color: var(--accent-dark);
+}
+
 .modal-card h3 {
     margin: 0 0 10px;
     font-size: 1.2rem;
@@ -762,6 +842,7 @@ input {
 }
 
 .save-slot {
+    position: relative;
     width: 100%;
     display: grid;
     grid-template-columns: 96px minmax(0, 1fr);
@@ -774,6 +855,11 @@ input {
     background: rgba(255, 251, 239, 0.9);
     text-align: left;
     box-shadow: 0 6px 16px rgba(78, 45, 20, 0.12);
+    cursor: pointer;
+    transition: box-shadow 0.15s;
+}
+.save-slot:hover {
+    box-shadow: 0 6px 20px rgba(78, 45, 20, 0.22);
 }
 
 .save-slot--empty {
@@ -843,7 +929,7 @@ input {
 
 .save-slot-footer {
     display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-columns: minmax(0, 1fr) auto auto;
     gap: 10px;
     align-items: center;
 }
@@ -867,6 +953,24 @@ input {
     font-size: 0.82rem;
     font-weight: 900;
     white-space: nowrap;
+}
+
+.save-slot-delete {
+    border: 1px solid rgba(180, 80, 60, 0.3);
+    border-radius: 4px;
+    background: transparent;
+    color: rgba(180, 80, 60, 0.7);
+    font-size: 0.75rem;
+    font-weight: 700;
+    cursor: pointer;
+    padding: 2px 8px;
+    white-space: nowrap;
+    transition: background 0.15s, color 0.15s, border-color 0.15s;
+}
+.save-slot-delete:hover {
+    background: rgba(200, 60, 40, 0.12);
+    color: #c0392b;
+    border-color: rgba(200, 60, 40, 0.5);
 }
 
 .campus-map-card {

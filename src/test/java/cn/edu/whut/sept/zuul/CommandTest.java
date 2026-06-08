@@ -1,218 +1,109 @@
-/**
- * Command类的单元测试用例。
- * 测试命令对象的创建、属性获取等功能。
- * 
- * @author 扩展功能实现
- * @version 1.0
- */
 package cn.edu.whut.sept.zuul;
 
 /**
- * Command类的单元测试。
+ * Tests for Command word parsing state.
  */
 public class CommandTest
 {
-    /**
-     * 运行所有Command类的测试用例。
-     * 
-     * @return 测试通过返回true，失败返回false
-     */
     public static boolean runAllTests()
     {
-        System.out.println("========================================");
-        System.out.println("Command类单元测试");
-        System.out.println("========================================\n");
-        
         int passed = 0;
         int failed = 0;
-        
-        // 测试用例1: 命令创建（有效命令）
-        if (testValidCommand()) {
-            System.out.println("✅ 测试1: 有效命令创建 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试1: 有效命令创建 - 失败");
-            failed++;
-        }
-        
-        // 测试用例2: 命令创建（无效命令）
-        if (testInvalidCommand()) {
-            System.out.println("✅ 测试2: 无效命令创建 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试2: 无效命令创建 - 失败");
-            failed++;
-        }
-        
-        // 测试用例3: 命令属性获取
-        if (testCommandProperties()) {
-            System.out.println("✅ 测试3: 命令属性获取 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试3: 命令属性获取 - 失败");
-            failed++;
-        }
-        
-        // 测试用例4: hasSecondWord方法
-        if (testHasSecondWord()) {
-            System.out.println("✅ 测试4: hasSecondWord方法 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试4: hasSecondWord方法 - 失败");
-            failed++;
-        }
-        
-        // 测试用例5: isUnknown方法
-        if (testIsUnknown()) {
-            System.out.println("✅ 测试5: isUnknown方法 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试5: isUnknown方法 - 失败");
-            failed++;
-        }
-        
-        System.out.println("\n========================================");
-        System.out.println("测试结果: " + passed + " 通过, " + failed + " 失败");
-        System.out.println("========================================\n");
-        
+
+        if (testCommandWithTwoWords()) passed++; else failed++;
+        if (testCommandWithoutSecondWord()) passed++; else failed++;
+        if (testUnknownCommand()) passed++; else failed++;
+        if (testUnknownCommandCanStillStoreSecondWord()) passed++; else failed++;
+        if (testEmptyStringCommandIsNotUnknown()) passed++; else failed++;
+        if (testEmptySecondWordCountsAsSecondWord()) passed++; else failed++;
+
+        printSummary("CommandTest", passed, failed);
         return failed == 0;
     }
-    
-    /**
-     * 测试用例1: 有效命令创建。
-     */
-    private static boolean testValidCommand()
+
+    private static boolean testCommandWithTwoWords()
     {
-        try {
-            Command command = new Command("go", "north");
-            
-            if (!command.getCommandWord().equals("go")) {
-                System.out.println("  错误: 命令词不匹配");
-                return false;
-            }
-            
-            if (!command.getSecondWord().equals("north")) {
-                System.out.println("  错误: 第二个词不匹配");
-                return false;
-            }
-            
-            if (command.isUnknown()) {
-                System.out.println("  错误: 有效命令不应该被标记为未知");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+        Command command = new Command("go", "north");
+
+        return assertEquals("go", command.getCommandWord(), "命令词不正确")
+                && assertEquals("north", command.getSecondWord(), "第二个词不正确")
+                && assertFalse(command.isUnknown(), "有效命令不应被识别为未知")
+                && assertTrue(command.hasSecondWord(), "带方向的命令应有第二个词");
     }
-    
-    /**
-     * 测试用例2: 无效命令创建。
-     */
-    private static boolean testInvalidCommand()
+
+    private static boolean testCommandWithoutSecondWord()
     {
-        try {
-            Command command = new Command(null, "something");
-            
-            if (command.getCommandWord() != null) {
-                System.out.println("  错误: 无效命令的命令词应该为null");
-                return false;
-            }
-            
-            if (!command.isUnknown()) {
-                System.out.println("  错误: 无效命令应该被标记为未知");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+        Command command = new Command("look", null);
+
+        return assertEquals("look", command.getCommandWord(), "命令词不正确")
+                && assertNull(command.getSecondWord(), "没有第二个词时应返回 null")
+                && assertFalse(command.isUnknown(), "命令词非 null 时不应未知")
+                && assertFalse(command.hasSecondWord(), "第二个词为 null 时 hasSecondWord 应为 false");
     }
-    
-    /**
-     * 测试用例3: 命令属性获取。
-     */
-    private static boolean testCommandProperties()
+
+    private static boolean testUnknownCommand()
     {
-        try {
-            Command command = new Command("take", "key");
-            
-            String commandWord = command.getCommandWord();
-            String secondWord = command.getSecondWord();
-            
-            if (!commandWord.equals("take")) {
-                System.out.println("  错误: 命令词不匹配");
-                return false;
-            }
-            
-            if (!secondWord.equals("key")) {
-                System.out.println("  错误: 第二个词不匹配");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+        Command command = new Command(null, null);
+
+        return assertNull(command.getCommandWord(), "未知命令的命令词应为 null")
+                && assertTrue(command.isUnknown(), "命令词为 null 时应识别为未知")
+                && assertFalse(command.hasSecondWord(), "第二个词为 null 时不应有第二个词");
     }
-    
-    /**
-     * 测试用例4: hasSecondWord方法。
-     */
-    private static boolean testHasSecondWord()
+
+    private static boolean testUnknownCommandCanStillStoreSecondWord()
     {
-        try {
-            // 有第二个词
-            Command command1 = new Command("go", "north");
-            if (!command1.hasSecondWord()) {
-                System.out.println("  错误: 应该有第二个词");
-                return false;
-            }
-            
-            // 没有第二个词
-            Command command2 = new Command("look", null);
-            if (command2.hasSecondWord()) {
-                System.out.println("  错误: 不应该有第二个词");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+        Command command = new Command(null, "anything");
+
+        return assertTrue(command.isUnknown(), "命令词为 null 时应识别为未知")
+                && assertEquals("anything", command.getSecondWord(), "未知命令仍应保留第二个词")
+                && assertTrue(command.hasSecondWord(), "第二个词非 null 时 hasSecondWord 应为 true");
     }
-    
-    /**
-     * 测试用例5: isUnknown方法。
-     */
-    private static boolean testIsUnknown()
+
+    private static boolean testEmptyStringCommandIsNotUnknown()
     {
-        try {
-            // 有效命令
-            Command validCommand = new Command("help", null);
-            if (validCommand.isUnknown()) {
-                System.out.println("  错误: 有效命令不应该被标记为未知");
-                return false;
-            }
-            
-            // 无效命令
-            Command invalidCommand = new Command(null, null);
-            if (!invalidCommand.isUnknown()) {
-                System.out.println("  错误: 无效命令应该被标记为未知");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
+        Command command = new Command("", null);
+
+        return assertEquals("", command.getCommandWord(), "空字符串命令词应原样保存")
+                && assertFalse(command.isUnknown(), "只有 null 命令词才应被识别为未知");
+    }
+
+    private static boolean testEmptySecondWordCountsAsSecondWord()
+    {
+        Command command = new Command("take", "");
+
+        return assertEquals("", command.getSecondWord(), "空字符串第二个词应原样保存")
+                && assertTrue(command.hasSecondWord(), "第二个词为空字符串但非 null，应视为存在");
+    }
+
+    private static void printSummary(String testName, int passed, int failed)
+    {
+        System.out.println(testName + ": " + passed + " passed, " + failed + " failed.");
+    }
+
+    private static boolean assertTrue(boolean condition, String message)
+    {
+        if (!condition) {
+            System.out.println("失败: " + message);
         }
+        return condition;
+    }
+
+    private static boolean assertFalse(boolean condition, String message)
+    {
+        return assertTrue(!condition, message);
+    }
+
+    private static boolean assertNull(Object actual, String message)
+    {
+        return assertTrue(actual == null, message);
+    }
+
+    private static boolean assertEquals(Object expected, Object actual, String message)
+    {
+        boolean matches = expected == null ? actual == null : expected.equals(actual);
+        if (!matches) {
+            System.out.println("失败: " + message + "，期望: " + expected + "，实际: " + actual);
+        }
+        return matches;
     }
 }
-

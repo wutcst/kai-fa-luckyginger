@@ -1,303 +1,211 @@
-/**
- * UseCommand类单元测试
- * 测试物品使用功能的各个方面
- * 
- * @author 扩展功能实现
- * @version 2.0
- */
 package cn.edu.whut.sept.zuul;
 
-public class UseCommandTest {
-    
-    /**
-     * 运行所有测试用例
-     * @return 测试通过返回true，失败返回false
-     */
-    public static boolean runAllTests() {
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
+
+/**
+ * Tests for UseCommand key item behavior.
+ */
+public class UseCommandTest
+{
+    public static boolean runAllTests()
+    {
         int passed = 0;
         int failed = 0;
-        
-        System.out.println("\n========================================");
-        System.out.println("UseCommand类单元测试");
-        System.out.println("========================================\n");
-        
-        if (testUseKeyOnLockedRoom()) {
-            System.out.println("✅ 测试1: 使用钥匙解锁房间 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试1: 使用钥匙解锁房间 - 失败");
-            failed++;
-        }
-        
-        if (testUseKeyOnUnlockedRoom()) {
-            System.out.println("✅ 测试2: 使用钥匙解锁已解锁的房间 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试2: 使用钥匙解锁已解锁的房间 - 失败");
-            failed++;
-        }
-        
-        if (testUseKeyOnNormalRoom()) {
-            System.out.println("✅ 测试3: 在普通房间使用钥匙 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试3: 在普通房间使用钥匙 - 失败");
-            failed++;
-        }
-        
-        if (testUseMap()) {
-            System.out.println("✅ 测试4: 使用地图 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试4: 使用地图 - 失败");
-            failed++;
-        }
-        
-        if (testUseNonUsableItem()) {
-            System.out.println("✅ 测试5: 使用不可使用的物品 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试5: 使用不可使用的物品 - 失败");
-            failed++;
-        }
-        
-        if (testUseItemNotInInventory()) {
-            System.out.println("✅ 测试6: 使用背包中不存在的物品 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试6: 使用背包中不存在的物品 - 失败");
-            failed++;
-        }
-        
-        if (testUseCommandWithoutItemName()) {
-            System.out.println("✅ 测试7: use命令缺少物品名称 - 通过");
-            passed++;
-        } else {
-            System.out.println("❌ 测试7: use命令缺少物品名称 - 失败");
-            failed++;
-        }
-        
-        System.out.println("\n========================================");
-        System.out.println("测试结果: " + passed + " 通过, " + failed + " 失败");
-        System.out.println("========================================\n");
-        
+
+        if (testUseKeyUnlocksAdjacentLockedRoom()) passed++; else failed++;
+        if (testUseWrongKeyDoesNotUnlockRoom()) passed++; else failed++;
+        if (testUseKeyOnAlreadyUnlockedCurrentRoomKeepsUnlocked()) passed++; else failed++;
+        if (testUseMapDoesNotConsumeItem()) passed++; else failed++;
+        if (testUseFoodConsumesItemAndIncreasesWeightForCookie()) passed++; else failed++;
+        if (testUseToolKeepsItemInInventory()) passed++; else failed++;
+        if (testUseNormalItemDoesNotConsumeItem()) passed++; else failed++;
+        if (testUseMissingInventoryItemDoesNothing()) passed++; else failed++;
+        if (testUseWithoutItemNameDoesNothing()) passed++; else failed++;
+
+        printSummary("UseCommandTest", passed, failed);
         return failed == 0;
     }
-    
-    /**
-     * 测试用例1: 使用钥匙解锁房间
-     */
-    private static boolean testUseKeyOnLockedRoom() {
+
+    private static boolean testUseKeyUnlocksAdjacentLockedRoom()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        Room currentRoom = new Room("走廊");
+        LockedRoom lockedRoom = new LockedRoom("宝库", "key");
+        currentRoom.setExit("north", lockedRoom);
+        player.setCurrentRoom(currentRoom);
+        Item key = new Item("key", "钥匙", 0.1, "KEY", "解锁房间");
+        player.takeItem(key);
+
+        boolean result = executeSilently(new UseCommand(), new Command("use", "key"), game);
+
+        return assertFalse(result, "use 命令不应结束游戏")
+                && assertTrue(lockedRoom.isUnlocked(), "正确钥匙应解锁相邻上锁房间")
+                && assertTrue(player.hasItem("key"), "钥匙使用后不应被消耗");
+    }
+
+    private static boolean testUseWrongKeyDoesNotUnlockRoom()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        Room currentRoom = new Room("走廊");
+        LockedRoom lockedRoom = new LockedRoom("宝库", "silver_key");
+        currentRoom.setExit("east", lockedRoom);
+        player.setCurrentRoom(currentRoom);
+        player.takeItem(new Item("key", "普通钥匙", 0.1, "KEY", "尝试解锁"));
+
+        executeSilently(new UseCommand(), new Command("use", "key"), game);
+
+        return assertFalse(lockedRoom.isUnlocked(), "错误钥匙不应解锁房间")
+                && assertTrue(player.hasItem("key"), "错误钥匙使用失败后仍应留在背包");
+    }
+
+    private static boolean testUseKeyOnAlreadyUnlockedCurrentRoomKeepsUnlocked()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        LockedRoom lockedRoom = new LockedRoom("宝库", "key");
+        lockedRoom.unlock("key");
+        player.setCurrentRoom(lockedRoom);
+        player.takeItem(new Item("key", "钥匙", 0.1, "KEY", "解锁房间"));
+
+        executeSilently(new UseCommand(), new Command("use", "key"), game);
+
+        return assertTrue(lockedRoom.isUnlocked(), "已解锁房间再次使用钥匙后应保持解锁")
+                && assertTrue(player.hasItem("key"), "钥匙不应因重复使用被消耗");
+    }
+
+    private static boolean testUseMapDoesNotConsumeItem()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        Room room = new Room("大厅");
+        room.setExit("north", new Room("实验室"));
+        player.setCurrentRoom(room);
+        Item map = new Item("map", "校园地图", 0.2, "MAP", "显示当前位置");
+        player.takeItem(map);
+
+        executeSilently(new UseCommand(), new Command("use", "map"), game);
+
+        return assertSame(map, player.getItem("map"), "地图使用后应留在背包")
+                && assertDoubleEquals(0.2, player.getTotalWeight(), 0.0001, "地图使用不应改变背包重量");
+    }
+
+    private static boolean testUseFoodConsumesItemAndIncreasesWeightForCookie()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        double initialMaxWeight = player.getMaxWeight();
+        Item cookie = new Item("cookie", "魔法饼干", 0.1, "FOOD", "增加负重");
+        player.takeItem(cookie);
+
+        executeSilently(new UseCommand(), new Command("use", "cookie"), game);
+
+        return assertFalse(player.hasItem("cookie"), "食物使用后应从背包移除")
+                && assertDoubleEquals(initialMaxWeight + 2.0, player.getMaxWeight(), 0.0001,
+                        "使用 cookie 类型食物应增加 2kg 最大负重");
+    }
+
+    private static boolean testUseToolKeepsItemInInventory()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        Item box = new Item("box", "密码箱", 1.0, "TOOL", "需要密码才能打开");
+        player.takeItem(box);
+
+        executeSilently(new UseCommand(), new Command("use", "box"), game);
+
+        return assertSame(box, player.getItem("box"), "工具使用后当前实现不应消耗物品");
+    }
+
+    private static boolean testUseNormalItemDoesNotConsumeItem()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        Item computer = new Item("computer", "电脑", 2.5);
+        player.takeItem(computer);
+
+        executeSilently(new UseCommand(), new Command("use", "computer"), game);
+
+        return assertSame(computer, player.getItem("computer"), "不可使用物品尝试 use 后应仍在背包")
+                && assertFalse(computer.isUsable(), "普通物品应保持不可使用状态");
+    }
+
+    private static boolean testUseMissingInventoryItemDoesNothing()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        int initialInventorySize = player.getInventory().size();
+
+        executeSilently(new UseCommand(), new Command("use", "missing_item"), game);
+
+        return assertEquals(initialInventorySize, player.getInventory().size(), "使用不存在物品不应改变背包");
+    }
+
+    private static boolean testUseWithoutItemNameDoesNothing()
+    {
+        Game game = new Game();
+        Player player = game.getPlayer();
+        Item map = new Item("map", "地图", 0.2, "MAP", "查看位置");
+        player.takeItem(map);
+
+        boolean result = executeSilently(new UseCommand(), new Command("use", null), game);
+
+        return assertFalse(result, "缺少物品名的 use 命令不应结束游戏")
+                && assertSame(map, player.getItem("map"), "缺少物品名时背包不应变化");
+    }
+
+    private static boolean executeSilently(UseCommand useCommand, Command command, Game game)
+    {
+        PrintStream originalOut = System.out;
+        ByteArrayOutputStream output = new ByteArrayOutputStream();
+        System.setOut(new PrintStream(output));
         try {
-            Game game = new Game();
-            Player player = game.getPlayer();
-            
-            // 创建上锁房间
-            LockedRoom lockedRoom = new LockedRoom("上锁的宝库", "key");
-            Room currentRoom = new Room("当前房间");
-            currentRoom.setExit("north", lockedRoom);
-            player.setCurrentRoom(currentRoom);
-            
-            // 给玩家一把钥匙
-            Item key = new Item("key", "一把钥匙", 0.1, "KEY", "可以解锁上锁的房间");
-            player.takeItem(key);
-            
-            // 移动到上锁房间（应该被阻止）
-            Room nextRoom = currentRoom.getExit("north");
-            if (nextRoom != null && nextRoom instanceof LockedRoom) {
-                LockedRoom lr = (LockedRoom) nextRoom;
-                if (lr.isUnlocked()) {
-                    System.out.println("  错误: 房间不应该已经解锁");
-                    return false;
-                }
-                
-                // 使用钥匙解锁
-                boolean unlocked = lr.unlock("key");
-                if (!unlocked) {
-                    System.out.println("  错误: 钥匙应该能解锁房间");
-                    return false;
-                }
-                
-                if (!lr.isUnlocked()) {
-                    System.out.println("  错误: 房间应该已解锁");
-                    return false;
-                }
-                
-                return true;
-            }
-            
-            return false;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            e.printStackTrace();
-            return false;
+            return useCommand.execute(command, game);
+        } finally {
+            System.setOut(originalOut);
         }
     }
-    
-    /**
-     * 测试用例2: 使用钥匙解锁已解锁的房间
-     */
-    private static boolean testUseKeyOnUnlockedRoom() {
-        try {
-            LockedRoom lockedRoom = new LockedRoom("上锁的房间", "key");
-            lockedRoom.unlock("key");
-            
-            // 尝试再次解锁
-            boolean result = lockedRoom.unlock("key");
-            // 应该返回true（即使已经解锁）
-            if (!lockedRoom.isUnlocked()) {
-                System.out.println("  错误: 房间应该保持解锁状态");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+
+    private static void printSummary(String testName, int passed, int failed)
+    {
+        System.out.println(testName + ": " + passed + " passed, " + failed + " failed.");
     }
-    
-    /**
-     * 测试用例3: 在普通房间使用钥匙
-     */
-    private static boolean testUseKeyOnNormalRoom() {
-        try {
-            Game game = new Game();
-            Player player = game.getPlayer();
-            
-            // 创建普通房间
-            Room normalRoom = new Room("普通房间");
-            player.setCurrentRoom(normalRoom);
-            
-            // 给玩家一把钥匙
-            Item key = new Item("key", "一把钥匙", 0.1, "KEY", "可以解锁上锁的房间");
-            player.takeItem(key);
-            
-            // 使用钥匙（应该提示没有需要解锁的房间）
-            UseCommand useCommand = new UseCommand();
-            Command command = new Command("use", "key");
-            
-            // 由于UseCommand使用System.out.println，我们无法直接捕获输出
-            // 但可以验证钥匙仍然在玩家背包中
-            Item keyInInventory = player.getItem("key");
-            if (keyInInventory == null) {
-                System.out.println("  错误: 钥匙不应该被消耗");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
+
+    private static boolean assertTrue(boolean condition, String message)
+    {
+        if (!condition) {
+            System.out.println("失败: " + message);
         }
+        return condition;
     }
-    
-    /**
-     * 测试用例4: 使用地图
-     */
-    private static boolean testUseMap() {
-        try {
-            Game game = new Game();
-            Player player = game.getPlayer();
-            
-            // 给玩家一张地图
-            Item map = new Item("map", "一张地图", 0.2, "MAP", "显示当前位置的详细信息");
-            player.takeItem(map);
-            
-            // 验证地图是可使用的
-            if (!map.isUsable()) {
-                System.out.println("  错误: 地图应该是可使用的");
-                return false;
-            }
-            
-            if (!"MAP".equals(map.getItemType())) {
-                System.out.println("  错误: 地图类型应该是MAP");
-                return false;
-            }
-            
-            // 地图使用后不应该被消耗
-            Item mapAfterUse = player.getItem("map");
-            if (mapAfterUse == null) {
-                System.out.println("  错误: 地图不应该被消耗");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+
+    private static boolean assertFalse(boolean condition, String message)
+    {
+        return assertTrue(!condition, message);
     }
-    
-    /**
-     * 测试用例5: 使用不可使用的物品
-     */
-    private static boolean testUseNonUsableItem() {
-        try {
-            Game game = new Game();
-            Player player = game.getPlayer();
-            
-            // 创建一个不可使用的物品
-            Item normalItem = new Item("book", "一本书", 1.0);
-            player.takeItem(normalItem);
-            
-            // 验证物品不可使用
-            if (normalItem.isUsable()) {
-                System.out.println("  错误: 普通物品不应该是可使用的");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
-        }
+
+    private static boolean assertSame(Object expected, Object actual, String message)
+    {
+        return assertTrue(expected == actual, message + "，期望同一对象");
     }
-    
-    /**
-     * 测试用例6: 使用背包中不存在的物品
-     */
-    private static boolean testUseItemNotInInventory() {
-        try {
-            Game game = new Game();
-            Player player = game.getPlayer();
-            
-            // 尝试使用不存在的物品
-            Item item = player.getItem("nonexistent");
-            if (item != null) {
-                System.out.println("  错误: 不应该找到不存在的物品");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
+
+    private static boolean assertEquals(Object expected, Object actual, String message)
+    {
+        boolean matches = expected == null ? actual == null : expected.equals(actual);
+        if (!matches) {
+            System.out.println("失败: " + message + "，期望: " + expected + "，实际: " + actual);
         }
+        return matches;
     }
-    
-    /**
-     * 测试用例7: use命令缺少物品名称
-     */
-    private static boolean testUseCommandWithoutItemName() {
-        try {
-            UseCommand useCommand = new UseCommand();
-            Command command = new Command("use", null);
-            
-            // 执行命令（应该返回false，因为命令不会退出游戏）
-            boolean result = useCommand.execute(command, new Game());
-            
-            // 验证命令执行（虽然没有物品名称，但应该处理错误情况）
-            if (result) {
-                System.out.println("  错误: use命令不应该退出游戏");
-                return false;
-            }
-            
-            return true;
-        } catch (Exception e) {
-            System.out.println("  异常: " + e.getMessage());
-            return false;
+
+    private static boolean assertDoubleEquals(double expected, double actual, double delta, String message)
+    {
+        boolean matches = Math.abs(expected - actual) <= delta;
+        if (!matches) {
+            System.out.println("失败: " + message + "，期望: " + expected + "，实际: " + actual);
         }
+        return matches;
     }
 }
-

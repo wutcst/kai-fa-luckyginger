@@ -2,6 +2,7 @@ services:
   - type: web
     name: zuul-api
     runtime: docker
+    plan: free
     dockerfilePath: ./Dockerfile
     dockerContext: .
     healthCheckPath: /api/health
@@ -18,7 +19,8 @@ services:
   - type: web
     name: zuul-web
     runtime: static
-    buildCommand: printf 'window.ZUUL_CONFIG = { apiBaseUrl: "%s" };\n' "$API_BASE_URL" > web/config.js
+    buildCommand: |
+      printf 'window.ZUUL_CONFIG = { apiBaseUrl: "%s" };\n' "$API_BASE_URL" > web/config.js
     staticPublishPath: ./web
     envVars:
       - key: API_BASE_URL

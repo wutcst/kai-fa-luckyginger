@@ -841,8 +841,9 @@ function renderInventory() {
     }
 
     const playerInfo = lastBackendStatus && lastBackendStatus.player ? lastBackendStatus.player : {};
-    const totalWeight = playerInfo.totalWeight != null ? playerInfo.totalWeight : inventoryWeight();
-    const maxWeight = playerInfo.maxWeight != null ? playerInfo.maxWeight : 10;
+    // 优先使用本地计算的负重（更准确），如果后端有有效数据则使用后端数据
+    const totalWeight = playerInfo.totalWeight != null && playerInfo.totalWeight > 0 ? playerInfo.totalWeight : inventoryWeight();
+    const maxWeight = playerInfo.maxWeight != null && playerInfo.maxWeight > 0 ? playerInfo.maxWeight : 10;
     const safeMaxWeight = Math.max(0, Number(maxWeight) || 0);
     const safeTotalWeight = Math.max(0, Number(totalWeight) || 0);
     const remainingWeight = Math.max(0, safeMaxWeight - safeTotalWeight);
@@ -1442,6 +1443,7 @@ function takeItem(itemName, options = {}) {
     gameState.inventory.push(itemName);
     gameState.completion.itemsCollected = Math.max(gameState.completion.itemsCollected, gameState.inventory.length);
     renderRoom();
+    renderInventory(); // 更新背包负重显示
     appendLog(`你拾取了 ${itemName}。`);
     if (currentUsername) {
         saveFullState('zuul_auto_' + currentUsername);
@@ -1505,6 +1507,7 @@ function applyFrontEndCommand(command, options = {}) {
                 homeRoom.items = [...(homeRoom.items || []), dropName];
             }
             renderRoom();
+            renderInventory(); // 更新背包负重显示
             appendLog(`你丢弃了 ${dropName}。`);
             if (currentUsername) {
                 saveFullState('zuul_auto_' + currentUsername);

@@ -1653,21 +1653,38 @@ function normalizeApiLogMessage(message) {
     if (!text) return "";
 
     const completion = gameState.completion;
+    const roomsExplored = gameState.visitedRooms.size;
     const itemsCollected = Math.max(
         Number(completion.itemsCollected) || 0,
         gameState.inventory.length
     );
-    const withLocalItemCount = text.replace(
-        /物品收集:\s*\d+\/\d+/gu,
-        `物品收集: ${itemsCollected}/${completion.totalItems}`
-    );
-    const withoutBackendProgress = withLocalItemCount.replace(
-        /\s*进度：房间\s*\d+\/\d+\s+物品\s*\d+\/\d+\s+饼干:\S+\s+位置:\S+\s*$/u,
+    const cookieEaten = !(rooms.main_hall.items || []).includes("cookie")
+        && !gameState.inventory.includes("cookie");
+    const atStartRoom = currentRoomId === "campus_gate";
+    const withLocalStatus = text
+        .replace(
+            /房间探索\s*[：:]\s*\d+\s*\/\s*\d+/gu,
+            `房间探索: ${roomsExplored}/${completion.totalRooms}`
+        )
+        .replace(
+            /物品收集\s*[：:]\s*\d+\s*\/\s*\d+/gu,
+            `物品收集: ${itemsCollected}/${completion.totalItems}`
+        )
+        .replace(
+            /魔法饼干\s*[：:]\s*(?:已吃|未吃)/gu,
+            `魔法饼干: ${cookieEaten ? "已吃" : "未吃"}`
+        )
+        .replace(
+            /当前位置\s*[：:]\s*(?:起始房间|其他房间)/gu,
+            `当前位置: ${atStartRoom ? "起始房间" : "其他房间"}`
+        );
+    const withoutBackendProgress = withLocalStatus.replace(
+        /\s*进度\s*[：:]\s*房间\s*\d+\s*\/\s*\d+\s+物品\s*\d+\s*\/\s*\d+\s+饼干\s*[：:]\s*\S+\s+位置\s*[：:]\s*\S+\s*$/u,
         ""
     ).trim();
 
-    if (withoutBackendProgress === withLocalItemCount) {
-        return withLocalItemCount;
+    if (withoutBackendProgress === withLocalStatus) {
+        return withLocalStatus;
     }
 
     return `${withoutBackendProgress}\n\n${buildLocalProgressLog()}`;
@@ -2387,9 +2404,7 @@ document.addEventListener("keydown", (e) => {
         movePlayerStep(action.dir).then(result => {
             if (result.roomChanged) {
                 sendGameCommand(action.cmd).then(response => {
-                    if (response && response.message) {
-                        appendLog(response.message, response.success === false ? "error" : "");
-                    }
+                    appendApiMessage(response);
                 }).catch(() => {});
             }
         });
@@ -2402,9 +2417,7 @@ document.addEventListener("keydown", (e) => {
                 movePlayerStep(action.dir, getKeyboardMoveOptions()).then(result => {
                     if (result.roomChanged) {
                         sendGameCommand(action.cmd).then(response => {
-                            if (response && response.message) {
-                                appendLog(response.message, response.success === false ? "error" : "");
-                            }
+                            appendApiMessage(response);
                         }).catch(() => {});
                     }
                 });
@@ -2437,9 +2450,7 @@ document.querySelectorAll(".direction-pad button").forEach((button) => {
             movePlayerStep(direction).then(result => {
                 if (result.roomChanged) {
                     sendGameCommand(button.dataset.command).then(response => {
-                        if (response && response.message) {
-                            appendLog(response.message, response.success === false ? "error" : "");
-                        }
+                        appendApiMessage(response);
                     }).catch(() => {});
                 }
             });

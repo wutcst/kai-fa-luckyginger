@@ -1136,6 +1136,7 @@ function enterGameFromAuth(data) {
     renderRoom();
     appendLog(`欢迎进入游戏，${currentUsername || "player"}。`);
     if (data.message) appendLog(data.message);
+    startBgm();
 
     if (data.gameStatus) {
         syncFromBackendStatus(data.gameStatus, { allowRoomChange: true });
@@ -1187,15 +1188,18 @@ async function startGameFromMenu(mode) {
         appendLog("新游戏已开始！");
         // 新游戏开始后自动显示玩法说明
         showGameplayOnNewGame();
+        startBgm();
     } else if (mode === "load") {
         sessionId = pendingAuthData.sessionId || null;
         currentUsername = pendingAuthData.username || $("login-username").value.trim() || $("register-username").value.trim();
         showView("game");
         await loadSavedGame();
+        startBgm();
     } else {
         sessionId = pendingAuthData.sessionId || null;
         currentUsername = pendingAuthData.username || $("login-username").value.trim() || $("register-username").value.trim();
         showView("game");
+        startBgm();
         
         const autoKey = 'zuul_auto_' + currentUsername;
         const loaded = loadFullState(autoKey);
@@ -1258,6 +1262,58 @@ function resetFrontendState(username) {
 function closeGameMenu() {
     $("game-menu-popover").classList.remove("open");
 }
+
+/* ===== 背景音乐控制 ===== */
+let bgmStarted = false;
+
+function startBgm() {
+    const audio = $("bgm-audio");
+    if (!audio || bgmStarted) return;
+    const savedVol = localStorage.getItem('zuul_bgm_volume');
+    const savedMuted = localStorage.getItem('zuul_bgm_muted');
+    audio.volume = savedVol !== null ? parseFloat(savedVol) : 0.5;
+    if (savedMuted === 'true') {
+        audio.pause();
+        $("music-toggle-switch").checked = false;
+        $("music-btn").classList.add("muted");
+    } else {
+        audio.play().catch(() => {});
+    }
+    if (savedVol !== null) {
+        $("music-volume-slider").value = Math.round(parseFloat(savedVol) * 100);
+    }
+    bgmStarted = true;
+}
+
+$("music-btn").addEventListener("click", (e) => {
+    e.stopPropagation();
+    $("music-popover").classList.toggle("open");
+    $("game-menu-popover").classList.remove("open");
+});
+
+$("music-toggle-switch").addEventListener("change", function () {
+    const audio = $("bgm-audio");
+    if (this.checked) {
+        audio.play().catch(() => {});
+        $("music-btn").classList.remove("muted");
+    } else {
+        audio.pause();
+        $("music-btn").classList.add("muted");
+    }
+    localStorage.setItem('zuul_bgm_muted', String(!this.checked));
+});
+
+$("music-volume-slider").addEventListener("input", function () {
+    const audio = $("bgm-audio");
+    audio.volume = this.value / 100;
+    localStorage.setItem('zuul_bgm_volume', String(audio.volume));
+});
+
+document.addEventListener("click", (e) => {
+    if (!e.target.closest("#music-btn") && !e.target.closest("#music-popover")) {
+        $("music-popover").classList.remove("open");
+    }
+});
 
 async function saveCurrentGame() {
     try {

@@ -1633,8 +1633,50 @@ function applyFrontEndCommand(command, options = {}) {
 
 function appendApiMessage(data) {
     if (data && data.message) {
-        appendLog(data.message, data.success === false ? "error" : "");
+        appendLog(normalizeApiLogMessage(data.message), data.success === false ? "error" : "");
     }
+}
+
+function buildLocalProgressLog() {
+    const completion = gameState.completion;
+    const roomsExplored = gameState.visitedRooms.size;
+    const itemsCollected = Math.max(
+        Number(completion.itemsCollected) || 0,
+        gameState.inventory.length
+    );
+    const cookieEaten = !(rooms.main_hall.items || []).includes("cookie")
+        && !gameState.inventory.includes("cookie");
+    const atStartRoom = currentRoomId === "campus_gate";
+
+    return `进度：房间 ${roomsExplored}/${completion.totalRooms}`
+        + `  物品 ${itemsCollected}/${completion.totalItems}`
+        + `  饼干:${cookieEaten ? "已吃" : "未吃"}`
+        + `  位置:${atStartRoom ? "起始房间" : "其他房间"}`;
+}
+
+function normalizeApiLogMessage(message) {
+    const text = String(message || "").trim();
+    if (!text) return "";
+
+    const completion = gameState.completion;
+    const itemsCollected = Math.max(
+        Number(completion.itemsCollected) || 0,
+        gameState.inventory.length
+    );
+    const withLocalItemCount = text.replace(
+        /物品收集:\s*\d+\/\d+/gu,
+        `物品收集: ${itemsCollected}/${completion.totalItems}`
+    );
+    const withoutBackendProgress = withLocalItemCount.replace(
+        /\s*进度：房间\s*\d+\/\d+\s+物品\s*\d+\/\d+\s+饼干:\S+\s+位置:\S+\s*$/u,
+        ""
+    ).trim();
+
+    if (withoutBackendProgress === withLocalItemCount) {
+        return withLocalItemCount;
+    }
+
+    return `${withoutBackendProgress}\n\n${buildLocalProgressLog()}`;
 }
 
 async function handleCommand(command) {

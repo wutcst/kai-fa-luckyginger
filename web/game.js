@@ -1157,11 +1157,6 @@ function showGameMenu(data) {
 async function startGameFromMenu(mode) {
     if (!pendingAuthData) return;
 
-    if (mode === "load" && !sessionId) {
-        setMenuMessage("当前为离线会话，无法读取服务器存档。", "error");
-        return;
-    }
-
     setMenuMessage(mode === "load" ? "正在读取存档..." : "正在进入游戏...");
 
     if (mode === "new") {

@@ -73,6 +73,20 @@
                     <h2 id="room-name">校园入口</h2>
                 </div>
                 <div class="title-actions">
+                    <button class="hud-button" id="music-btn" type="button" title="音乐">🎵</button>
+                    <div class="music-popover" id="music-popover">
+                        <div class="music-popover-row">
+                            <span>背景音乐</span>
+                            <label class="music-toggle">
+                                <input type="checkbox" id="music-toggle-switch" checked>
+                                <span class="music-toggle-slider"></span>
+                            </label>
+                        </div>
+                        <div class="music-popover-row">
+                            <span>音量</span>
+                            <input type="range" id="music-volume-slider" min="0" max="100" value="50" class="music-volume-slider">
+                        </div>
+                    </div>
                     <button class="hud-button" id="help-btn" type="button">帮助</button>
                     <button class="hud-button" id="save-game-btn" type="button">保存</button>
                     <button class="hud-button" id="game-menu-btn" type="button">菜单</button>
@@ -290,6 +304,8 @@
             </div>
         </div>
     </div>
+
+    <audio id="bgm-audio" loop preload="auto" src="assets/audio/bgm.mp3"></audio>
 
     <script src="config.js"></script>
     <script src="game.js"></script>

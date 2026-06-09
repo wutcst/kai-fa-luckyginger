@@ -426,6 +426,7 @@ function createGameRunId() {
 
 const gameState = {
     inventory: [],
+    maxWeight: 10, // 初始负重上限
     treasureUnlocked: false,
     visitedRooms: new Set(["campus_gate"]),
     completion: {
@@ -841,9 +842,9 @@ function renderInventory() {
     }
 
     const playerInfo = lastBackendStatus && lastBackendStatus.player ? lastBackendStatus.player : {};
-    // 优先使用本地计算的负重（更准确），如果后端有有效数据则使用后端数据
-    const totalWeight = playerInfo.totalWeight != null && playerInfo.totalWeight > 0 ? playerInfo.totalWeight : inventoryWeight();
-    const maxWeight = playerInfo.maxWeight != null && playerInfo.maxWeight > 0 ? playerInfo.maxWeight : 10;
+    // 使用本地计算的负重和本地存储的负重上限
+    const totalWeight = inventoryWeight();
+    const maxWeight = gameState.maxWeight || 10;
     const safeMaxWeight = Math.max(0, Number(maxWeight) || 0);
     const safeTotalWeight = Math.max(0, Number(totalWeight) || 0);
     const remainingWeight = Math.max(0, safeMaxWeight - safeTotalWeight);
@@ -1525,12 +1526,20 @@ function applyFrontEndCommand(command, options = {}) {
 
     if (normalized.startsWith("eat ")) {
         const foodName = normalized.split(" ").slice(1).join(" ");
-        if (foodName === "cookie" && gameState.inventory.includes("cookie")) {
-            gameState.inventory = gameState.inventory.filter((i) => i !== "cookie");
-            rooms.main_hall.items = (rooms.main_hall.items || []).filter((i) => i !== "cookie");
-            renderRoom();
-            if (currentUsername) {
-                saveFullState('zuul_auto_' + currentUsername);
+        if (foodName === "cookie") {
+            if (!gameState.inventory.includes("cookie")) {
+                appendLog("你没有饼干可以吃。", "error");
+            } else {
+                gameState.inventory = gameState.inventory.filter((i) => i !== "cookie");
+                rooms.main_hall.items = (rooms.main_hall.items || []).filter((i) => i !== "cookie");
+                // 增加5kg负重上限
+                gameState.maxWeight = (gameState.maxWeight || 10) + 5;
+                renderRoom();
+                renderInventory(); // 更新背包负重显示
+                appendLog("你吃掉了魔法饼干，感觉身体变得轻盈了！负重上限增加了5kg！");
+                if (currentUsername) {
+                    saveFullState('zuul_auto_' + currentUsername);
+                }
             }
         }
         return;
@@ -1627,33 +1636,39 @@ async function handleCommand(command) {
         return;
     }
 
-    try {
-        response = await sendGameCommand(normalized);
-    } catch (error) {
-        appendLog("后端命令暂时不可用，已执行前端交互。", "error");
-    }
-
     const isItemCommand = normalized.startsWith("take") || normalized.startsWith("get") || 
                            normalized.startsWith("drop") || normalized.startsWith("use") || 
                            normalized.startsWith("eat");
 
-    if (response && response.success === false && !isItemCommand) {
-        appendApiMessage(response);
+    // 物品命令只在前端处理，不发送到后端（避免冲突）
+    if (!isItemCommand) {
+        try {
+            response = await sendGameCommand(normalized);
+        } catch (error) {
+            appendLog("后端命令暂时不可用，已执行前端交互。", "error");
+        }
+
+        if (response && response.success === false) {
+            appendApiMessage(response);
+            return;
+        }
+    }
+
+    // 物品命令：只执行前端逻辑
+    if (isItemCommand) {
+        applyFrontEndCommand(normalized, { echoLook: false });
         return;
     }
 
-    if (response && response.success === false && isItemCommand) {
-        // 物品命令：后端失败也执行前端逻辑（前端状态可能和后端不同步）
-    } else {
-        appendApiMessage(response);
-    }
+    // 非物品命令：处理后端响应
+    appendApiMessage(response);
     applyFrontEndCommand(normalized, { echoLook: !response || !response.message });
 
     const isSpecialCommand = 
         (currentRoomId === 'unlocked_treasure_room' && normalized.startsWith('take')) ||
         (currentRoomId === 'locked_room' && normalized.startsWith('use'));
 
-    if (!isItemCommand && !isSpecialCommand && normalized !== "look" && normalized !== "status" && normalized !== "items") {
+    if (!isSpecialCommand && normalized !== "look" && normalized !== "status" && normalized !== "items") {
         await refreshGameStatus();
     }
 }
@@ -2523,6 +2538,7 @@ function buildFullState() {
         currentRoomId: currentRoomId,
         currentPlayerPosition: { ...currentPlayerPosition },
         inventory: [...gameState.inventory],
+        maxWeight: gameState.maxWeight, // 保存负重上限
         visitedRooms: [...gameState.visitedRooms],
         roomHistory: [...roomHistory],
         treasureUnlocked: gameState.treasureUnlocked,
@@ -2564,6 +2580,7 @@ function applyFullState(state) {
     currentRoomId = state.currentRoomId || 'campus_gate';
     currentPlayerPosition = state.currentPlayerPosition || { left: 50, top: 50 };
     gameState.inventory = state.inventory || [];
+    gameState.maxWeight = state.maxWeight || 10; // 恢复负重上限
     gameState.visitedRooms = new Set(state.visitedRooms || ['campus_gate']);
     roomHistory = state.roomHistory || [];
     gameState.treasureUnlocked = !!state.treasureUnlocked;

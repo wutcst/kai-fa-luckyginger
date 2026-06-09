@@ -1626,9 +1626,12 @@ function applyFrontEndCommand(command, options = {}) {
 }
 
 function appendApiMessage(data) {
-    if (data && data.message) {
-        appendLog(normalizeApiLogMessage(data.message), data.success === false ? "error" : "");
-    }
+    if (!data || !data.message || isSilentSaveFailure(data.message)) return;
+    appendLog(normalizeApiLogMessage(data.message), data.success === false ? "error" : "");
+}
+
+function isSilentSaveFailure(message) {
+    return /(?:保存失败|无法保存|保存暂时不可用)/u.test(String(message || ""));
 }
 
 function buildLocalProgressLog() {

@@ -1314,17 +1314,16 @@ async function saveCurrentGame() {
     try {
         if (sessionId) {
             try {
-                const response = await callApi("save", { sessionId });
-                appendApiMessage(response);
+                await callApi("save", { sessionId });
             } catch (error) {
-                appendLog("服务器保存暂时不可用，已保存到本地存档槽。", "error");
+                console.warn("Server save unavailable; continuing with local save slots.", error);
             }
         }
         const slot = saveManualSlot();
         appendLog(`游戏进度已保存：${slot.summary.roomTitle}。`);
         showSaveSlotsModal("save", slot.id);
     } catch (error) {
-        appendLog("保存失败，请确认浏览器存储是否可用。", "error");
+        console.error("Local save failed.", error);
     }
 }
 

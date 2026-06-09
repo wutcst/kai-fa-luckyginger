@@ -269,6 +269,125 @@ input {
     white-space: nowrap;
 }
 
+/* 音乐控制面板 */
+.music-popover {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    z-index: 20;
+    display: none;
+    min-width: 200px;
+    padding: 14px 16px;
+    border: 1px solid rgba(255, 255, 255, 0.62);
+    border-radius: 8px;
+    background: rgba(255, 248, 230, 0.94);
+    box-shadow: var(--shadow);
+    backdrop-filter: blur(10px);
+}
+
+.music-popover.open {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.music-popover-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    font-size: 14px;
+    font-weight: 700;
+    color: var(--accent-dark);
+}
+
+.music-toggle {
+    position: relative;
+    display: inline-block;
+    width: 44px;
+    height: 24px;
+    cursor: pointer;
+}
+
+.music-toggle input {
+    opacity: 0;
+    width: 0;
+    height: 0;
+    position: absolute;
+}
+
+.music-toggle-slider {
+    position: absolute;
+    inset: 0;
+    border-radius: 24px;
+    background: rgba(180, 123, 68, 0.25);
+    transition: background 0.2s ease;
+}
+
+.music-toggle-slider::before {
+    content: "";
+    position: absolute;
+    left: 3px;
+    top: 3px;
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    background: #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.18);
+    transition: transform 0.2s ease;
+}
+
+.music-toggle input:checked + .music-toggle-slider {
+    background: var(--accent);
+}
+
+.music-toggle input:checked + .music-toggle-slider::before {
+    transform: translateX(20px);
+}
+
+.music-volume-slider {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 100px;
+    height: 6px;
+    border-radius: 3px;
+    background: rgba(180, 123, 68, 0.2);
+    outline: none;
+    cursor: pointer;
+}
+
+.music-volume-slider::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+.music-volume-slider::-moz-range-thumb {
+    width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    background: var(--accent);
+    border: 2px solid #fff;
+    box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+}
+
+#music-btn {
+    font-size: 16px;
+    min-width: 42px;
+    padding: 0 8px;
+}
+
+#music-btn.muted {
+    opacity: 0.5;
+}
+
 .scene-item-layer {
     position: absolute;
     inset: 0;

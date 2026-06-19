@@ -170,6 +170,8 @@ http://localhost:8080
 
 ### Render 部署
 
+在线访问：[https://zuul-api.onrender.com/](https://zuul-api.onrender.com/)
+
 前后端 Render 部署及 TiDB Cloud 环境变量配置见：
 
 ```text
